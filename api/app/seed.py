@@ -1,103 +1,78 @@
-"""Populate the database from LIVE approved sources (no synthetic data).
-
-    python -m app.seed               # sync source registry; run live ingestion once (skips if runs exist)
-    python -m app.seed --reimport    # re-run the same live queries (idempotent reruns)
-    python -m app.seed --reset       # drop + recreate all tables first (SQLite/local only)
-    python -m app.seed --sources-only
-
-Requires LIVE_CONNECTORS_ENABLED=true. Credential-gated sources (Zefix, CVR) run too: without credentials
-they fail closed and the run is recorded as FAILED with the reason, so the blocker is visible in the UI.
-"""
+"""Synchronize the Estonia catalog and import the official register data."""
 
 import argparse
 import sys
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from app.config import get_settings
-from app.db import Base, SessionLocal, engine
+from app.db import SessionLocal
 from app.models import IngestionRun
-from app.services import ingestion
-from app.services.permissions import PermissionDenied
+from app.services import ee_import, maintenance
+from app.services.permissions import PermissionDenied, load_config
 from app.services.source_registry import sync_sources
 
 ACTOR = "system:seed"
 
-# Registry discovery (A sources). Brreg filters >= min_employees at source; PRH has no headcount.
-REGISTRY_RUNS: list[tuple[str, dict]] = [
-    ("no-brreg", {"naeringskode": "62", "max_records": 300}),  # IT services / software
-    ("no-brreg", {"naeringskode": "28", "max_records": 100}),  # machinery & equipment
-    ("no-brreg", {"naeringskode": "71", "max_records": 100}),  # engineering & technical consultancy
-    (
-        "fi-prh-ytj",
-        {"mainBusinessLine": "62100", "companyForm": "OY", "location": "Tampere", "max_records": 120},
-    ),
-    ("fi-prh-ytj", {"mainBusinessLine": "62100", "companyForm": "OY", "location": "Oulu", "max_records": 80}),
-    ("ch-zefix", {"name": "Informatik", "max_records": 50}),
-    ("dk-cvr", {"industry_code": "62", "max_records": 200}),
-]
-# Website enrichment (C sources) of registry-published domains.
-WEBSITE_RUNS: list[tuple[str, dict]] = [
-    ("web-company-nordics", {"countries": ["NO"], "qualified_only": True, "max_records": 60}),
-    ("web-company-nordics", {"countries": ["FI"], "qualified_only": False, "max_records": 30}),
-    ("web-company-dach", {"countries": ["DE", "AT", "CH"], "qualified_only": True, "max_records": 60}),
-]
-
 
 def _fmt(counts: dict[str, int]) -> str:
-    keys = [
+    keys = (
         "discovered",
         "accepted",
         "updated",
         "unchanged",
+        "financial_added",
+        "financial_changed",
+        "address_added",
+        "orphan_reports",
         "rejected",
-        "qualified",
-        "unknown_headcount",
-        "contacts_added",
-    ]
-    return " ".join(f"{k}={counts.get(k, 0)}" for k in keys)
-
-
-def run_live(session) -> None:
-    for source_id, query in REGISTRY_RUNS + WEBSITE_RUNS:
-        try:
-            run = ingestion.start_discovery_run(session, source_id=source_id, query=query, actor=ACTOR)
-        except PermissionDenied as exc:
-            print(f"  {source_id:<22} REJECTED  {'; '.join(exc.reasons)}")
-            continue
-        err = f"  ! {run.errors[0]['message']}" if run.errors and run.status != "UPSERTED" else ""
-        print(f"  {source_id:<22} {run.status:<9} {_fmt(run.counts)}{err}", flush=True)
+    )
+    return " ".join(f"{key}={counts.get(key, 0)}" for key in keys)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--reimport", action="store_true")
-    parser.add_argument("--reset", action="store_true")
+    parser.add_argument("--replace", action="store_true", help="backup and purge imported data before re-seeding")
+    parser.add_argument("--reset", action="store_true", help="deprecated alias for --replace")
     parser.add_argument("--sources-only", action="store_true")
+    parser.add_argument("--reimport", action="store_true", help="re-run the import (kept for compatibility)")
     args = parser.parse_args()
     settings = get_settings()
-    if args.reset:
-        if not settings.database_url.startswith("sqlite"):
-            sys.exit(
-                "--reset is only allowed for local SQLite databases; use `alembic downgrade base` on Postgres"
+    replace = args.replace or args.reset
+
+    # The production source is live by policy. Refuse before a destructive replace if live access is disabled.
+    if not settings.live_connectors_enabled:
+        sys.exit("LIVE_CONNECTORS_ENABLED is false: set it to true before running the Estonia import.")
+
+    config = load_config()
+    configured_ids = {entry["id"] for entry in config["sources"]}
+    if replace:
+        backup = maintenance.backup_database()
+        print(f"database backed up to {backup}")
+        with SessionLocal() as session:
+            counts = maintenance.purge_source_data(
+                session, configured_source_ids=configured_ids, actor=ACTOR
             )
-        Base.metadata.drop_all(engine)
-        Base.metadata.create_all(engine)
+            print(f"purged {_fmt(counts)}")
+
     with SessionLocal() as session:
         changed = sync_sources(session, actor=ACTOR)
         session.commit()
         print(f"source registry synced ({len(changed)} changed)")
         if args.sources_only:
             return
-        if not settings.live_connectors_enabled:
-            sys.exit(
-                "LIVE_CONNECTORS_ENABLED is false: no live ingestion performed (no synthetic data is seeded)."
+        try:
+            run = ee_import.import_estonia(
+                session,
+                source_id="ee-ariregister",
+                query={"years": list(range(2019, 2026))},
+                actor=ACTOR,
+                min_employees=settings.min_employees_default,
             )
-        existing = session.scalar(select(func.count()).select_from(IngestionRun))
-        if existing and not args.reimport:
-            print(f"{existing} ingestion runs already exist; skipping (use --reimport)")
-            return
-        run_live(session)
+        except PermissionDenied as exc:
+            sys.exit(f"Estonia import rejected: {'; '.join(exc.reasons)}")
+        error = f" error={run.errors[0]['message']}" if run.errors else ""
+        print(f"ee-ariregister {run.status} {_fmt(run.counts)}{error}")
 
 
 if __name__ == "__main__":

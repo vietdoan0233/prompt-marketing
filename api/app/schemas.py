@@ -1,6 +1,7 @@
 """Typed API schemas. All external input is validated here; datetimes serialize as ISO 8601 UTC."""
 
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -194,6 +195,72 @@ class IdentifierOut(ORM):
     derived: bool
 
 
+class FinancialOut(ORM):
+    id: str
+    period_start: date | None
+    period_end: date | None
+    fiscal_year: int
+    currency: str | None
+    revenue: Decimal | None
+    ebitda: Decimal | None
+    net_income: Decimal | None
+    dividends: Decimal | None
+    capex: Decimal | None
+    depreciation: Decimal | None
+    depreciation_and_impairment: Decimal | None
+    operating_profit: Decimal | None
+    profit_before_tax: Decimal | None
+    total_assets: Decimal | None
+    equity: Decimal | None
+    labour_cost: Decimal | None
+    employees_fte: Decimal | None
+    source_id: str
+    source_name: str | None = None
+    source_url: str
+    source_file: str | None
+    snapshot_id: str | None
+    observed_at: datetime
+    confidence: str
+    usage_policy: str
+    parser_version: str
+    statement_scope: str | None
+    value_type: str
+    filing_id: str
+    document_id: str | None
+    unit: str | None
+    restated: bool | None
+    calculation_formula: str | None
+    ingestion_run_id: str | None
+    review_status: str
+    registry_code: str
+    source_key: str
+    content_hash: str
+    source_values: list[dict[str, Any]]
+
+
+class RegisteredAddressOut(ORM):
+    id: str
+    address_line: str | None
+    postal_code: str | None
+    city: str | None
+    municipality: str | None
+    county: str | None
+    ehak_code: str | None
+    country: str | None
+    source_id: str
+    source_name: str | None = None
+    source_url: str
+    source_file: str | None
+    snapshot_id: str | None
+    ingestion_run_id: str | None
+    observed_at: datetime
+    parser_version: str
+    content_hash: str
+    warnings: list[str]
+    valid_from: datetime
+    valid_to: datetime | None
+
+
 class CompanySummary(ORM):
     id: str
     legal_name: str
@@ -277,6 +344,8 @@ class CompanyDetail(BaseModel):
     facts: list[FactOut]
     history: list[FactOut]
     identifiers: list[IdentifierOut]
+    financials: list[FinancialOut]
+    registered_address: RegisteredAddressOut | None
     contacts: list[ContactOut]
     duplicates: list[DuplicateOut]
     audit_events: list[AuditEventOut]
