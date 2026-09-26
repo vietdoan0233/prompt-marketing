@@ -35,6 +35,7 @@ from app.domain.ee_address import (
 )
 from app.domain.normalize import normalize_name
 from app.domain.records import build_record, stable_hash
+from app.domain.reporting_period import reporting_period_metadata
 from app.models import (
     Company,
     CompanyFinancial,
@@ -575,11 +576,14 @@ def _upsert_financial(
     for old in previous_rows:
         old.review_status = "superseded"
     kwargs = {field: values.get(field) for field in FINANCIAL_FIELDS}
+    period_days, period_length_class = reporting_period_metadata(report.period_start, report.period_end)
     session.add(
         CompanyFinancial(
             company_id=company.id,
             period_start=report.period_start,
             period_end=report.period_end,
+            period_days=period_days,
+            period_length_class=period_length_class,
             fiscal_year=report.fiscal_year,
             currency="EUR",
             **kwargs,
@@ -753,7 +757,7 @@ def import_estonia(
     # registry codes are materialised; the full 378k-row file is never retained in memory.
     basic_file = next(f for f in files if f.kind == "basic")
     activity_file = next(f for f in files if f.kind == "activity")
-    latest_activity: dict[str, tuple[int, str]] = {}
+    latest_activity: dict[str, tuple[int, str, str | None]] = {}
     for row in iter_rows(activity_file):
         report = _resolve_report(_text(row.get("report_id")), reports, documents)
         if report is None:
@@ -764,7 +768,12 @@ def import_estonia(
             "yes",
         }:
             continue
-        candidate = (report.fiscal_year, _text(row.get("emtak")))
+        version_label = _text(row.get("emtak_version"))
+        if version_label.casefold().startswith("emtak "):
+            version = version_label[len("EMTAK ") :].strip() or None
+        else:
+            version = version_label or None
+        candidate = (report.fiscal_year, _text(row.get("emtak")), version)
         if candidate[1] and (code not in latest_activity or candidate[0] >= latest_activity[code][0]):
             latest_activity[code] = candidate
 
@@ -787,6 +796,7 @@ def import_estonia(
             evidence["employees"] = fte[2].url
         report_candidates = reports_by_code.get(code, [])
         latest_report = max(report_candidates, key=lambda r: (r.fiscal_year, r.report_id), default=None)
+        activity = latest_activity.get(code)
         if latest_report and code in latest_activity:
             evidence["industry_code"] = activity_file.url
         provenance = {column: row.get(column, "") for column in ADDRESS_SOURCE_COLUMNS}
@@ -809,7 +819,10 @@ def import_estonia(
                 "vat_id": row.get("kmkr_nr"),
                 "country": "EE",
                 "city": parts.city,
-                "industry_code": latest_activity.get(code, (None, None))[1],
+                "industry_code": activity[1] if activity else None,
+                "fact_metadata": {"industry_code": {"code_system": "EMTAK", "code_version": activity[2]}}
+                if activity
+                else {},
                 "employees": employees,
                 "registry_status": row.get("ettevotja_staatus"),
                 "warnings": parts.warnings,

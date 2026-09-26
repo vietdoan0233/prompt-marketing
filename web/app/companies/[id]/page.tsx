@@ -17,6 +17,11 @@ function FactRow({ f }: { f: Fact }) {
         {f.original_value && f.original_value !== fmtValue(f.value_json) && (
           <div className="small muted">source value: “{f.original_value}”</div>
         )}
+        {f.code_system && (
+          <div className="small muted">
+            {f.code_system} {f.code_version ?? "version unknown"}
+          </div>
+        )}
         {f.correction_reason && <div className="small">reason: {f.correction_reason}</div>}
       </td>
       <td className="small">
@@ -137,14 +142,15 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
         <section className="panel">
           <h2>Financials by year</h2>
           <p className="small muted" style={{ marginTop: -6 }}>
-            Reported lines retain source provenance. EBITDA is derived only when operating profit and depreciation
-            and impairment are both reported.
+            Reported lines retain source provenance. Reported EBITDA takes precedence; otherwise it is derived only
+            when operating profit and depreciation and impairment are both reported. Values are not annualized.
           </p>
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>Year</th>
+                  <th>Reporting period</th>
                   <th>Scope</th>
                   <th>Currency / unit</th>
                   <th>Value type</th>
@@ -161,6 +167,18 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                 {d.financials.map((f) => (
                   <tr key={f.id}>
                     <td>{f.fiscal_year}</td>
+                    <td className="small">
+                      {f.period_start ?? "—"} – {f.period_end ?? "—"}
+                      <div className="muted">
+                        {f.period_days === null
+                          ? "period length unknown"
+                          : `${f.period_days} days · ${
+                              f.period_length_class === "standard_12_month"
+                                ? "standard 12-month"
+                                : f.period_length_class ?? "unclassified"
+                            }`}
+                      </div>
+                    </td>
                     <td>{f.statement_scope ?? "—"}</td>
                     <td>{f.currency ?? "—"} / {f.unit ?? "—"}</td>
                     <td>{f.value_type}</td>

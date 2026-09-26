@@ -65,7 +65,15 @@ FACT_FIELDS = [
     "family_business_signal",
 ]
 # Structured (non-string) row keys a connector may attach.
-STRUCTURED_KEYS = {"contacts", "enrichment_only", "estimated_fields", "evidence", "warnings", "provenance"}
+STRUCTURED_KEYS = {
+    "contacts",
+    "enrichment_only",
+    "estimated_fields",
+    "evidence",
+    "warnings",
+    "provenance",
+    "fact_metadata",
+}
 CONTACT_BASES = {"public-business", "mergero-supplied", "partner-referral", "unknown"}
 
 
@@ -105,6 +113,7 @@ class ParsedRecord:
     fact_confidence: dict[str, str] = field(
         default_factory=dict
     )  # per-field override, e.g. estimated signals
+    fact_metadata: dict[str, dict[str, str | None]] = field(default_factory=dict)
     field_urls: dict[str, str] = field(default_factory=dict)  # per-field evidence URL
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
@@ -152,6 +161,17 @@ def build_record(
     rec.warnings.extend(str(w) for w in row.get("warnings") or [])
     rec.field_urls = {k: str(v) for k, v in (row.get("evidence") or {}).items()}
     rec.fact_confidence = {f: "estimated" for f in row.get("estimated_fields") or []}
+    metadata = row.get("fact_metadata") or {}
+    if isinstance(metadata, dict):
+        rec.fact_metadata = {
+            str(field_name): {
+                str(key): None if value is None else str(value)
+                for key, value in field_metadata.items()
+                if key in {"code_system", "code_version"}
+            }
+            for field_name, field_metadata in metadata.items()
+            if isinstance(field_metadata, dict)
+        }
 
     if unknown_cols:
         rec.warnings.append(f"ignored unmapped columns: {', '.join(unknown_cols)}")
@@ -173,6 +193,8 @@ def build_record(
     if row.get("provenance"):
         # Verbatim source columns + dataset file identity, kept unchanged in the source snapshot.
         rec.raw["provenance"] = row["provenance"]
+    if rec.fact_metadata:
+        rec.raw["fact_metadata"] = rec.fact_metadata
 
     legal_name = canonical.get("legal_name")
     if not legal_name and not rec.enrichment_only:

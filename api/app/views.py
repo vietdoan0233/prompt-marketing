@@ -103,6 +103,17 @@ def summaries(session: Session, companies: list[Company]) -> list[schemas.Compan
                 "unknown",
             )
         summary = schemas.CompanySummary.model_validate(c)
+        code_details = {
+            (str(f.value_json), f.code_system, f.code_version)
+            for f in facts
+            if f.field_name == "industry_code" and not f.is_correction and f.value_json is not None
+        }
+        summary.industry_code_details = [
+            schemas.IndustryCodeOut(code=code, code_system=system, code_version=version)
+            for code, system, version in sorted(
+                code_details, key=lambda item: (item[0], item[1] or "", item[2] or "")
+            )
+        ]
         summary.freshness = freshness(c.last_verified_at, now)
         summary.source_ids = sources
         summary.source_count = len(sources)

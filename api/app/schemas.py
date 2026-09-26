@@ -139,6 +139,8 @@ class FactOut(ORM):
     field_name: str
     value_json: Any
     original_value: str | None
+    code_system: str | None
+    code_version: str | None
     source_id: str
     source_name: str | None = None
     source_key: str | None
@@ -199,6 +201,8 @@ class FinancialOut(ORM):
     id: str
     period_start: date | None
     period_end: date | None
+    period_days: int | None
+    period_length_class: str | None
     fiscal_year: int
     currency: str | None
     revenue: Decimal | None
@@ -261,6 +265,12 @@ class RegisteredAddressOut(ORM):
     valid_to: datetime | None
 
 
+class IndustryCodeOut(BaseModel):
+    code: str
+    code_system: str | None
+    code_version: str | None
+
+
 class CompanySummary(ORM):
     id: str
     legal_name: str
@@ -272,6 +282,7 @@ class CompanySummary(ORM):
     website: str | None
     sector: str | None
     industry_codes: list[str]
+    industry_code_details: list[IndustryCodeOut] = []
     estimated_employee_min: int | None
     estimated_employee_max: int | None
     ownership_type: str

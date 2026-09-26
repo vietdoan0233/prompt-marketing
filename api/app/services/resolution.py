@@ -213,7 +213,8 @@ def upsert_facts(
     }
     now = utcnow()
     for field_name, value in rec.facts.items():
-        value_hash = stable_hash(value)
+        fact_metadata = rec.fact_metadata.get(field_name, {})
+        value_hash = stable_hash({"value": value, **fact_metadata}) if fact_metadata else stable_hash(value)
         current = active.get(field_name)
         if current and current.value_hash == value_hash:
             if observed_at > current.observed_at:
@@ -232,6 +233,8 @@ def upsert_facts(
                 field_name=field_name,
                 value_json=value,
                 original_value=rec.originals.get(field_name),
+                code_system=fact_metadata.get("code_system"),
+                code_version=fact_metadata.get("code_version"),
                 value_hash=value_hash,
                 source_id=source.id,
                 source_key=rec.source_key,
