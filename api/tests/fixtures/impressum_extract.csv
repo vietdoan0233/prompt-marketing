@@ -1,0 +1,4 @@
+legal_name,city,registry_id,vat_id,website,country,contact_name,contact_role,contact_basis,source_url,observed_at
+Alpenblick Software GmbH,München,"HRB 123456, Amtsgericht München",DE281234567,https://www.alpenblick-software.example/impressum,DE,Markus Brenner,Geschäftsführer,public-business,https://www.alpenblick-software.example/impressum,2026-09-18T12:00:00Z
+Isar Robotics GmbH,München,"HRB 98765 München",DE312345678,https://isar-robotics.example/impressum,DE,Clara Vogt,Geschäftsführerin,public-business,https://isar-robotics.example/impressum,2026-09-18T12:00:00Z
+Limmat Fintech AG,Zürich,,CHE-112.345.676 MWST,https://limmat-fintech.example/impressum,CH,,,,https://limmat-fintech.example/impressum,2026-09-18T12:00:00Z

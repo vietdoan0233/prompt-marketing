@@ -1,0 +1,7 @@
+Firma,Sitz,Registernummer,USt-IdNr,Webseite,WZ-Code,Branche,Mitarbeiter,Land,Geschäftsführer,Funktion,Quelle,Abgerufen
+Alpenblick Software GmbH,München,"HRB 123456, Amtsgericht München",DE281234567,alpenblick-software.example,62.01,Programmierungstätigkeiten,55,Deutschland,Markus Brenner,Geschäftsführer,https://www.handelsregister.de/,2026-09-10T10:00:00Z
+Rheinwerk Automation GmbH,Köln,"HRB 77001, Amtsgericht Köln",DE299876543,rheinwerk-automation.example,28.99,Maschinenbau,140,Deutschland,Petra Hollmann,Geschäftsführerin,https://www.handelsregister.de/,2026-09-10T10:00:00Z
+Rheinwerk Automation Service GmbH,Köln,"HRB 81234, Amtsgericht Köln",,rheinwerk-automation.example,33.12,Reparatur von Maschinen,24,Deutschland,,,https://www.handelsregister.de/,2026-09-10T10:00:00Z
+Spree Digital UG (haftungsbeschränkt),Berlin,"HRB 201234 B, Amtsgericht Charlottenburg",,spree-digital.example,62.01,Programmierungstätigkeiten,2,Deutschland,Jonas Weber,Geschäftsführer,https://www.handelsregister.de/,2026-09-10T10:00:00Z
+Isar Robotics GmbH,München,"HRB 98765, Amtsgericht München",DE312345678,,28.99,Maschinenbau,20-49,Deutschland,,,https://www.handelsregister.de/,2026-09-10T10:00:00Z
+Elbe Präzision GmbH,Hamburg,HRB 4455,,elbe-praezision.example,25.62,Mechanik,65,Deutschland,,,https://www.handelsregister.de/,2026-09-10T10:00:00Z

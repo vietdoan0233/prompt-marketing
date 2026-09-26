@@ -1,0 +1,9 @@
+Organisationsnummer;Företagsnamn;Ort;SNI-kod;Bransch;Anställda;Omsättning (SEK);Valuta;Hemsida;Land;VD;Roll;Källa-URL;Hämtad
+556812-3458;Fjällbacka Mjukvara AB;Göteborg;62010;Dataprogrammering;20-49;48000000;SEK;www.fjallbacka-mjukvara.example;Sverige;Anna Lindqvist;Verkställande direktör;https://www.allabolag.se/5568123458;2026-09-15T09:00:00Z
+559104-3210;Norrsken Konsult AB;Umeå;70220;Konsultverksamhet;2;1900000;SEK;;Sverige;;;https://www.allabolag.se/5591043210;2026-09-15T09:00:00Z
+556033-2214;Vänern Industri AB;Vänersborg;25620;Metallbearbetning;120;310000000;SEK;vanern-industri.example;Sverige;Erik Sjöberg;Verkställande direktör;https://www.allabolag.se/5560332214;2026-09-15T09:00:00Z
+559220-0116;Skärgård Medtech AB;Stockholm;32501;Medicinteknik;50-99;;SEK;skargard-medtech.example;Sverige;;;https://www.allabolag.se/5592200116;2026-09-15T09:00:00Z
+556812-3999;Felaktig Nummer AB;Malmö;62010;Dataprogrammering;25;;;;Sverige;;;;2026-09-15T09:00:00Z
+556033-2214;Vänern Industri AB;Vänersborg;25620;Metallbearbetning;120;310000000;SEK;vanern-industri.example;Sverige;Erik Sjöberg;Verkställande direktör;https://www.allabolag.se/5560332214;2026-09-15T09:00:00Z
+559104-3211;;Lund;62010;Dataprogrammering;30;;;;Sverige;;;;2026-09-15T09:00:00Z
+912345688;Nordlys Programvare AS;Oslo;62010;Programmering;35;;;;Norge;;;;2026-09-15T09:00:00Z

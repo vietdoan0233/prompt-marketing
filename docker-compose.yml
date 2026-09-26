@@ -1,0 +1,61 @@
+# Local development stack: PostgreSQL + FastAPI (migrations + seed on start) + Next.js browser.
+# Usage: cp .env.example .env && docker compose up --build   ->  http://localhost:3000
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mergero}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mergero-local-only}
+      POSTGRES_DB: ${POSTGRES_DB:-mergero}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-mergero}:${POSTGRES_PASSWORD:-mergero-local-only}@db:5432/${POSTGRES_DB:-mergero}
+      MIN_EMPLOYEES_DEFAULT: ${MIN_EMPLOYEES_DEFAULT:-20}
+      STALE_AFTER_DAYS: ${STALE_AFTER_DAYS:-365}
+      DEFAULT_RETENTION_DAYS: ${DEFAULT_RETENTION_DAYS:-30}
+      LIVE_CONNECTORS_ENABLED: ${LIVE_CONNECTORS_ENABLED:-true}
+      HTTP_CONTACT: ${HTTP_CONTACT:-}
+      ZEFIX_USERNAME: ${ZEFIX_USERNAME:-}
+      ZEFIX_PASSWORD: ${ZEFIX_PASSWORD:-}
+      CVR_USERNAME: ${CVR_USERNAME:-}
+      CVR_PASSWORD: ${CVR_PASSWORD:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    command: >
+      sh -c "alembic upgrade head && python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  web:
+    build:
+      context: ./web
+      args:
+        API_URL: http://api:8000
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -1,0 +1,4 @@
+legal_name,city,registry_id,vat_id,website,industry_code,sector,country,source_url,observed_at
+Limmat Fintech AG,Zürich,CHE-112.345.676,CHE-112.345.676 MWST,limmat-fintech.example,62.01,Software,CH,https://www.zefix.admin.ch/,2026-09-14T10:00:00Z
+Genfersee Medtech SA,Lausanne,CHE-421.987.651,,genfersee-medtech.example,32.50,Medizintechnik,CH,https://www.zefix.admin.ch/,2026-09-14T10:00:00Z
+Aare Engineering AG,Bern,CHE-305.512.349,,aare-engineering.example,71.12,Ingenieurbüros,CH,https://www.zefix.admin.ch/,2026-09-14T10:00:00Z

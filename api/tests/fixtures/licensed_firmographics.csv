@@ -1,0 +1,9 @@
+legal_name,country,registry_id,vat_id,website,sector,employees,city,source_url,observed_at
+Kuusisto Analytics,FI,2931457-2,,kuusisto-analytics.example,Software,45,Helsinki,https://feed.example/companies/fi-2931457-2,2026-09-01T00:00:00Z
+Revontuli Systems,FI,,FI30188227,revontuli-systems.example,Software,20-49,Tampere,https://feed.example/companies/fi-3018822-7,2026-09-01T00:00:00Z
+Pohjola Metallityö,FI,2455871-1,,pohjola-metalli.example,Manufacturing,30-39,Oulu,https://feed.example/companies/fi-2455871-1,2023-05-01T00:00:00Z
+Isar Robotik,DE,,,isar-robotics.example,Robotics,38,München,https://feed.example/companies/de-isar-robotics,2026-09-01T00:00:00Z
+Limmat Fintech,CH,CHE-112.345.676,,limmat-fintech.example,Fintech,60,Zürich,https://feed.example/companies/ch-limmat,2026-09-01T00:00:00Z
+Genfersee Medtech,CH,CHE-421.987.651,,genfersee-medtech.example,Medtech,10-49,Lausanne,https://feed.example/companies/ch-genfersee,2026-09-01T00:00:00Z
+Nordlys Programvare,NO,,NO912345688MVA,nordlys-programvare.example,Software,30-40,Oslo,https://feed.example/companies/no-912345688,2026-09-01T00:00:00Z
+Aare Engineering,CH,CHE-305.512.349,,aare-engineering.example,Engineering,25,Bern,https://feed.example/companies/ch-aare,2026-09-01T00:00:00Z

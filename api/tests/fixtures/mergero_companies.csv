@@ -1,0 +1,8 @@
+source_key,legal_name,country,city,registry_id,vat_id,website,industry_code,sector,employees,revenue,currency,ownership_type,description,contact_name,contact_role,contact_email,contact_phone,contact_basis,observed_at
+M-0001,Kuusisto Analytics Oy,FI,Helsinki,2931457-2,,kuusisto-analytics.example,62010,Software,40-60,,,founder-led,Analytics software for Nordic retailers.,Liisa Kuusisto,CEO & founder,liisa.kuusisto@kuusisto-analytics.example,+358 40 123 4567,mergero-supplied,2026-09-05T00:00:00Z
+M-0002,Revontuli Systems Oy,FI,Tampere,3018822-7,,revontuli-systems.example,62020,Software,12,,,unknown,,Mikko Laine,Managing Director,,,mergero-supplied,2026-09-05T00:00:00Z
+M-0003,Toiminimi Virtanen Design,FI,Turku,3120045-1,,,74100,Design,1,,,founder-led,,,,,,,2026-09-05T00:00:00Z
+M-0004,Øresund Data ApS,DK,København,41234567,,oresund-data.example,62.01,Software,28,,,family-owned,Data engineering consultancy.,,,,,,2026-09-05T00:00:00Z
+M-0005,Vänern Industri,SE,Vänersborg,,,,,Manufacturing,100-149,,,family-owned,Second-generation family business.,,,,,,2024-05-01T00:00:00Z
+M-0006,Tiroler Holzbau GmbH,AT,Innsbruck,FN 345678p,,tiroler-holzbau.example,16.23,Construction,22,5000000,EUR,family-owned,,,,,,,2026-09-05T00:00:00Z
+M-0007,Bodensee Sensorik GmbH,DE,Konstanz,,,bodensee-sensorik.example,26.51,Sensors,30-49,,,founder-led,,,,,,,2026-09-05T00:00:00Z

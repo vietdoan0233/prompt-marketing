@@ -1,0 +1,4 @@
+legal_name,city,registry_id,vat_id,website,industry_code,sector,employees,country,source_url,observed_at
+Donau Precision GmbH,Wien,FN 234567k,ATU12345678,donau-precision.example,25.62,Maschinenbau,75,AT,https://www.firmenabc.at/,2026-09-12T10:00:00Z
+Tiroler Holzbau GmbH,Innsbruck,FN 345678p,ATU23456789,tiroler-holzbau.example,16.23,Holzbau,22,AT,https://www.firmenabc.at/,2026-09-12T10:00:00Z
+Grazer Web Studio e.U.,Graz,FN 456789a,,grazer-webstudio.example,62.01,Webdesign,1,AT,https://www.firmenabc.at/,2026-09-12T10:00:00Z

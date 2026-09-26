@@ -1,0 +1,43 @@
+{
+  "_comment": "Fictional entities in the shape of the Brreg Enhetsregisteret /enheter response. Numbers are checksum-valid synthetic organisasjonsnummer.",
+  "_embedded": {
+    "enheter": [
+      {
+        "organisasjonsnummer": "912345688", "navn": "NORDLYS PROGRAMVARE AS",
+        "organisasjonsform": {"kode": "AS"}, "antallAnsatte": 35, "registrertIMvaregisteret": true,
+        "naeringskode1": {"kode": "62.010", "beskrivelse": "Programmeringstjenester"},
+        "forretningsadresse": {"land": "Norge", "landkode": "NO", "poststed": "OSLO", "kommune": "OSLO"},
+        "hjemmeside": "www.nordlys-programvare.example", "_observed_at": "2026-09-20T06:00:00Z"
+      },
+      {
+        "organisasjonsnummer": "923456783", "navn": "BERGEN HAVBRUK AS",
+        "organisasjonsform": {"kode": "AS"}, "antallAnsatte": 250, "registrertIMvaregisteret": true,
+        "naeringskode1": {"kode": "03.211", "beskrivelse": "Produksjon av matfisk og skalldyr i hav- og kystbasert akvakultur"},
+        "forretningsadresse": {"land": "Norge", "landkode": "NO", "poststed": "BERGEN"},
+        "hjemmeside": "bergen-havbruk.example", "_observed_at": "2026-09-20T06:00:00Z"
+      },
+      {
+        "organisasjonsnummer": "987654325", "navn": "FJORDKRAFT MARINE TEKNIKK AS",
+        "organisasjonsform": {"kode": "AS"}, "antallAnsatte": 18, "registrertIMvaregisteret": true,
+        "naeringskode1": {"kode": "33.150", "beskrivelse": "Reparasjon og vedlikehold av skip og båter"},
+        "forretningsadresse": {"land": "Norge", "landkode": "NO", "poststed": "ÅLESUND"},
+        "_observed_at": "2026-09-20T06:00:00Z"
+      },
+      {
+        "organisasjonsnummer": "998877660", "navn": "TRONDHEIM ROBOTIKK AS",
+        "organisasjonsform": {"kode": "AS"}, "antallAnsatte": 42, "registrertIMvaregisteret": false,
+        "naeringskode1": {"kode": "28.990", "beskrivelse": "Produksjon av spesialmaskiner"},
+        "forretningsadresse": {"land": "Norge", "landkode": "NO", "poststed": "TRONDHEIM"},
+        "hjemmeside": "trondheim-robotikk.example", "_observed_at": "2026-09-20T06:00:00Z"
+      },
+      {
+        "organisasjonsnummer": "934567897", "navn": "HANSEN RÅDGIVNING",
+        "organisasjonsform": {"kode": "ENK"}, "antallAnsatte": 1, "registrertIMvaregisteret": false,
+        "naeringskode1": {"kode": "70.220", "beskrivelse": "Bedriftsrådgivning"},
+        "forretningsadresse": {"land": "Norge", "landkode": "NO", "poststed": "STAVANGER"},
+        "_observed_at": "2026-09-20T06:00:00Z"
+      }
+    ]
+  },
+  "page": {"size": 20, "totalElements": 5, "totalPages": 1, "number": 0}
+}
