@@ -47,3 +47,16 @@ export function fmtValue(v: unknown): string {
   }
   return String(v);
 }
+
+export function fmtMoney(v: number | string | null | undefined, currency = "EUR"): string {
+  if (v === null || v === undefined || v === "") return "—";
+  const amount = typeof v === "number" ? v : Number(v);
+  if (!Number.isFinite(amount)) return String(v);
+  return new Intl.NumberFormat("et-EE", {
+    style: "currency",
+    currency,
+    currencyDisplay: "code",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}

@@ -535,8 +535,10 @@ def _upsert_financial(
         and values.get("operating_profit") is not None
         and values.get("depreciation_and_impairment") is not None
     ):
-        values["ebitda"] = values["operating_profit"] + values["depreciation_and_impairment"]
-        calculation_formula = "operating_profit + depreciation_and_impairment"
+        # The Estonian statement line preserves its reported sign: expenses are negative. Subtract
+        # that signed expense from operating profit to add it back; a reported EBITDA still wins.
+        values["ebitda"] = values["operating_profit"] - values["depreciation_and_impairment"]
+        calculation_formula = "operating_profit - depreciation_and_impairment"
     report = group.report
     source_key = (
         f"EE:{report.registry_code}:{report.report_id}:{report.fiscal_year}:{group.scope or 'unknown'}"

@@ -324,9 +324,10 @@ class CompanyFinancial(Base):
     """One row per company, filing and statement scope, with source-period length made explicit.
 
     Reported values retain their source provenance. When EBITDA is absent but operating profit and
-    depreciation/impairment are both reported, the Estonia importer derives it using their sum and records
-    the formula with value_type='derived'. Reported EBITDA always takes precedence. Values are never
-    annualized: consumers should use period_days and period_length_class when comparing filings.
+    depreciation/impairment are both reported, the Estonia importer derives EBITDA from operating profit
+    minus the signed depreciation/impairment source line. This adds back negative reported expenses and
+    records the formula with value_type='derived'. Reported EBITDA always takes precedence. Values are
+    never annualized: consumers should use period_days and period_length_class when comparing filings.
     """
 
     __tablename__ = "company_financials"

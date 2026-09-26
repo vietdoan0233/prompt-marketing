@@ -193,7 +193,7 @@ def _datasets(
                 "R2025",
                 "DepreciationAndImpairmentLossReversal",
                 "Kasumiaruanne",
-                "20",
+                "-20",
                 "Depreciation and impairment",
             ],
         ],
@@ -233,7 +233,7 @@ def test_import_estonia_full_lifecycle_and_idempotency(
     assert leap_year["period_days"] == 366 and leap_year["period_length_class"] == "standard_12_month"
     assert derived["currency"] == "EUR" and derived["unit"] == "EUR"
     assert derived["value_type"] == "derived"
-    assert derived["calculation_formula"] == "operating_profit + depreciation_and_impairment"
+    assert derived["calculation_formula"] == "operating_profit - depreciation_and_impairment"
     assert detail["company"]["industry_code_details"] == [
         {"code": "62011", "code_system": "EMTAK", "code_version": "2025"}
     ]

@@ -52,7 +52,7 @@ def _group() -> IndicatorGroup:
         (
             ("revenue", "Revenue", "1000"),
             ("net_income", "TotalAnnualPeriodProfitLoss", "75"),
-            ("depreciation_and_impairment", "DepreciationAndImpairmentLossReversal", "20"),
+            ("depreciation_and_impairment", "DepreciationAndImpairmentLossReversal", "-20"),
             ("operating_profit", "TotalProfitLoss", "50"),
         ),
         start=1,
@@ -83,7 +83,7 @@ def test_reported_lines_map_directly_and_deferred_values_stay_null(session: Sess
     assert values == {
         "revenue": Decimal("1000"),
         "net_income": Decimal("75"),
-        "depreciation_and_impairment": Decimal("20"),
+        "depreciation_and_impairment": Decimal("-20"),
         "operating_profit": Decimal("50"),
     }
     assert not warnings
@@ -131,13 +131,13 @@ def test_reported_lines_map_directly_and_deferred_values_stay_null(session: Sess
     assert financial is not None
     assert financial.revenue == Decimal("1000")
     assert financial.net_income == Decimal("75")
-    assert financial.depreciation_and_impairment == Decimal("20")
+    assert financial.depreciation_and_impairment == Decimal("-20")
     assert financial.depreciation is None
     assert financial.ebitda == Decimal("70")
     assert financial.dividends is None
     assert financial.capex is None
     assert financial.currency == "EUR" and financial.unit == "EUR"
-    assert financial.calculation_formula == "operating_profit + depreciation_and_impairment"
+    assert financial.calculation_formula == "operating_profit - depreciation_and_impairment"
     assert financial.source_id == source.id
     assert financial.source_url == group.source_file.url
     assert financial.source_file == group.source_file.name
