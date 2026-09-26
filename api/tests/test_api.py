@@ -76,6 +76,18 @@ def test_company_filters_and_detail(client, session):
     )
 
 
+def test_nordic_filter_with_blank_form_fields(client, session):
+    # Exactly what the browser's GET filter form submits: every empty input is sent as `key=`.
+    seed_all(session)
+    r = client.get(
+        "/companies?q=&country=FI%2CSE%2CNO%2CDK%2CIS&sector=&min_employees=0&max_employees="
+        "&qualification=&review_status=&freshness=&sort=&order="
+    )
+    assert r.status_code == 200, r.text
+    items = r.json()["items"]
+    assert items and {i["country"] for i in items} <= {"FI", "SE", "NO", "DK", "IS"}
+
+
 def test_quality_report_and_duplicate_review(client, session):
     seed_all(session)
     report = client.get("/quality/report").json()

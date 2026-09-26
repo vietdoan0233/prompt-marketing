@@ -1,7 +1,8 @@
 import logging
 import re
+from urllib.parse import parse_qsl, urlencode
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
@@ -36,4 +37,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def drop_blank_query_params(request: Request, call_next):
+    # HTML GET forms submit empty inputs as `?max_employees=`; treat blank as "not set", not as invalid.
+    if request.scope.get("query_string"):
+        pairs = parse_qsl(request.scope["query_string"].decode("latin-1"), keep_blank_values=True)
+        request.scope["query_string"] = urlencode([(k, v) for k, v in pairs if v.strip() != ""]).encode(
+            "latin-1"
+        )
+    return await call_next(request)
+
+
 app.include_router(router)
