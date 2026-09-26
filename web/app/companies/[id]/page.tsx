@@ -2,9 +2,9 @@ import Link from "next/link";
 
 import { Badge } from "@/components/Badge";
 import { apiGet, fmtDate, fmtEmployees, fmtMoney, fmtValue } from "@/lib/api";
-import type { CompanyDetail, Fact } from "@/lib/types";
+import type { CompanyDetail, DigitalDecayView, Fact } from "@/lib/types";
 
-import { CorrectionForm, EraseContactButton, ReviewControls } from "./ClientControls";
+import { CorrectionForm, EraseContactButton, ReviewControls, RunDecayCheck } from "./ClientControls";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +54,182 @@ function FactRow({ f }: { f: Fact }) {
         {f.valid_to && <div className="muted">superseded {fmtDate(f.valid_to)}</div>}
       </td>
     </tr>
+  );
+}
+
+function EvidenceLink({ url, label }: { url: string | null; label?: string }) {
+  return url ? (
+    <a href={url} target="_blank" rel="noreferrer" className="small">
+      {label ?? "evidence"}
+    </a>
+  ) : (
+    <span className="small muted">no evidence URL</span>
+  );
+}
+
+function DecayResult({ view }: { view: DigitalDecayView }) {
+  const s = view.signal;
+  return (
+    <dl className="kv">
+      <dt>Verdict</dt>
+      <dd>
+        <Badge value={s.verdict} />{" "}
+        <span className="small muted">
+          {s.stale_count} of {s.determinable_count} determinable checks stale
+        </span>
+      </dd>
+      <dt>Website</dt>
+      <dd>
+        {s.domain ? (
+          <a href={`https://${s.domain}`} target="_blank" rel="noreferrer">
+            {s.domain}
+          </a>
+        ) : (
+          "not found"
+        )}{" "}
+        <Badge
+          value={s.domain_verification === "unverified" ? "unknown" : "verified"}
+          label={s.domain_verification.replaceAll("_", " ")}
+        />
+      </dd>
+      <dt>Footer copyright</dt>
+      <dd>
+        <Badge value={s.checks.copyright.state} /> {s.checks.copyright.year ?? "—"}
+        {s.checks.copyright.age_years !== null && (
+          <span className="small muted"> ({s.checks.copyright.age_years} y old)</span>
+        )}{" "}
+        <EvidenceLink url={s.checks.copyright.evidence_url} />
+      </dd>
+      <dt>Latest news / press</dt>
+      <dd>
+        <Badge value={s.checks.news.state} /> {s.checks.news.latest_date ?? "—"}
+        {s.checks.news.age_months !== null && (
+          <span className="small muted"> ({s.checks.news.age_months} months ago)</span>
+        )}
+        {s.checks.news.method && <span className="small muted mono"> via {s.checks.news.method}</span>}{" "}
+        <EvidenceLink url={s.checks.news.evidence_url} />
+        {s.checks.news.posts_18m != null && (
+          <div className="small">
+            {s.checks.news.posts_18m} post{s.checks.news.posts_18m === 1 ? "" : "s"} in 18 months
+            {s.checks.news.cadence_source && (
+              <span className="muted">
+                {" "}
+                (from {s.checks.news.cadence_source === "sitemap" ? "sitemap" : "news page"})
+              </span>
+            )}
+          </div>
+        )}
+        {s.checks.news.reason && (
+          <div className="small muted">
+            stale because:{" "}
+            {s.checks.news.reason === "low_cadence"
+              ? "fewer than 3 posts in 18 months"
+              : "no post in 18 months"}
+          </div>
+        )}
+        {s.checks.news.post_dates && s.checks.news.post_dates.length > 0 && (
+          <div className="small muted mono">{s.checks.news.post_dates.join(" · ")}</div>
+        )}
+      </dd>
+      <dt>Hiring</dt>
+      <dd>
+        <Badge value={s.checks.hiring.state} />{" "}
+        {s.checks.hiring.open_roles !== null ? `${s.checks.hiring.open_roles} open roles` : "open roles unknown"}
+        {s.checks.hiring.ats && <span className="small muted"> · ATS {s.checks.hiring.ats}</span>}{" "}
+        <EvidenceLink url={s.checks.hiring.careers_url} label="careers page" />
+      </dd>
+      <dt>Headcount (register FTE)</dt>
+      <dd>
+        {s.checks.headcount ? (
+          <>
+            <Badge value={s.checks.headcount.state} />{" "}
+            {s.checks.headcount.change_pct !== null && (
+              <>
+                {s.checks.headcount.change_pct > 0 ? "+" : ""}
+                {s.checks.headcount.change_pct.toFixed(1)}%{" "}
+                <span className="small muted">
+                  FY{s.checks.headcount.from_year}→FY{s.checks.headcount.to_year}
+                </span>
+              </>
+            )}
+            {s.checks.headcount.series.length > 0 && (
+              <div className="small muted">
+                {s.checks.headcount.series.map(([year, fte]) => `${year}: ${fte}`).join(" · ")}
+              </div>
+            )}
+          </>
+        ) : (
+          <span className="muted">no register FTE filed</span>
+        )}
+      </dd>
+      <dt>Last-Modified header</dt>
+      <dd className="small">
+        {s.checks.last_modified.header ? fmtDate(s.checks.last_modified.header) : "not sent"}
+      </dd>
+      <dt>Revenue used</dt>
+      <dd>
+        {s.revenue ? (
+          <>
+            {fmtMoney(s.revenue.amount, s.revenue.currency)}{" "}
+            <span className="small muted">
+              FY{s.revenue.fiscal_year} · {s.revenue.value_type}
+            </span>
+          </>
+        ) : (
+          <span className="muted">no reported revenue — cannot be classed as coasting</span>
+        )}
+      </dd>
+      <dt>Provenance</dt>
+      <dd className="small">
+        <span className="mono">{view.source_id}</span> · observed {fmtDate(view.observed_at, true)} ·{" "}
+        <Badge value={view.confidence} /> <Badge value={view.review_status} />
+        {view.ingestion_run_id && (
+          <>
+            {" "}
+            · <Link href={`/runs/${view.ingestion_run_id}`}>run {view.ingestion_run_id.slice(0, 8)}</Link>
+          </>
+        )}
+        <div className="muted">parser {s.version}</div>
+      </dd>
+      {s.warnings.length > 0 && (
+        <>
+          <dt>Warnings</dt>
+          <dd>
+            <ul style={{ margin: 0 }}>
+              {s.warnings.map((w) => (
+                <li key={w} className="small">
+                  {w}
+                </li>
+              ))}
+            </ul>
+          </dd>
+        </>
+      )}
+    </dl>
+  );
+}
+
+function DecayPanel({ companyId, view }: { companyId: string; view: DigitalDecayView | null | undefined }) {
+  return (
+    <section className="panel">
+      <div className="page-head" style={{ marginBottom: 0 }}>
+        <h2>Digital decay (operational stagnation)</h2>
+        <RunDecayCheck companyId={companyId} hasResult={!!view?.signal} />
+      </div>
+      <p className="small muted" style={{ marginTop: -6 }}>
+        Opt-in website signal (source <span className="mono">web-digital-decay</span>). Footer copyright ≥2 years old,
+        news publishing cadence (no post for ≥18 months, or fewer than 3 posts in 18 months — translations counted
+        once, bulk re-save dates ignored) and zero open roles on the careers page, read against reported revenue.
+        Verdict <em>watch</em>: website otherwise maintained, but zero open roles and flat or shrinking register
+        headcount (FTE) at ≥€5M revenue. Values are estimated heuristics from the company&apos;s own website; register
+        FTE is a filed figure. Unknown checks never count as stale. LinkedIn is not used.
+      </p>
+      {view?.signal ? (
+        <DecayResult view={view} />
+      ) : (
+        <p className="muted">No website check has been run for this company.</p>
+      )}
+    </section>
   );
 }
 
@@ -212,6 +388,8 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
           {d.financials.length === 0 && <p className="muted">No annual financial lines were imported.</p>}
         </section>
       </div>
+
+      <DecayPanel companyId={c.id} view={d.digital_decay} />
 
       <div className="grid grid-2">
         <section className="panel">

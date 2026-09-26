@@ -16,7 +16,7 @@ from app.config import get_settings
 from app.domain import confidence as conf
 from app.domain.normalize import normalize_name, registry_from_vat
 from app.domain.qualification import qualify
-from app.domain.records import ParsedRecord, stable_hash
+from app.domain.records import WEBSITE_SIGNAL_FIELDS, ParsedRecord, stable_hash
 from app.models import Company, CompanyFact, CompanyIdentifier, DuplicateCandidate, Source, utcnow
 
 KEY_PRIORITY = {"source_key": 0, "registry_id": 1, "vat_id": 2, "domain": 3}
@@ -51,7 +51,8 @@ def identity_keys(rec: ParsedRecord, source: Source) -> IdentityKeys:
     if rec.derived_vat_key and rec.derived_vat_key != rec.vat_key:
         keys.append(("vat_id", rec.derived_vat_key, True))
     if rec.domain:
-        keys.append(("domain", rec.domain, False))
+        # A domain found by an enrichment (website) source is a derived key; register-published ones are not.
+        keys.append(("domain", rec.domain, rec.enrichment_only))
     return IdentityKeys(keys)
 
 
@@ -313,7 +314,13 @@ def recompute_company(
         settings.min_employees_default,
         settings.sub_scale_max_employees,
     ).value
-    source_obs = [f.observed_at for f in facts if not f.is_correction]
+    # Website activity signals are not source verification of the company record itself.
+    source_obs = [
+        f.observed_at
+        for f in facts
+        if not f.is_correction
+        and not (f.source_id.startswith("web-") and f.field_name in WEBSITE_SIGNAL_FIELDS)
+    ]
     company.last_verified_at = max(source_obs) if source_obs else None
     session.flush()
     return resolutions

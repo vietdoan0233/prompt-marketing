@@ -24,7 +24,8 @@ sources:
     connector_type: ee_ariregister
     connector_config: {live: true}
     enabled: true
-    allowed_fields: [legal_name, registry_id, vat_id, city, registry_status, industry_code, employees]
+    allowed_fields: [legal_name, registry_id, vat_id, city, registry_status, industry_code, employees,
+                     website, email_domain, registry_domains]
     field_mapping: {}
     base_confidence: verified
     usage_policy: internal-only
@@ -35,6 +36,37 @@ sources:
       Official basic-data, annual-report and EMTAK bulk files. Only OÜ, AS, UÜ, TÜ,
       TÜH and SE entities are eligible; person, shareholder and beneficial-owner files
       are not used. The source supplies registered addresses and reported financial lines.
+      The general-data file (yldandmed) is used only for company-declared website and email
+      *domains* (active WWW/EMAIL entries); phone numbers and mailbox local-parts are never read.
+
+  - id: web-digital-decay
+    tier: C
+    name: Company website activity check (Digital Decay)
+    provider: Company-published websites (domain verified against the official register)
+    region: baltics
+    countries: [EE]
+    source_type: website
+    source_mode: public-approved
+    terms_url: null
+    permission_status: approved
+    approval_reference: Opt-in Digital Decay signal; evidence-only, robots.txt respected (see ARCHITECTURE.md)
+    connector_type: website_decay
+    connector_config: {live: true}
+    enabled: false
+    # registry_id is the match key only (enrichment rows never store it as a fact); see build_record.
+    allowed_fields: [registry_id, website, footer_copyright_year, latest_news_date, open_positions, digital_decay_signal]
+    field_mapping: {}
+    base_confidence: estimated
+    usage_policy: internal-only
+    retention_days: 14
+    rate_limit_per_minute: 20
+    trust_rank: 40
+    notes: >-
+      Opt-in and disabled by default. Enrichment only: it can never create a company. Reads a
+      company's own website (home, sitemap, news and careers pages; max 8 pages; robots.txt respected)
+      only after the domain is verified by registry code or legal name + registered address. Stores
+      extracted evidence (years, dates, job-link counts, URLs), never raw HTML or contact data. No
+      LinkedIn or social networks.
 
   - id: mergero-manual
     tier: I

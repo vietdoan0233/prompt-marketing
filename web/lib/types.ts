@@ -207,6 +207,7 @@ export type CompanyDetail = {
   audit_events: AuditEvent[];
   timeline: TimelineEntry[];
   warnings: string[];
+  digital_decay?: DigitalDecayView | null;
 };
 
 export type Financial = {
@@ -299,3 +300,62 @@ export type QualityReport = {
   }[];
   top_warnings: { message: string; count: number }[];
 };
+
+export type DecayCheckState = "stale" | "fresh" | "unknown";
+
+export type DigitalDecaySignal = {
+  version: string;
+  domain: string | null;
+  domain_verification:
+    | "registry_code"
+    | "name_and_address"
+    | "user_supplied"
+    | "registry_www"
+    | "registry_email"
+    | "unverified";
+  checks: {
+    copyright: { state: DecayCheckState; year: number | null; age_years: number | null; evidence_url: string | null };
+    news: {
+      state: DecayCheckState;
+      latest_date: string | null;
+      age_months: number | null;
+      evidence_url: string | null;
+      method: "page_dates" | "sitemap_lastmod" | "time_tag" | "jsonld" | "meta" | null;
+      posts_18m?: number | null;
+      post_dates?: string[];
+      cadence_source?: "sitemap" | "news_page" | null;
+      reason?: "no_recent_post" | "low_cadence" | null;
+    };
+    hiring: {
+      state: "zero_roles" | "hiring" | "unknown";
+      open_roles: number | null;
+      careers_url: string | null;
+      ats: string | null;
+    };
+    last_modified: { header: string | null; url: string | null };
+    headcount?: {
+      state: "growing" | "flat" | "shrinking" | "unknown";
+      change_pct: number | null;
+      from_year: number | null;
+      to_year: number | null;
+      series: [number, number][];
+    } | null;
+  };
+  stale_count: number;
+  determinable_count: number;
+  revenue: { amount: number; currency: string; fiscal_year: number; value_type: string } | null;
+  verdict: "coasting" | "decaying" | "watch" | "active" | "insufficient_evidence";
+  warnings: string[];
+};
+
+export type DigitalDecayView = {
+  signal: DigitalDecaySignal;
+  observed_at: string;
+  source_id: string;
+  source_url: string | null;
+  ingestion_run_id: string | null;
+  confidence: string;
+  review_status: string;
+};
+
+export type DigitalDecayRunResult = { run_id: string; status: string; signal: DigitalDecaySignal | null };

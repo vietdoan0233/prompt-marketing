@@ -27,11 +27,11 @@ from app.models import (
     RegisteredAddress,
     Source,
 )
-from app.services import audit, ingestion, quality, retention
+from app.services import audit, digital_decay, ingestion, quality, retention
 from app.services.contacts import erase_contact
 from app.services.corrections import CorrectionError, apply_correction
 from app.services.permissions import PermissionDenied, enable_gate, ingestion_gate
-from app.views import company_detail, duplicate_out, freshness, summaries
+from app.views import company_detail, digital_decay_out, duplicate_out, freshness, summaries
 
 router = APIRouter()
 SessionDep = Annotated[Session, Depends(get_session)]
@@ -409,6 +409,43 @@ def company_registered_address(company_id: str, session: SessionDep) -> schemas.
     source = session.get(Source, row.source_id)
     item.source_name = source.name if source else None
     return item
+
+
+@router.post(
+    "/companies/{company_id}/signals/digital-decay",
+    response_model=schemas.DigitalDecayRunOut,
+    status_code=201,
+)
+def run_digital_decay(
+    company_id: str,
+    session: SessionDep,
+    actor: ActorDep,
+    body: schemas.DigitalDecayRunCreate | None = None,
+) -> schemas.DigitalDecayRunOut:
+    """Opt-in website activity check for one registry-backed company (estimated, provenance-linked facts)."""
+    company = _company_or_404(session, company_id)
+    domains = {company.id: body.domain} if body and body.domain else None
+    try:
+        run = digital_decay.run_decay(session, [company], actor=actor, domains=domains)
+    except PermissionDenied as exc:
+        raise HTTPException(
+            403, {"message": "rejected by permission gate", "reasons": exc.reasons, "run_id": exc.run_id}
+        ) from exc
+    except ConnectorError as exc:
+        session.rollback()
+        raise HTTPException(422, str(exc)) from exc
+    source_names = {s.id: s.name for s in session.scalars(select(Source))}
+    decay = digital_decay_out(session, company.id, source_names)
+    run_detail = _run_out(run, detail=True)
+    assert isinstance(run_detail, schemas.IngestionRunDetail)
+    return schemas.DigitalDecayRunOut(
+        run_id=run.id,
+        status=run.status,
+        # A failed fetch leaves an older signal active; only report it when this run produced evidence.
+        signal=decay.signal if decay and not run.errors else None,
+        run=run_detail,
+        digital_decay=decay,
+    )
 
 
 @router.post(

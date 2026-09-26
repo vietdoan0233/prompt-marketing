@@ -43,6 +43,17 @@ const TONE: Record<string, string> = {
   dismissed: "muted",
   likely: "bad",
   possible: "warn",
+  // digital decay
+  coasting: "bad",
+  decaying: "warn",
+  watch: "warn",
+  active: "good",
+  insufficient_evidence: "muted",
+  zero_roles: "warn",
+  hiring: "good",
+  growing: "good",
+  flat: "warn",
+  shrinking: "bad",
 };
 
 const LABEL: Record<string, string> = {
@@ -51,6 +62,9 @@ const LABEL: Record<string, string> = {
   unknown_headcount: "headcount unknown",
   qualified: "≥20 qualified",
   needs_correction: "needs correction",
+  insufficient_evidence: "insufficient evidence",
+  zero_roles: "0 open roles",
+  watch: "watch",
 };
 
 export function Badge({ value, title, label }: { value: string; title?: string; label?: string }) {

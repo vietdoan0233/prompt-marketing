@@ -347,6 +347,34 @@ class TimelineEntry(BaseModel):
     detail: dict[str, Any] = {}
 
 
+class DigitalDecayOut(BaseModel):
+    """Latest Digital Decay website activity signal (an estimated, source-backed fact) with provenance."""
+
+    signal: dict[str, Any]
+    fact_id: str
+    source_id: str
+    source_name: str | None = None
+    source_url: str | None
+    ingestion_run_id: str | None
+    snapshot_id: str | None
+    observed_at: datetime
+    confidence: str
+    review_status: str
+    domain_identifier: str | None
+
+
+class DigitalDecayRunCreate(BaseModel):
+    domain: str | None = Field(default=None, max_length=253)
+
+
+class DigitalDecayRunOut(BaseModel):
+    run_id: str
+    status: str
+    signal: dict[str, Any] | None
+    run: IngestionRunDetail
+    digital_decay: DigitalDecayOut | None
+
+
 class CompanyDetail(BaseModel):
     company: CompanySummary
     description: str | None
@@ -363,6 +391,7 @@ class CompanyDetail(BaseModel):
     audit_events: list[AuditEventOut]
     timeline: list[TimelineEntry]
     warnings: list[str]
+    digital_decay: DigitalDecayOut | None = None
 
 
 class CorrectionCreate(BaseModel):

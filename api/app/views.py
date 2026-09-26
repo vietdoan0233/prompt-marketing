@@ -21,6 +21,7 @@ from app.models import (
     Source,
     utcnow,
 )
+from app.services.digital_decay import latest_signal
 from app.services.quality import company_completeness
 from app.services.resolution import recompute_company
 
@@ -48,6 +49,8 @@ FIELD_ORDER = [
     "ownership_type",
     "description",
     "open_positions",
+    "footer_copyright_year",
+    "latest_news_date",
     "founder_signal",
     "family_business_signal",
 ]
@@ -138,6 +141,61 @@ def duplicate_out(session: Session, d: DuplicateCandidate) -> schemas.DuplicateO
     item.company_a_name = a.legal_name if a else None
     item.company_b_name = b.legal_name if b else None
     return item
+
+
+def digital_decay_out(
+    session: Session, company_id: str, source_names: dict[str, str]
+) -> schemas.DigitalDecayOut | None:
+    fact = latest_signal(session, company_id)
+    if fact is None or not isinstance(fact.value_json, dict):
+        return None
+    domain_identifier = session.scalar(
+        select(CompanyIdentifier.value)
+        .where(CompanyIdentifier.company_id == company_id, CompanyIdentifier.kind == "domain")
+        .order_by(CompanyIdentifier.created_at, CompanyIdentifier.id)
+    )
+    return schemas.DigitalDecayOut(
+        signal=fact.value_json,
+        fact_id=fact.id,
+        source_id=fact.source_id,
+        source_name=source_names.get(fact.source_id),
+        source_url=fact.source_url,
+        ingestion_run_id=fact.ingestion_run_id,
+        snapshot_id=fact.snapshot_id,
+        observed_at=fact.observed_at,
+        confidence=fact.confidence,
+        review_status=fact.review_status,
+        domain_identifier=domain_identifier,
+    )
+
+
+def decay_warning(decay: schemas.DigitalDecayOut | None) -> str | None:
+    if decay is None:
+        return None
+    s = decay.signal
+    review = "unreviewed" if decay.review_status == "unreviewed" else "reviewed"
+    stale = s.get("stale_count")
+    if s.get("verdict") == "coasting":
+        min_rev = get_settings().decay_min_revenue_eur
+        return (
+            f"digital decay: coasting — {stale} of 3 website activity checks stale and no open roles "
+            f"despite reported revenue ≥ €{min_rev / 1e6:.1f}M (estimated website signal, {review})"
+        )
+    if s.get("verdict") == "watch":
+        min_rev = get_settings().decay_min_revenue_eur
+        headcount = (s.get("checks") or {}).get("headcount") or {}
+        pct = headcount.get("change_pct")
+        change = f"{pct:+.1f}%" if isinstance(pct, int | float) else "change unknown"
+        return (
+            f"digital decay: watch — zero open roles, register headcount "
+            f"{headcount.get('state') or 'flat/shrinking'} ({change}), revenue ≥ €{min_rev / 1e6:.1f}M "
+            f"(estimated website signal, {review})"
+        )
+    if s.get("verdict") == "decaying":
+        return (
+            f"digital decay: {stale} of 3 website activity checks stale (estimated website signal, {review})"
+        )
+    return None
 
 
 def company_detail(session: Session, company: Company) -> schemas.CompanyDetail:
@@ -266,6 +324,10 @@ def company_detail(session: Session, company: Company) -> schemas.CompanyDetail:
     open_dupes = [d for d in dupes if d.status == "open"]
     if open_dupes:
         warnings.append(f"{len(open_dupes)} open duplicate candidate(s) awaiting review")
+    decay = digital_decay_out(session, company.id, source_names)
+    decay_note = decay_warning(decay)
+    if decay_note:
+        warnings.append(decay_note)
 
     revenue = resolutions.get("revenue")
     financial_out = []
@@ -293,4 +355,5 @@ def company_detail(session: Session, company: Company) -> schemas.CompanyDetail:
         audit_events=[schemas.AuditEventOut.model_validate(a) for a in audits],
         timeline=timeline,
         warnings=warnings,
+        digital_decay=decay,
     )
