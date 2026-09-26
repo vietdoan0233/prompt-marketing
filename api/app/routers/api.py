@@ -19,10 +19,12 @@ from app.models import (
     AuditEvent,
     Company,
     CompanyFact,
+    CompanyFinancial,
     CompanyIdentifier,
     Contact,
     DuplicateCandidate,
     IngestionRun,
+    RegisteredAddress,
     Source,
 )
 from app.services import audit, ingestion, quality, retention
@@ -374,6 +376,40 @@ def _company_or_404(session: Session, company_id: str) -> Company:
 @router.get("/companies/{company_id}", response_model=schemas.CompanyDetail)
 def get_company(company_id: str, session: SessionDep) -> schemas.CompanyDetail:
     return company_detail(session, _company_or_404(session, company_id))
+
+
+@router.get("/companies/{company_id}/financials", response_model=list[schemas.FinancialOut])
+def company_financials(company_id: str, session: SessionDep) -> list[schemas.FinancialOut]:
+    _company_or_404(session, company_id)
+    source_names = {s.id: s.name for s in session.scalars(select(Source))}
+    rows = session.scalars(
+        select(CompanyFinancial)
+        .where(CompanyFinancial.company_id == company_id, CompanyFinancial.review_status != "superseded")
+        .order_by(CompanyFinancial.fiscal_year.desc(), CompanyFinancial.statement_scope.nulls_last())
+    ).all()
+    out: list[schemas.FinancialOut] = []
+    for row in rows:
+        item = schemas.FinancialOut.model_validate(row)
+        item.source_name = source_names.get(row.source_id)
+        out.append(item)
+    return out
+
+
+@router.get("/companies/{company_id}/registered-address", response_model=schemas.RegisteredAddressOut | None)
+def company_registered_address(
+    company_id: str, session: SessionDep
+) -> schemas.RegisteredAddressOut | None:
+    _company_or_404(session, company_id)
+    row = session.scalar(
+        select(RegisteredAddress)
+        .where(RegisteredAddress.company_id == company_id, RegisteredAddress.valid_to.is_(None))
+        .order_by(RegisteredAddress.observed_at.desc())
+    )
+    if row is None:
+        return None
+    item = schemas.RegisteredAddressOut.model_validate(row)
+    item.source_name = session.get(Source, row.source_id).name if session.get(Source, row.source_id) else None
+    return item
 
 
 @router.post(

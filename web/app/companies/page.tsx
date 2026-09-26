@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 type SP = Record<string, string | undefined>;
 
-const COUNTRIES = ["FI", "SE", "NO", "DK", "IS", "DE", "AT", "CH"];
+const COUNTRIES = ["EE"];
 
 function sortHref(sp: SP, key: string): string {
   const next = new URLSearchParams(Object.entries(sp).filter(([, v]) => v) as [string, string][]);
@@ -69,8 +69,6 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
           Country
           <select name="country" defaultValue={sp.country ?? ""}>
             <option value="">All</option>
-            <option value="FI,SE,NO,DK,IS">Nordics</option>
-            <option value="DE,AT,CH">DACH</option>
             {COUNTRIES.map((c) => (
               <option key={c} value={c}>
                 {c}

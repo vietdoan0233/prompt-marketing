@@ -13,9 +13,11 @@ from app.models import (
     AuditEvent,
     Company,
     CompanyFact,
+    CompanyFinancial,
     CompanyIdentifier,
     Contact,
     DuplicateCandidate,
+    RegisteredAddress,
     Source,
     utcnow,
 )
@@ -180,6 +182,19 @@ def company_detail(session: Session, company: Company) -> schemas.CompanyDetail:
     contacts = session.scalars(
         select(Contact).where(Contact.company_id == company.id).order_by(Contact.name)
     ).all()
+    financial_rows = session.scalars(
+        select(CompanyFinancial)
+        .where(
+            CompanyFinancial.company_id == company.id,
+            CompanyFinancial.review_status != "superseded",
+        )
+        .order_by(CompanyFinancial.fiscal_year.desc(), CompanyFinancial.statement_scope.nulls_last())
+    ).all()
+    address = session.scalar(
+        select(RegisteredAddress)
+        .where(RegisteredAddress.company_id == company.id, RegisteredAddress.valid_to.is_(None))
+        .order_by(RegisteredAddress.observed_at.desc())
+    )
     dupes = session.scalars(
         select(DuplicateCandidate)
         .where(
@@ -240,6 +255,15 @@ def company_detail(session: Session, company: Company) -> schemas.CompanyDetail:
         warnings.append(f"{len(open_dupes)} open duplicate candidate(s) awaiting review")
 
     revenue = resolutions.get("revenue")
+    financial_out = []
+    for financial in financial_rows:
+        item = schemas.FinancialOut.model_validate(financial)
+        item.source_name = source_names.get(financial.source_id)
+        financial_out.append(item)
+    address_out = None
+    if address:
+        address_out = schemas.RegisteredAddressOut.model_validate(address)
+        address_out.source_name = source_names.get(address.source_id)
     return schemas.CompanyDetail(
         company=summary,
         description=company.description,
@@ -249,6 +273,8 @@ def company_detail(session: Session, company: Company) -> schemas.CompanyDetail:
         facts=active,
         history=history,
         identifiers=[schemas.IdentifierOut.model_validate(i) for i in identifiers],
+        financials=financial_out,
+        registered_address=address_out,
         contacts=[schemas.ContactOut.model_validate(c) for c in contacts],
         duplicates=[duplicate_out(session, d) for d in dupes],
         audit_events=[schemas.AuditEventOut.model_validate(a) for a in audits],
