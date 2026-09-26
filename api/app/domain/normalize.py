@@ -12,6 +12,7 @@ NORMALIZATION_VERSION = "norm-2026.09.1"
 
 NORDICS = ("FI", "SE", "NO", "DK", "IS")
 DACH = ("DE", "AT", "CH")
+BALTICS = ("EE",)
 
 _COUNTRY_ALIASES = {
     "FI": ["fi", "fin", "finland", "suomi"],
@@ -22,6 +23,7 @@ _COUNTRY_ALIASES = {
     "DE": ["de", "deu", "germany", "deutschland"],
     "AT": ["at", "aut", "austria", "osterreich", "oesterreich"],
     "CH": ["ch", "che", "switzerland", "schweiz", "suisse", "svizzera"],
+    "EE": ["ee", "est", "estonia", "eesti"],
 }
 _COUNTRY_LOOKUP = {alias: code for code, aliases in _COUNTRY_ALIASES.items() for alias in aliases}
 
@@ -42,6 +44,8 @@ def region_for_country(country: str | None) -> str | None:
         return "nordics"
     if country in DACH:
         return "dach"
+    if country in BALTICS:
+        return "baltics"
     return None
 
 
@@ -84,6 +88,12 @@ _LEGAL_FORMS = [
     "ans",
     "da",
     "enk",
+    # Estonia (accents are stripped before matching: OÜ -> ou, TÜH -> tuh)
+    "ou",
+    "tuh",
+    "uu",
+    "tu",
+    "mtu",
 ]
 _LEGAL_FORM_RE = re.compile(
     r"(?:^|\s)(?:"
@@ -173,6 +183,14 @@ def _fi_check(d7: str) -> int | None:
     return 0 if rem == 0 else 11 - rem
 
 
+def _ee_check(d7: str) -> int:
+    for weights in ((1, 2, 3, 4, 5, 6, 7), (3, 4, 5, 6, 7, 8, 9)):
+        rem = sum(int(a) * w for a, w in zip(d7, weights, strict=True)) % 11
+        if rem != 10:
+            return rem
+    return 0
+
+
 def _luhn_ok(digits: str) -> bool:
     total = 0
     for i, ch in enumerate(reversed(digits)):
@@ -219,6 +237,10 @@ def normalize_registry_id(country: str, value: str | None) -> RegistryIdResult:
         if len(d) == 8:
             return RegistryIdResult(f"DK:{d}", f"DK{d}", None)
         return RegistryIdResult(None, None, f"invalid Danish CVR '{raw}' (expected 8 digits)")
+    if country == "EE":  # registrikood, 8 digits, two-pass mod-11 check digit (same scheme as isikukood)
+        if len(d) == 8 and _ee_check(d[:7]) == int(d[7]):
+            return RegistryIdResult(f"EE:{d}", None, None)
+        return RegistryIdResult(None, None, f"invalid Estonian registry code '{raw}' (format/check digit)")
     if country == "IS":  # kennitala, 10 digits
         if len(d) == 10:
             return RegistryIdResult(f"IS:{d}", None, None)
@@ -259,6 +281,7 @@ _VAT_PATTERNS = {
     "DE": r"DE\d{9}",
     "AT": r"ATU\d{8}",
     "CH": r"CHE\d{9}",
+    "EE": r"EE\d{9}",
 }
 
 

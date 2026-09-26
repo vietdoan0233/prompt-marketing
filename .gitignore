@@ -15,3 +15,7 @@ node_modules/
 # Local config
 .env
 .env.local
+api/backups/
+api/test-tmp/
+api/pytest-cache-files-*/
+api/data/

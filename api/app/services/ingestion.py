@@ -12,7 +12,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
+from app.config import active_countries, get_settings
 from app.connectors.base import CandidateRef, ConnectorError, FetchedSnapshot
 from app.connectors.csv_connector import CsvConnector
 from app.connectors.registries import BrregConnector, CvrConnector, PrhConnector, ZefixConnector
@@ -467,6 +467,8 @@ def _upsert_one(
             session.flush()
             is_new = company is None
             if company is None:
+                if rec.country not in active_countries():  # defence in depth; build_record rejects these first
+                    raise ValueError(f"refusing to create a company in inactive country {rec.country}")
                 company = Company(
                     legal_name=rec.facts["legal_name"],
                     normalized_name=normalize_name(rec.facts["legal_name"]),

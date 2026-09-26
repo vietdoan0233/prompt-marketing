@@ -1,16 +1,19 @@
 """Relational model. Facts are append-only/versioned; display fields on `companies` are a derived view."""
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
     JSON,
     Boolean,
+    Date,
     DateTime,
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
     TypeDecorator,
@@ -310,3 +313,100 @@ class AuditEvent(Base):
     entity_id: Mapped[str | None] = mapped_column(String(300))
     company_id: Mapped[str | None] = mapped_column(String(36), index=True)
     details: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
+
+
+Money = Numeric(20, 2)
+
+
+class CompanyFinancial(Base):
+    """One row per company, filing and statement scope. Values are exactly as reported; nothing is derived.
+
+    Deferred measures (ebitda, dividends, capex) stay NULL until an explicit source or a reviewed formula
+    exists; a derived value must set value_type='derived' and calculation_formula.
+    """
+
+    __tablename__ = "company_financials"
+    __table_args__ = (
+        UniqueConstraint("source_id", "source_key", "content_hash", name="uq_financial_source_version"),
+        Index("ix_financial_company_year", "company_id", "fiscal_year"),
+        Index("ix_financial_source_key", "source_id", "source_key"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id", ondelete="CASCADE"), index=True)
+    period_start: Mapped[date | None] = mapped_column(Date)
+    period_end: Mapped[date | None] = mapped_column(Date)
+    fiscal_year: Mapped[int] = mapped_column(Integer, index=True)
+    currency: Mapped[str | None] = mapped_column(String(3))
+    revenue: Mapped[Decimal | None] = mapped_column(Money)
+    ebitda: Mapped[Decimal | None] = mapped_column(Money)
+    net_income: Mapped[Decimal | None] = mapped_column(Money)
+    dividends: Mapped[Decimal | None] = mapped_column(Money)
+    capex: Mapped[Decimal | None] = mapped_column(Money)
+    depreciation: Mapped[Decimal | None] = mapped_column(Money)
+    # Additional explicitly reported measures (nullable canonical fields)
+    depreciation_and_impairment: Mapped[Decimal | None] = mapped_column(Money)  # "kulum ja väärtuse langus"
+    operating_profit: Mapped[Decimal | None] = mapped_column(Money)
+    profit_before_tax: Mapped[Decimal | None] = mapped_column(Money)
+    total_assets: Mapped[Decimal | None] = mapped_column(Money)
+    equity: Mapped[Decimal | None] = mapped_column(Money)
+    labour_cost: Mapped[Decimal | None] = mapped_column(Money)
+    employees_fte: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    source_id: Mapped[str] = mapped_column(ForeignKey("sources.id"))
+    source_url: Mapped[str] = mapped_column(String(500))
+    source_file: Mapped[str | None] = mapped_column(String(300))  # dataset file identity
+    snapshot_id: Mapped[str | None] = mapped_column(ForeignKey("source_snapshots.id", ondelete="SET NULL"))
+    observed_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    confidence: Mapped[str] = mapped_column(String(32))
+    usage_policy: Mapped[str] = mapped_column(String(64))
+    parser_version: Mapped[str] = mapped_column(String(64))
+    statement_scope: Mapped[str | None] = mapped_column(String(16))  # standalone | consolidated | NULL (unproven)
+    value_type: Mapped[str] = mapped_column(String(16), default="reported")  # reported | derived
+    filing_id: Mapped[str] = mapped_column(String(64))
+    document_id: Mapped[str | None] = mapped_column(String(64))
+    unit: Mapped[str | None] = mapped_column(String(16))
+    restated: Mapped[bool | None] = mapped_column(Boolean)
+    calculation_formula: Mapped[str | None] = mapped_column(Text)
+    ingestion_run_id: Mapped[str | None] = mapped_column(ForeignKey("ingestion_runs.id", ondelete="SET NULL"))
+    review_status: Mapped[str] = mapped_column(String(32), default="unreviewed")  # unreviewed | superseded | ...
+    registry_code: Mapped[str] = mapped_column(String(32))
+    source_key: Mapped[str] = mapped_column(String(200))  # registry code + report_id + period + scope
+    content_hash: Mapped[str] = mapped_column(String(64))
+    source_values: Mapped[list[dict[str, Any]]] = mapped_column(JsonType, default=list)  # original lines
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class RegisteredAddress(Base):
+    """The registered seat (asukoht) from the official register. Not an operating headquarters.
+
+    Versioned: an unchanged address (same content hash) never creates a new row; a changed one closes the
+    previous row (valid_to) and adds a new one.
+    """
+
+    __tablename__ = "registered_addresses"
+    __table_args__ = (
+        UniqueConstraint("company_id", "source_id", "content_hash", name="uq_registered_address_version"),
+        Index("ix_registered_address_current", "company_id", "valid_to"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id", ondelete="CASCADE"))
+    address_line: Mapped[str | None] = mapped_column(String(300))
+    postal_code: Mapped[str | None] = mapped_column(String(16))
+    city: Mapped[str | None] = mapped_column(String(120))
+    municipality: Mapped[str | None] = mapped_column(String(120))
+    county: Mapped[str | None] = mapped_column(String(120))
+    ehak_code: Mapped[str | None] = mapped_column(String(8))
+    country: Mapped[str | None] = mapped_column(String(2))
+    source_id: Mapped[str] = mapped_column(ForeignKey("sources.id"))
+    source_url: Mapped[str] = mapped_column(String(500))
+    source_file: Mapped[str | None] = mapped_column(String(300))
+    snapshot_id: Mapped[str | None] = mapped_column(ForeignKey("source_snapshots.id", ondelete="SET NULL"))
+    ingestion_run_id: Mapped[str | None] = mapped_column(ForeignKey("ingestion_runs.id", ondelete="SET NULL"))
+    observed_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    parser_version: Mapped[str] = mapped_column(String(64))
+    content_hash: Mapped[str] = mapped_column(String(64))
+    warnings: Mapped[list[str]] = mapped_column(JsonType, default=list)
+    valid_from: Mapped[datetime] = mapped_column(UTCDateTime)
+    valid_to: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

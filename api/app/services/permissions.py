@@ -6,13 +6,13 @@ from typing import Any
 
 import yaml
 
-from app.config import get_settings
+from app.config import active_countries, get_settings
 from app.models import Source
 
 APPROVED = "approved"
 PERMISSION_STATUSES = {"approved", "pending", "revoked", "unapproved"}
 SOURCE_MODES = {"public-approved", "licensed", "mergero-supplied"}
-INGESTIBLE_CONNECTORS = {"csv", "brreg", "prh", "zefix", "cvr", "website"}
+INGESTIBLE_CONNECTORS = {"csv", "brreg", "prh", "zefix", "cvr", "website", "ee_ariregister"}
 
 
 class PermissionDenied(Exception):
@@ -61,6 +61,9 @@ def ingestion_gate(source: Source | None, *, live: bool = False) -> list[str]:
     outside = sorted(set(source.countries) - allowed_countries)
     if outside:
         reasons.append(f"source coverage {outside} is outside region '{source.region}' policy")
+    inactive = sorted(set(source.countries) - active_countries())
+    if inactive:
+        reasons.append(f"countries {inactive} are not active in this deployment (ACTIVE_COUNTRIES={sorted(active_countries())})")
     if live and not get_settings().live_connectors_enabled:
         reasons.append("live network connectors are disabled (LIVE_CONNECTORS_ENABLED=false)")
     return reasons

@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
+from app.config import active_countries
 from app.domain import normalize as n
 
 PARSER_VERSION = "parse-2026.09.1"
@@ -62,7 +63,7 @@ FACT_FIELDS = [
     "family_business_signal",
 ]
 # Structured (non-string) row keys a connector may attach.
-STRUCTURED_KEYS = {"contacts", "enrichment_only", "estimated_fields", "evidence", "warnings"}
+STRUCTURED_KEYS = {"contacts", "enrichment_only", "estimated_fields", "evidence", "warnings", "provenance"}
 CONTACT_BASES = {"public-business", "mergero-supplied", "partner-referral", "unknown"}
 
 
@@ -167,6 +168,9 @@ def build_record(
     rec.raw = {k: v for k, v in canonical.items() if v is not None and k not in CONTACT_FIELDS}
     if rec.field_urls:
         rec.raw["evidence"] = rec.field_urls
+    if row.get("provenance"):
+        # Verbatim source columns + dataset file identity, kept unchanged in the source snapshot.
+        rec.raw["provenance"] = row["provenance"]
 
     legal_name = canonical.get("legal_name")
     if not legal_name and not rec.enrichment_only:
@@ -175,6 +179,8 @@ def build_record(
     country = n.normalize_country(canonical.get("country"))
     if not country:
         rec.errors.append(f"missing or unrecognised country '{canonical.get('country') or ''}'")
+    elif country not in active_countries():
+        rec.errors.append(f"country {country} is not an active country in this deployment {sorted(active_countries())}")
     elif country not in source_countries:
         rec.errors.append(f"country {country} is outside this source's approved coverage {source_countries}")
     rec.country = country

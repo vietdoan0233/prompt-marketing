@@ -49,17 +49,24 @@ def detect_duplicates(session: Session, company_ids: set[str] | None = None) -> 
     """Score pairs within the same country (blocking key) and store possible/likely candidates.
     Deterministic; existing (including dismissed) pairs are never re-opened."""
     profiles = _profiles(session)
-    by_country: dict[str, list[Profile]] = defaultdict(list)
+    # Blocking index: only pairs sharing country + (first name token | domain | VAT) are ever scored.
+    blocks: dict[tuple[str, str], list[Profile]] = defaultdict(list)
+
+    def keys(p: Profile) -> set[tuple[str, str]]:
+        out = {(p.country, "name:" + t) for t in p.normalized_name.split()[:1]}
+        out |= {(p.country, "domain:" + d) for d in p.domains}
+        out |= {(p.country, "vat:" + v) for v in p.vat_keys}
+        return out
+
     for p in profiles.values():
-        by_country[p.country].append(p)
+        for k in keys(p):
+            blocks[k].append(p)
     targets = [profiles[i] for i in sorted(company_ids or profiles.keys()) if i in profiles]
     created = 0
     for a in targets:
-        for b in sorted(by_country[a.country], key=lambda p: p.id):
+        candidates = {b.id: b for k in keys(a) for b in blocks[k]}
+        for b in sorted(candidates.values(), key=lambda p: p.id):
             if a.id == b.id or (company_ids and b.id in company_ids and b.id < a.id):
-                continue
-            first_tokens = set(a.normalized_name.split()[:1]) & set(b.normalized_name.split()[:1])
-            if not (first_tokens or a.domains & b.domains or a.vat_keys & b.vat_keys):
                 continue
             result = score_pair(a, b)
             if result.band == "none":

@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     source_config_path: Path = API_ROOT / "config" / "sources.yaml"
     fixtures_dir: Path = API_ROOT / "tests" / "fixtures"  # test-only fixtures; production is live
 
+    # Countries the database may contain. Estonia-only deployment: any other country fails closed.
+    active_countries: str = "EE"
+    # Local cache for official bulk files (git-ignored). Files are re-downloaded when the portal copy changes.
+    ee_cache_dir: Path = API_ROOT / "data" / "ee_ariregister"
+    backup_dir: Path = API_ROOT / "backups"
+
     # Company qualification: headcount is the primary viability proxy.
     min_employees_default: int = 20
     sub_scale_max_employees: int = 2
@@ -42,6 +48,10 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000"
     default_actor: str = "reviewer@mergero.local"
+
+
+def active_countries() -> set[str]:
+    return {c.strip().upper() for c in get_settings().active_countries.split(",") if c.strip()}
 
 
 @lru_cache
