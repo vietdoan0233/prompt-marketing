@@ -2,7 +2,22 @@
 
 This FastAPI and Next.js application holds company identities, official registered addresses, and annual financial observations for Estonian entities. The active country is `EE`. The [Estonian e-Business Register open-data portal](https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine) is the only enabled production ingestion source. Imports use its downloadable files, never company-page scraping or annual-report PDFs.
 
-## Start and import
+### First-time / Teammate database setup
+
+The SQLite database file (`mergero_dev.db`) is git-ignored (`*.db`) to keep repository size lean and prevent merge collisions. New contributors can initialize their local database in seconds:
+
+1. **Set up virtual environment & install dependencies** (from `api/`):
+   ```powershell
+   python -m venv .venv
+   .\.venv\Scripts\pip.exe install -r requirements.txt
+   ```
+2. **Apply migrations and seed data**:
+   ```powershell
+   .\.venv\Scripts\alembic.exe upgrade head
+   .\.venv\Scripts\python.exe -m app.seed --from-cache --replace
+   ```
+
+### Running seed and live imports
 
 From `api/`:
 
