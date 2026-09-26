@@ -20,7 +20,13 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.connectors.base import ConnectorError
-from app.connectors.ee_ariregister import EE_PARSER_VERSION, DatasetFile, EeAriregisterFiles, iter_rows
+from app.connectors.ee_ariregister import (
+    EE_PARSER_VERSION,
+    QUALIFICATION_YEARS,
+    DatasetFile,
+    EeAriregisterFiles,
+    iter_rows,
+)
 from app.domain.ee_address import (
     ADDRESS_PARSER_VERSION,
     ADDRESS_SOURCE_COLUMNS,
@@ -62,6 +68,7 @@ FINANCIAL_FIELDS = (
 )
 ELEMENT_TO_METRIC = {
     "Revenue": "revenue",
+    "EBITDA": "ebitda",
     "TotalAnnualPeriodProfitLoss": "net_income",
     "TotalProfitLoss": "operating_profit",
     "TotalProfitLossBeforeTax": "profit_before_tax",
@@ -538,6 +545,11 @@ def _upsert_financial(
             "report": report.raw,
             "scope": group.scope,
             "values": source_values,
+            "normalized_values": {field: values.get(field) for field in FINANCIAL_FIELDS},
+            "currency": "EUR",
+            "unit": "EUR",
+            "calculation_formula": calculation_formula,
+            "parser_version": EE_PARSER_VERSION,
             "warnings": warnings,
         }
     )
@@ -551,13 +563,16 @@ def _upsert_financial(
     if existing:
         counts["financial_unchanged"] += 1
         return
-    for old in session.scalars(
-        select(CompanyFinancial).where(
-            CompanyFinancial.source_id == source.id,
-            CompanyFinancial.source_key == source_key,
-            CompanyFinancial.review_status != "superseded",
+    previous_rows = list(
+        session.scalars(
+            select(CompanyFinancial).where(
+                CompanyFinancial.source_id == source.id,
+                CompanyFinancial.source_key == source_key,
+                CompanyFinancial.review_status != "superseded",
+            )
         )
-    ):
+    )
+    for old in previous_rows:
         old.review_status = "superseded"
     kwargs = {field: values.get(field) for field in FINANCIAL_FIELDS}
     session.add(
@@ -591,7 +606,7 @@ def _upsert_financial(
             source_values=source_values,
         )
     )
-    counts["financial_changed" if existing is not None else "financial_added"] += 1
+    counts["financial_changed" if previous_rows else "financial_added"] += 1
     for metric in FINANCIAL_FIELDS:
         if metric not in values:
             counts[f"missing_{metric}"] = counts.get(f"missing_{metric}", 0) + 1
@@ -694,23 +709,27 @@ def import_estonia(
         _file_snapshot(session, run, source, file)
     run.status = "PARSED"
     reports, documents, reports_by_code = _load_reports(files, years)
+    qualification_years = sorted(QUALIFICATION_YEARS)
+    qualification_reports, qualification_documents, _ = _load_reports(files, qualification_years)
     run.counts = {**run.counts, **{field: 0 for field in COUNT_FIELDS}}
 
     # Pass A: determine the current qualified company set from 2024/2025 entity-level FTE lines.
     fte_by_code: dict[str, tuple[int, Decimal, DatasetFile]] = {}
     indicator_files = [f for f in files if f.kind == "indicators"]
     for file in indicator_files:
-        if file.year not in {2024, 2025}:
+        if file.year not in QUALIFICATION_YEARS:
             continue
         for row in iter_rows(file):
             if row.get("elemendi_nimetus") != "AverageNumberOfEmployeesInFullTimeEquivalentUnits":
                 continue
-            report = _resolve_report(_text(row.get("report_id")), reports, documents)
+            report = _resolve_report(
+                _text(row.get("report_id")), qualification_reports, qualification_documents
+            )
             if report is None:
                 continue
             scope, _ = _statement_scope(report, _text(row.get("tabel")), _text(row.get("elemendi_nimetus")))
             value = _parse_decimal(row.get("vaartus"))
-            if scope == "consolidated" or value is None or report.fiscal_year not in {2024, 2025}:
+            if scope == "consolidated" or value is None or report.fiscal_year not in QUALIFICATION_YEARS:
                 continue
             previous = fte_by_code.get(report.registry_code)
             if previous is None or report.fiscal_year >= previous[0]:

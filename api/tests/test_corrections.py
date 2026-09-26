@@ -7,7 +7,7 @@ from tests.conftest import seed_all
 
 
 def _revontuli(session):
-    return session.scalars(select(Company).where(Company.legal_name == "Revontuli Systems Oy")).one()
+    return session.scalars(select(Company).where(Company.legal_name == "Revontuli Systems")).one()
 
 
 def test_correction_preserves_original_facts(client, session):

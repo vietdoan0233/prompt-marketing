@@ -15,7 +15,7 @@ def _company(session, name):
 
 def test_registry_and_vat_resolve_to_one_profile(session):
     seed_all(session)
-    revontuli = _company(session, "Revontuli Systems Oy")
+    revontuli = _company(session, "Revontuli Systems")
     sources = set(
         session.scalars(select(CompanyFact.source_id).where(CompanyFact.company_id == revontuli.id))
     )
@@ -95,7 +95,7 @@ def test_dismissed_candidates_are_not_reopened(session):
 
 def test_multi_source_and_conflict_labels(session):
     seed_all(session)
-    kuusisto = _company(session, "Kuusisto Analytics Oy")
+    kuusisto = _company(session, "Kuusisto Analytics")
     emp = session.scalars(
         select(CompanyFact).where(
             CompanyFact.company_id == kuusisto.id,
@@ -105,7 +105,7 @@ def test_multi_source_and_conflict_labels(session):
     ).all()
     assert {f.confidence for f in emp} == {"multi-source"}
 
-    revontuli = _company(session, "Revontuli Systems Oy")
+    revontuli = _company(session, "Revontuli Systems")
     emp = session.scalars(
         select(CompanyFact).where(
             CompanyFact.company_id == revontuli.id,
@@ -132,7 +132,7 @@ def test_single_estimated_source_is_not_upgraded(session):
 
 def test_old_evidence_is_marked_old(session):
     seed_all(session)
-    pohjola = _company(session, "Pohjola Metallityö Oy")
+    pohjola = _company(session, "Pohjola Metallityö")
     confs = set(session.scalars(select(CompanyFact.confidence).where(CompanyFact.company_id == pohjola.id)))
     assert confs == {"old"}
 

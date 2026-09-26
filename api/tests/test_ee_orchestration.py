@@ -18,7 +18,6 @@ from app.connectors.ee_ariregister import PORTAL
 from app.models import (
     AuditEvent,
     Company,
-    CompanyFact,
     CompanyFinancial,
     IngestionRecord,
     RegisteredAddress,
@@ -65,7 +64,13 @@ def _write_zip(cache: Path, name: str, content: str, *, kind: str, year: int | N
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
 
 
-def _datasets(cache: Path, *, address: str = "Regati pst 12", employees_2025: str = "22") -> None:
+def _datasets(
+    cache: Path,
+    *,
+    address: str = "Regati pst 12",
+    employees_2024: str = "24",
+    employees_2025: str = "22",
+) -> None:
     cache.mkdir(parents=True, exist_ok=True)
     basic = _csv(
         [
@@ -154,7 +159,13 @@ def _datasets(cache: Path, *, address: str = "Regati pst 12", employees_2025: st
     indicators_2024 = _csv(
         indicator_headers,
         [
-            ["R2024", "AverageNumberOfEmployeesInFullTimeEquivalentUnits", "Bilanss", "24", "FTE"],
+            [
+                "R2024",
+                "AverageNumberOfEmployeesInFullTimeEquivalentUnits",
+                "Bilanss",
+                employees_2024,
+                "FTE",
+            ],
             ["UNKNOWN-REPORT", "Revenue", "Kasumiaruanne", "999", "Revenue"],
         ],
     )
@@ -269,3 +280,19 @@ def test_importer_fails_before_upserts_when_a_required_year_is_missing(
     assert run.status == "FAILED"
     assert "2025" in run.errors[0]["message"]
     assert session.query(Company).filter_by(country="EE").count() == 0
+
+
+def test_2025_qualification_file_is_used_for_single_year_import(
+    cache_dir: Path, monkeypatch, session: Session
+) -> None:
+    _datasets(cache_dir, employees_2024="15", employees_2025="22")
+    settings = get_settings().model_copy(update={"ee_cache_dir": cache_dir})
+    monkeypatch.setattr("app.services.ee_import.get_settings", lambda: settings)
+
+    run = import_estonia(session, query={"years": [2024]}, min_employees=20, live_override=False)
+
+    assert run.status == "UPSERTED"
+    assert run.counts["accepted"] == 1
+    company = session.scalar(select(Company).where(Company.country == "EE"))
+    assert company is not None
+    assert company.estimated_employee_min == 22 and company.qualification_status == "qualified"

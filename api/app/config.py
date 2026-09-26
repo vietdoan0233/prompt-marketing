@@ -31,10 +31,10 @@ class Settings(BaseSettings):
     # Default raw snapshot / raw input retention if a source does not specify one.
     default_retention_days: int = 30
 
-    # Live network connectors are off by default: fixture-backed connectors keep the demo credential-free.
+    # Live portal access is off by default; imports can use the verified official-file cache.
     live_connectors_enabled: bool = False
     http_timeout_seconds: float = 15.0
-    # Optional contact appended to the crawler User-Agent (e.g. a team mailbox). Empty by default.
+    # Optional contact appended to the source-request User-Agent (e.g. a team mailbox). Empty by default.
     http_contact: str = ""
     cors_origins: str = "http://localhost:3000"
     default_actor: str = "reviewer@mergero.local"

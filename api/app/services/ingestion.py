@@ -19,7 +19,6 @@ from app.domain.normalize import NORMALIZATION_VERSION, normalize_name
 from app.domain.records import ParsedContact, ParsedRecord, build_record, stable_hash
 from app.models import (
     Company,
-    CompanyIdentifier,
     Contact,
     ContactSuppression,
     IngestionRecord,
@@ -168,8 +167,6 @@ def start_csv_run(
 ) -> IngestionRun:
     min_emp = min_employees if min_employees is not None else get_settings().min_employees_default
     source = _registered_or_deny(session, source_id, actor)
-    if source.connector_type != "csv":
-        raise ConnectorError(f"source '{source_id}' does not accept CSV uploads")
     run = _new_run(
         session,
         source,
@@ -182,6 +179,8 @@ def start_csv_run(
     )
     _gate_or_reject(session, run, source, live=False)
     assert source is not None
+    if source.connector_type != "csv":
+        return _fail(session, run, "fetch", f"source '{source_id}' does not accept CSV uploads")
     connector = CsvConnector(source.field_mapping)
     run.input_hash = hashlib.sha256(text.encode()).hexdigest()
     # Raw input kept only for retry, and only until the source's retention period ends.

@@ -87,7 +87,7 @@ def test_quality_report_and_duplicate_review(client, session):
     report = client.get("/quality/report").json()
     assert report["totals"]["open_duplicate_candidates"] == 2
     assert report["totals"]["unresolved_conflicts"] >= 1
-    assert report["missing_fields"]["employees"]["count"] == 1  # Saimaa Logistics
+    assert report["missing_fields"]["employees"]["count"] == 0
     assert report["stale_records"]
     dupes = client.get("/quality/duplicates").json()
     rheinwerk = next(d for d in dupes if "Rheinwerk" in (d["company_a_name"] or ""))

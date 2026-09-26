@@ -12,6 +12,7 @@ from app.connectors.ee_ariregister import DatasetFile, EeAriregisterFiles
 from app.domain.records import ParsedRecord, build_record
 from app.models import Company, CompanyFinancial, CompanyIdentifier, IngestionRun, Source
 from app.services.ee_import import (
+    ELEMENT_TO_METRIC,
     IndicatorGroup,
     Report,
     _financial_payload,
@@ -158,6 +159,60 @@ def test_non_estonian_company_is_rejected(monkeypatch) -> None:
     )
     assert not record.ok
     assert any("not an active country" in error for error in record.errors)
+
+
+def test_explicitly_reported_ebitda_is_not_replaced(session: Session) -> None:
+    sync_sources(session, actor="test", config=load_config())
+    source = session.get(Source, "ee-ariregister")
+    assert source is not None
+    company = Company(legal_name="EBITDA test", normalized_name="ebitda test", country="EE")
+    session.add(company)
+    session.flush()
+    group = _group()
+    group.elements.append(
+        {
+            "metric": ELEMENT_TO_METRIC["EBITDA"],
+            "element_name": "EBITDA",
+            "label": "EBITDA",
+            "table": "Kasumiaruanne",
+            "value": "80",
+            "document_id": "report-123",
+            "line_number": 5,
+        }
+    )
+    run = IngestionRun(
+        source_id=source.id,
+        kind="discovery",
+        parser_version="test",
+        config_hash="explicit-ebitda",
+        actor="test",
+        started_at=datetime(2026, 9, 26, 10, tzinfo=UTC),
+    )
+    session.add(run)
+    session.flush()
+    _, source_values, _ = _financial_payload(group)
+    snapshot = _row_snapshot(
+        session,
+        run,
+        source,
+        source_key="report:report-123:standalone",
+        raw={"general_info": group.report.raw, "elements": source_values},
+        file=group.source_file,
+    )
+    _upsert_financial(
+        session,
+        run,
+        source,
+        company,
+        group,
+        snapshot,
+        {"financial_added": 0, "financial_changed": 0, "financial_unchanged": 0, "reports_imported": 0},
+    )
+    session.flush()
+    financial = session.scalar(select(CompanyFinancial).where(CompanyFinancial.company_id == company.id))
+    assert financial is not None
+    assert financial.ebitda == Decimal("80")
+    assert financial.value_type == "reported" and financial.calculation_formula is None
 
 
 def test_indicator_completeness_requires_each_target_year() -> None:
