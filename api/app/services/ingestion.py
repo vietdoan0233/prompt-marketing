@@ -13,10 +13,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import active_countries, get_settings
-from app.connectors.base import CandidateRef, ConnectorError, FetchedSnapshot
+from app.connectors.base import ConnectorError, FetchedSnapshot
 from app.connectors.csv_connector import CsvConnector
-from app.connectors.registries import BrregConnector, CvrConnector, PrhConnector, ZefixConnector
-from app.connectors.website import WebsiteConnector
 from app.domain.normalize import NORMALIZATION_VERSION, normalize_name
 from app.domain.records import ParsedContact, ParsedRecord, build_record, stable_hash
 from app.models import (
@@ -71,61 +69,6 @@ def contact_identity_hash(name: str, company: Company) -> str:
 
 def email_hash(email: str) -> str:
     return hashlib.sha256(f"email|{email.strip().lower()}".encode()).hexdigest()
-
-
-def build_connector(source: Source):
-    settings = get_settings()
-    cfg = source.connector_config or {}
-    fixture = settings.fixtures_dir / cfg["fixture"] if cfg.get("fixture") else None
-    live = bool(cfg.get("live")) and settings.live_connectors_enabled
-    if source.connector_type == "csv":
-        return CsvConnector(source.field_mapping)
-    rate = source.rate_limit_per_minute
-    if source.connector_type == "brreg":
-        return BrregConnector(fixture, live, rate)
-    if source.connector_type == "prh":
-        return PrhConnector(fixture, live, rate)
-    if source.connector_type == "zefix":
-        return ZefixConnector(fixture, live, rate, (settings.zefix_username, settings.zefix_password))
-    if source.connector_type == "cvr":
-        return CvrConnector(fixture, live, rate, (settings.cvr_username, settings.cvr_password))
-    if source.connector_type == "website":
-        if not live:
-            raise ConnectorError("website crawling requires live: true and LIVE_CONNECTORS_ENABLED=true")
-        return WebsiteConnector(rate)
-    raise ConnectorError(f"no connector implementation for '{source.connector_type}'")
-
-
-def website_targets(
-    session: Session, source: Source, query: dict[str, Any], min_employees: int
-) -> list[dict]:
-    """Domains published by approved registries for companies in this source's coverage.
-    Only registry-published websites are crawled; the crawler never picks arbitrary URLs."""
-    countries = [c for c in (query.get("countries") or source.countries) if c in source.countries]
-    stmt = (
-        select(Company, CompanyIdentifier.value)
-        .join(CompanyIdentifier, CompanyIdentifier.company_id == Company.id)
-        .where(
-            Company.merged_into_id.is_(None),
-            Company.country.in_(countries),
-            CompanyIdentifier.kind == "domain",
-        )
-        .order_by(Company.estimated_employee_min.desc().nulls_last(), Company.legal_name)
-    )
-    if query.get("qualified_only", True) and min_employees > 0:
-        stmt = stmt.where(Company.estimated_employee_min >= min_employees)
-    if query.get("company_ids"):
-        stmt = stmt.where(Company.id.in_(query["company_ids"]))
-    limit = int(query.get("max_records", 25))
-    targets, seen = [], set()
-    for company, domain in session.execute(stmt):
-        if domain in seen:
-            continue
-        seen.add(domain)
-        targets.append({"domain": domain, "country": company.country, "company_id": company.id})
-        if len(targets) >= limit:
-            break
-    return targets
 
 
 def _config_hash(source: Source, parser_version: str, min_employees: int) -> str:
@@ -225,8 +168,8 @@ def start_csv_run(
 ) -> IngestionRun:
     min_emp = min_employees if min_employees is not None else get_settings().min_employees_default
     source = _registered_or_deny(session, source_id, actor)
-    if source.connector_type in ("brreg", "prh"):
-        raise ConnectorError(f"source '{source_id}' is a registry connector; start a discovery run instead")
+    if source.connector_type != "csv":
+        raise ConnectorError(f"source '{source_id}' does not accept CSV uploads")
     run = _new_run(
         session,
         source,
@@ -283,29 +226,7 @@ def start_discovery_run(
     live = bool(source and (source.connector_config or {}).get("live"))
     _gate_or_reject(session, run, source, live=live)
     assert source is not None
-    try:
-        connector = build_connector(source)
-        effective_query = query
-        if source.connector_type == "website":
-            effective_query = {**query, "targets": website_targets(session, source, query, min_emp)}
-        refs: list[CandidateRef] = connector.discover(effective_query, source.region, min_emp)
-    except ConnectorError as exc:
-        return _fail(session, run, "discover", str(exc))
-    if isinstance(connector, WebsiteConnector):
-        snaps, errs = connector.fetch_many(refs)
-        run.counts = {**run.counts, "discovered": len(refs)}
-        run.errors = errs
-        return _execute(session, run, source, connector, snaps)
-    run.counts = {**run.counts, "discovered": len(refs)}
-    snapshots: list[FetchedSnapshot] = []
-    fetch_errors = []
-    for ref in refs:
-        try:
-            snapshots.append(connector.fetch(ref))
-        except ConnectorError as exc:
-            fetch_errors.append({"stage": "fetch", "reference": ref.reference, "message": str(exc)})
-    run.errors = fetch_errors
-    return _execute(session, run, source, connector, snapshots)
+    return _fail(session, run, "discover", f"no discovery implementation for '{source.connector_type}'")
 
 
 def _fail(session: Session, run: IngestionRun, stage: str, message: str) -> IngestionRun:
@@ -571,7 +492,7 @@ def _upsert_contact(
             phone=c.phone,
             profile_url=c.profile_url,
             country=company.country,
-            language="de" if company.region == "dach" else "en",
+            language="et",
             source_id=source.id,
             source_key=rec.source_key,
             source_url=rec.source_url,

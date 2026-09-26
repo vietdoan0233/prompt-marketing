@@ -18,6 +18,7 @@ COMPANY_FIELDS = [
     "country",
     "region",
     "city",
+    "registry_status",
     "registry_id",
     "vat_id",
     "website",
@@ -49,6 +50,7 @@ FACT_FIELDS = [
     "legal_name",
     "trading_name",
     "city",
+    "registry_status",
     "website",
     "industry_code",
     "sector",
@@ -207,7 +209,7 @@ def build_record(
 
     if legal_name:
         put("legal_name", legal_name.strip(), legal_name)
-    for simple in ("trading_name", "city", "sector", "description"):
+    for simple in ("trading_name", "city", "registry_status", "sector", "description"):
         if canonical.get(simple):
             put(simple, " ".join(canonical[simple].split()), canonical[simple])
     if canonical.get("industry_code"):

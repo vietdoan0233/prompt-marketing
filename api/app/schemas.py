@@ -49,9 +49,9 @@ class SourceCreate(BaseModel):
     id: str = Field(pattern=r"^[a-z0-9][a-z0-9\-]{2,63}$")
     name: str = Field(min_length=2, max_length=200)
     provider: str = Field(min_length=2, max_length=200)
-    region: Literal["nordics", "dach", "baltics", "internal"]
-    countries: list[Literal["FI", "SE", "NO", "DK", "IS", "DE", "AT", "CH", "EE"]] = Field(min_length=1)
-    source_type: Literal["registry", "website", "licensed_feed", "mergero_csv"]
+    region: Literal["baltics", "internal"]
+    countries: list[Literal["EE"]] = Field(min_length=1)
+    source_type: Literal["registry", "licensed_feed", "mergero_csv"]
     source_mode: str
     terms_url: str | None = None
     connector_type: Literal["csv"] = "csv"
@@ -264,6 +264,7 @@ class RegisteredAddressOut(ORM):
 class CompanySummary(ORM):
     id: str
     legal_name: str
+    registry_status: str | None = None
     trading_name: str | None
     country: str
     region: str | None

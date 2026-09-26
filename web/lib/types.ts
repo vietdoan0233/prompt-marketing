@@ -65,6 +65,7 @@ export type IngestionRun = {
 export type CompanySummary = {
   id: string;
   legal_name: string;
+  registry_status: string | null;
   trading_name: string | null;
   country: string;
   region: string | null;

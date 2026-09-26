@@ -35,6 +35,7 @@ STATUS_LABEL = {
 }
 FIELD_ORDER = [
     "legal_name",
+    "registry_status",
     "trading_name",
     "registry_id",
     "vat_id",
@@ -111,6 +112,7 @@ def summaries(session: Session, companies: list[Company]) -> list[schemas.Compan
         summary.headcount_status = headcount_status
         summary.registry_id = regs.get(c.id)
         latest = {f.field_name: f.value_json for f in facts if not f.is_correction}
+        summary.registry_status = latest.get("registry_status")
         summary.open_positions = latest.get("open_positions")
         summary.founder_signal = bool(latest.get("founder_signal"))
         summary.family_business_signal = bool(latest.get("family_business_signal"))

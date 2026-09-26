@@ -6,7 +6,7 @@ from app.models import Company, CompanyFact, IngestionRun, SourceSnapshot
 from app.services import ingestion
 from app.services.permissions import PermissionDenied
 from app.services.source_registry import sync_sources
-from tests.conftest import FIXTURES, import_csv, source
+from tests.conftest import import_csv, source
 
 ROW = "legal_name,country,registry_id,employees\nTest Data ApS,DK,41234567,30\n"
 
@@ -33,7 +33,7 @@ def _assert_rejected(session, source_id, text=ROW):
 
 
 def test_unapproved_source_fails_closed(session):
-    exc = _assert_rejected(session, "linkedin-scrape", (FIXTURES / "linkedin_scrape.csv").read_text())
+    exc = _assert_rejected(session, "linkedin-scrape")
     assert any("unapproved" in r for r in exc.reasons)
 
 
@@ -58,11 +58,11 @@ def test_manual_source_cannot_ingest(session):
 
 
 def test_live_network_requires_feature_flag(session):
-    src = source(session, "no-brreg")
-    src.connector_config = {"fixture": "registry/brreg_enheter.json", "live": True}
+    src = source(session, "ee-ariregister")
+    src.connector_config = {"live": True}
     session.commit()
     try:
-        ingestion.start_discovery_run(session, source_id="no-brreg", query={}, actor="test")
+        ingestion.start_discovery_run(session, source_id="ee-ariregister", query={}, actor="test")
         raise AssertionError("live connector ran without LIVE_CONNECTORS_ENABLED")
     except PermissionDenied as exc:
         assert any("LIVE_CONNECTORS_ENABLED" in r for r in exc.reasons)
@@ -121,11 +121,11 @@ def test_new_sources_start_pending_and_disabled(client):
     r = client.post(
         "/sources",
         json={
-            "id": "fi-new-feed",
+            "id": "ee-new-feed",
             "name": "New feed",
             "provider": "Vendor",
-            "region": "nordics",
-            "countries": ["FI"],
+            "region": "baltics",
+            "countries": ["EE"],
             "source_type": "licensed_feed",
             "source_mode": "licensed",
             "allowed_fields": ["legal_name"],
@@ -136,9 +136,9 @@ def test_new_sources_start_pending_and_disabled(client):
 
 
 def test_config_downgrade_wins_and_disables(session):
-    cfg = {"sources": [{"id": "fi-prh-ytj", "permission_status": "revoked", "countries": ["FI"]}]}
+    cfg = {"sources": [{"id": "ee-ariregister", "permission_status": "revoked", "countries": ["EE"]}]}
     sync_sources(session, actor="test", config=cfg)
-    src = source(session, "fi-prh-ytj")
+    src = source(session, "ee-ariregister")
     assert src.permission_status == "revoked" and src.enabled is False
 
 

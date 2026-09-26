@@ -13,8 +13,7 @@ class Settings(BaseSettings):
 
     database_url: str = f"sqlite:///{(API_ROOT / 'mergero_dev.db').as_posix()}"
     source_config_path: Path = API_ROOT / "config" / "sources.yaml"
-    fixtures_dir: Path = API_ROOT / "tests" / "fixtures"  # test-only fixtures; production is live
-
+    fixtures_dir: Path = API_ROOT / "tests" / "fixtures"  # only used by synthetic tests
     # Countries the database may contain. Estonia-only deployment: any other country fails closed.
     active_countries: str = "EE"
     # Local cache for official bulk files (git-ignored). Files are re-downloaded when the portal copy changes.
@@ -37,15 +36,6 @@ class Settings(BaseSettings):
     http_timeout_seconds: float = 15.0
     # Optional contact appended to the crawler User-Agent (e.g. a team mailbox). Empty by default.
     http_contact: str = ""
-    # Credentials for registries that require (free) registration. Missing credentials fail closed.
-    zefix_username: str = ""
-    zefix_password: str = ""
-    cvr_username: str = ""
-    cvr_password: str = ""
-    # Website crawler limits
-    crawl_max_pages_per_domain: int = 6
-    crawl_workers: int = 6
-
     cors_origins: str = "http://localhost:3000"
     default_actor: str = "reviewer@mergero.local"
 

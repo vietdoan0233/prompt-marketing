@@ -1,15 +1,13 @@
-"""Shared polite HTTP client for live connectors.
+"""Polite HTTP client for official Estonian portal requests.
 
 - Stable User-Agent; optional contact via HTTP_CONTACT (never personal by default).
 - Per-host minimum interval (derived from the source's rate_limit_per_minute) + retry with backoff on 429/5xx.
-- Optional robots.txt enforcement (always on for company-website crawling).
 - Response size cap so a single page cannot exhaust memory.
 """
 
 import ssl
 import threading
 import time
-import urllib.robotparser
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
@@ -43,18 +41,16 @@ class Response:
 
 
 class PoliteClient:
-    def __init__(self, rate_limit_per_minute: int | None = 60, respect_robots: bool = False) -> None:
+    def __init__(self, rate_limit_per_minute: int | None = 60) -> None:
         settings = get_settings()
         self.min_interval = 60.0 / rate_limit_per_minute if rate_limit_per_minute else 0.0
-        self.respect_robots = respect_robots
         self._last: dict[str, float] = {}
-        self._robots: dict[str, urllib.robotparser.RobotFileParser | None] = {}
         self._lock = threading.Lock()
         self._client = httpx.Client(
             timeout=settings.http_timeout_seconds,
             follow_redirects=True,
             verify=_SSL_CONTEXT,
-            headers={"User-Agent": user_agent(), "Accept-Language": "en;q=0.8, *;q=0.5"},
+            headers={"User-Agent": user_agent(), "Accept-Language": "et;q=0.8, *;q=0.5"},
         )
 
     def close(self) -> None:
@@ -69,29 +65,7 @@ class PoliteClient:
         if wait > 0:
             time.sleep(wait)
 
-    def allowed(self, url: str) -> bool:
-        if not self.respect_robots:
-            return True
-        parts = urlsplit(url)
-        origin = f"{parts.scheme}://{parts.netloc}"
-        if origin not in self._robots:
-            rp: urllib.robotparser.RobotFileParser | None = urllib.robotparser.RobotFileParser()
-            try:
-                self._throttle(parts.netloc)
-                resp = self._client.get(f"{origin}/robots.txt")
-                if resp.status_code >= 400:
-                    rp = None  # no robots.txt: crawling allowed
-                else:
-                    rp.parse(resp.text.splitlines())  # type: ignore[union-attr]
-            except httpx.HTTPError:
-                rp = None
-            self._robots[origin] = rp
-        rp = self._robots[origin]
-        return True if rp is None else rp.can_fetch(user_agent(), url)
-
     def request(self, method: str, url: str, **kwargs) -> Response:
-        if not self.allowed(url):
-            raise ConnectorError(f"robots.txt disallows {url}")
         host = urlsplit(url).netloc
         for attempt in range(3):
             self._throttle(host)

@@ -70,8 +70,6 @@ def import_fixture(session: Session, source_id: str, file_name: str):
 
 
 def seed_all(session: Session) -> None:
-    ingestion.start_discovery_run(session, source_id="fi-prh-ytj", query={}, actor="test")
-    ingestion.start_discovery_run(session, source_id="no-brreg", query={}, actor="test")
     for source_id, name in [
         ("se-bolagsverket-allabolag", "allabolag_export.csv"),
         ("de-handelsregister", "handelsregister_export.csv"),

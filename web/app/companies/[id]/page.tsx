@@ -69,6 +69,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
           <p className="subtitle">
             {c.country} · {c.city ?? "city unknown"} · {c.sector ?? "sector unknown"} ·{" "}
             {fmtEmployees(c.estimated_employee_min, c.estimated_employee_max)} employees{" "}
+            · Registry status: <strong>{c.registry_status ?? "unknown"}</strong>{" "}
             <Badge value={c.qualification_status} /> <Badge value={c.headcount_status} />{" "}
             <Badge value={c.freshness} /> <Badge value={c.review_status} />
           </p>
@@ -136,7 +137,8 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
         <section className="panel">
           <h2>Financials by year</h2>
           <p className="small muted" style={{ marginTop: -6 }}>
-            Reported values only. A dash means the source did not provide that measure; no value is inferred.
+            Reported lines retain source provenance. EBITDA is derived only when operating profit and depreciation
+            and impairment are both reported.
           </p>
           <div className="table-wrap">
             <table>
@@ -144,6 +146,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                 <tr>
                   <th>Year</th>
                   <th>Scope</th>
+                  <th>Currency / unit</th>
                   <th>Value type</th>
                   <th>Revenue</th>
                   <th>Net income</th>
@@ -159,11 +162,15 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                   <tr key={f.id}>
                     <td>{f.fiscal_year}</td>
                     <td>{f.statement_scope ?? "—"}</td>
+                    <td>{f.currency ?? "—"} / {f.unit ?? "—"}</td>
                     <td>{f.value_type}</td>
                     <td>{fmtValue(f.revenue)}</td>
                     <td>{fmtValue(f.net_income)}</td>
                     <td>{fmtValue(f.operating_profit)}</td>
-                    <td>{fmtValue(f.ebitda)}</td>
+                    <td>
+                      {fmtValue(f.ebitda)}
+                      {f.calculation_formula && <div className="small muted">{f.calculation_formula}</div>}
+                    </td>
                     <td>{fmtValue(f.dividends)}</td>
                     <td>{fmtValue(f.capex)}</td>
                     <td className="small">

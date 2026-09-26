@@ -1,78 +1,50 @@
-# CLAUDE.md — Mergero Database Scraper
+# CLAUDE.md — Mergero Estonia Company Database
 
-## Mission
+## Mission and scope
 
-Build the smallest credible internal prototype for Mergero's permission-gated company database scraper. Start with a Nordic and DACH workflow. The system discovers, fetches, parses, validates, normalizes, deduplicates, and stores company records and source-backed facts from approved data sources. Its output is a reliable, provenance-linked database for internal use; the scope ends after ingestion, review, and data-quality reporting.
+Maintain an internal, provenance-linked company database for Estonia. The production deployment is Estonia-only (`ACTIVE_COUNTRIES=EE`, region `baltics`) and has one enabled ingestion source: the official Estonian e-Business Register bulk-data portal (`ee-ariregister`). The application imports company identity and registry status, registered-address versions, annual-report facts, and financial rows. It does not scrape company pages or annual-report PDFs.
 
-Read `ARCHITECTURE.md` before making implementation decisions. The architecture is the source of truth for source permissions, provenance, normalization, retention, and regional data rules.
+Read `ARCHITECTURE.md` before making implementation decisions. The source catalog and this file must stay aligned with the Estonia-only production scope.
 
 ## Product rules
 
 1. Ingest only Mergero-approved public, licensed, or Mergero-supplied data. Disabled or unapproved sources must fail closed.
-2. Respect each source's terms, access controls, rate limits, allowed fields, and retention requirements. Do not bypass authentication or technical restrictions.
-3. Keep `unknown`, `estimated`, `conflicting`, and `verified` distinct. Never turn a missing value into a guessed value.
-4. Store source, collection time, confidence, usage policy, and review status for every material fact.
-5. Never infer sensitive attributes or fabricate company, ownership, financial, employee, or contact data.
-6. Make discovery and imports idempotent using stable source keys and content hashes.
-7. Preserve the minimum evidence needed to reproduce a record, and expire raw snapshots according to configuration.
-8. Treat scraped contact fields as personal data. Keep them source-backed and do not create or enrich personal details from naming conventions.
-9. Filter by company size qualification: target a baseline of ≥20 employees as the primary proxy for viable scale (since public financial data is often unavailable). Flag sub-scale (1–2 person) micro-entities as out-of-scope or low priority.
-10. Target approved discovery and enrichment tiers: official national registries (YTJ/PRH, Allabolag/Bolagsverket, CVR, Brreg in Nordics; Handelsregister, North Data, FirmenABC/Firmenbuch, Zefix in DACH), target company websites (extracting legal entity and managing directors via `/impressum`, founder signals via `/about` and `/team`, and growth/headcount via `/careers`), and approved B2B firmographic feeds.
+2. Respect the official portal's terms, access controls, rate limits, allowed fields, and retention requirements.
+3. Keep `unknown`, `estimated`, `conflicting`, `derived`, and `verified` distinct. Never turn a missing value into a guessed value.
+4. Keep source, collection time, confidence, usage policy, review status, and provenance for every material fact.
+5. Preserve official legal status as a source-backed `registry_status` fact; do not infer it from company names or other fields.
+6. Make imports idempotent using stable source keys and content hashes. Version address and fact changes rather than silently overwriting evidence.
+7. Keep the minimum evidence needed to reproduce a record and expire raw snapshots according to configuration.
+8. Treat any contact fields as personal data. Keep them source-backed; never create or enrich personal details from naming conventions.
+9. Use reported FTE from the 2024 or 2025 indicator datasets as the default ≥20 employee scope filter. Keep previously known companies visible with an updated qualification status when newer reported FTE falls below the threshold.
+10. The approved production source is the official Estonian e-Business Register bulk-data portal. Do not wire Nordic, DACH, company-website, or unapproved social-network connectors into the Estonia production workflow.
+
+## Data model and API
+
+- `companies` stores the consolidated company profile and qualification status.
+- `company_facts` stores versioned facts such as `registry_status`, headcount, registry ID, and industry code with source provenance.
+- `registered_addresses` stores versioned official registered seats (`asukoht`), not operating locations.
+- `company_financials` stores annual report values by filing and statement scope. Estonia rows use EUR. EBITDA is derived only when operating profit and depreciation plus impairment are both present and EBITDA was not reported; the formula and `value_type="derived"` are recorded.
+- `source_snapshots`, `ingestion_runs`, `ingestion_records`, and `audit_events` preserve dataset evidence and import outcomes.
+
+Company detail is served by `GET /companies/{id}`. It includes the company summary and registry status, source-backed facts, registered address, financials, identifiers, warnings, and review history. Dedicated time-series endpoints are `GET /companies/{id}/financials` and `GET /companies/{id}/registered-address`. Other relevant routes include `GET /companies`, `GET /ingestion-runs`, and `GET /ingestion-runs/{id}`.
 
 ## Working conventions
 
-- Preserve existing repository conventions if they appear; otherwise use a typed, testable structure.
-- Prefer small vertical ingestion slices over scaffolding a large platform.
+- Preserve repository conventions and prefer typed, testable vertical changes.
 - Keep domain logic independent of frameworks and external providers.
-- Use migrations and seed data so a reviewer can run the demo without credentials.
-- Put provider-specific behavior behind interfaces and configuration.
+- Use migrations for database schema changes and seed commands for source synchronization/import.
+- Put provider behavior behind explicit configuration. Live access is off unless `LIVE_CONNECTORS_ENABLED=true`.
 - Use UTC timestamps in storage and ISO 8601 at API boundaries.
-- Validate all external input with typed schemas.
-- Return provenance and warnings in API responses used by the database browser.
-- Use feature flags or explicit configuration for connectors; disabled connectors must fail closed.
-- Avoid adding dependencies unless they materially reduce implementation risk.
+- Validate external input with typed schemas and return provenance and warnings in the database browser.
+- Do not add dependencies unless they materially reduce implementation risk.
 
-## Required implementation order
+## Data quality and safety
 
-1. Inspect the repository and document any existing stack.
-2. Add the domain schema, migrations, and seed data.
-3. Implement the source registry, permission gate, provenance model, and CSV importer.
-4. Implement the connector interface for discovery, fetching, parsing, validation, and upsert.
-5. Implement normalization, stable identity resolution, deduplication, and idempotent reruns.
-6. Implement the database browser and ingestion-run detail view with source links and warnings.
-7. Add data-quality checks, correction history, retention handling, and audit events.
-8. Add automated tests and a concise local runbook.
+Imports must be deterministic for the same source snapshot, parser version, and configuration. Explain accepted, rejected, skipped, duplicate, incomplete, stale, and conflicting records with source references. A missing field reduces completeness; it does not justify inventing a value. Corrections preserve the original fact and provenance.
 
-Do not move to the next slice while the previous slice cannot be demonstrated locally.
-
-## Data-quality requirements
-
-The ingestion pipeline must be deterministic for the same source snapshot, parser version, and configuration. It must explain accepted, rejected, skipped, duplicate, incomplete, stale, and conflicting records with source references. A missing field reduces completeness; it does not justify inventing a value. Corrections must preserve the original fact and its provenance.
-
-If Claude or another LLM is used inside the application, limit it to schema mapping or human-readable summaries of supplied source facts and warnings. It must not decide permissions, invent values, silently rewrite source data, access unapproved sources, or trigger external side effects.
-
-## Data and prompt safety
-
-- Keep raw snapshots short-lived and configurable.
-- Redact personal contact data and credentials from debug logs.
-- Do not put unnecessary personal data or raw source payloads into LLM prompts.
-- Persist parser/provider metadata and the source facts used for any generated data-quality summary.
-- Mark generated summaries as generated until reviewed.
-- Add tests that reject missing provenance, unauthorized sources, fabricated values, and duplicate records.
+Keep raw snapshots short-lived and configurable. Redact personal contact data and credentials from debug logs. Do not put unnecessary personal data or raw source payloads into LLM prompts. Generated summaries must cite supplied facts and remain marked as generated until reviewed.
 
 ## Expected quality bar
 
-Before declaring work complete:
-
-- Run the formatter, linter, type checker, and tests.
-- Test idempotent imports, regional permission enforcement, source retention, normalization, deduplication, correction history, and provenance.
-- Exercise the happy path from an approved source query or CSV through a reviewed database record.
-- Verify the app runs from a clean checkout using documented commands.
-- Update documentation when behavior or setup changes.
-- Report any provider credential, source permission, or legal/compliance dependency as a clear blocker; do not silently substitute an unapproved scraper.
-
-## Scope boundary
-
-Keep implementation limited to source discovery, fetching, parsing, validation, normalization, deduplication, provenance, database review, and data-quality reporting. Anything beyond that boundary requires a separate request.
-
-Do not make AI valuation claims without verified financial data.
+Run the requested formatter, linter, type checker, migration consistency check, and tests. Verify the Estonia import lifecycle, cache integrity and missing-year handling, idempotency, address versioning, financial derivation and currency, status exposure, orphan rejection, permissions, and provenance. Keep setup instructions usable from a clean checkout; explain that the ignored `api/data/` cache must be downloaded once or copied from a verified cache before offline `--from-cache` use.

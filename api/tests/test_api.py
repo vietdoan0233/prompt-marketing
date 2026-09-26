@@ -17,9 +17,9 @@ def test_health(client):
 
 def test_sources_show_permission_and_gate(client):
     sources = {s["id"]: s for s in client.get("/sources").json()}
-    assert sources["no-brreg"]["ingestible"] is True
+    assert sources["ee-ariregister"]["ingestible"] is True
     assert sources["linkedin-scrape"]["ingestible"] is False and sources["linkedin-scrape"]["gate_reasons"]
-    assert {"nordics", "dach", "internal"} == {s["region"] for s in sources.values()}
+    assert {"nordics", "dach", "baltics", "internal"} == {s["region"] for s in sources.values()}
 
 
 def test_csv_upload_and_run_detail(client):
@@ -39,12 +39,6 @@ def test_csv_upload_and_run_detail(client):
     assert len(client.get("/ingestion-runs").json()) == 2
 
 
-def test_discovery_via_json(client):
-    r = client.post("/ingestion-runs", json={"source_id": "fi-prh-ytj", "query": {"industry_code": "62"}})
-    assert r.status_code == 201, r.text
-    assert r.json()["counts"]["discovered"] == 2
-
-
 def test_company_filters_and_detail(client, session):
     seed_all(session)
     r = client.get(
@@ -59,7 +53,7 @@ def test_company_filters_and_detail(client, session):
     assert client.get("/companies", params={"review_status": "reviewed"}).json()["total"] == 0
 
     kuusisto = client.get("/companies", params={"q": "kuusisto"}).json()["items"][0]
-    assert kuusisto["source_count"] == 3 and kuusisto["freshness"] == "fresh"
+    assert kuusisto["source_count"] == 2 and kuusisto["freshness"] == "fresh"
     detail = client.get(f"/companies/{kuusisto['id']}").json()
     fields = {f["field_name"]: f for f in detail["fields"]}
     assert fields["employees"]["label"] == "multi-source"

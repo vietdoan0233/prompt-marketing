@@ -32,6 +32,7 @@ from app.domain.records import build_record, stable_hash
 from app.models import (
     Company,
     CompanyFinancial,
+    CompanyIdentifier,
     IngestionRecord,
     IngestionRun,
     RegisteredAddress,
@@ -125,34 +126,14 @@ def _legal_form(value: Any) -> str:
     value = _strip_accents(_text(value)).casefold()
     compact = "".join(c for c in value if c.isalnum())
     return {
-        "osaühing": "ou",
         "osauhing": "ou",
         "aktsiaselts": "as",
-        "usaldusühing": "uu",
-        "usaldusu hing": "uu",
-        "taisühing": "tu",
+        "usaldusuhing": "uu",
         "taisuhing": "tu",
-        "tulundusühistu": "tuh",
         "tulundusuhistu": "tuh",
+        "euroopaariuhing": "se",
         "se": "se",
-        "euroopaäriühing": "se",
-        "euroopäriühing": "se",
-    }.get(
-        value,
-        {
-            "osaühing": "ou",
-            "osauhing": "ou",
-            "aktsiaselts": "as",
-            "usaldusühing": "uu",
-            "usaldusuhing": "uu",
-            "täisühing": "tu",
-            "taisuhing": "tu",
-            "tulundusühistu": "tuh",
-            "tulundusuhistu": "tuh",
-            "euroopaäriühing": "se",
-            "euroopariuhing": "se",
-        }.get(compact, compact),
-    )
+    }.get(compact, compact)
 
 
 def _parse_date(value: Any) -> date | None:
@@ -540,6 +521,14 @@ def _upsert_financial(
     counts: dict[str, int],
 ) -> None:
     values, source_values, warnings = _financial_payload(group)
+    calculation_formula = None
+    if (
+        "ebitda" not in values
+        and values.get("operating_profit") is not None
+        and values.get("depreciation_and_impairment") is not None
+    ):
+        values["ebitda"] = values["operating_profit"] + values["depreciation_and_impairment"]
+        calculation_formula = "operating_profit + depreciation_and_impairment"
     report = group.report
     source_key = (
         f"EE:{report.registry_code}:{report.report_id}:{report.fiscal_year}:{group.scope or 'unknown'}"
@@ -577,7 +566,7 @@ def _upsert_financial(
             period_start=report.period_start,
             period_end=report.period_end,
             fiscal_year=report.fiscal_year,
-            currency=None,
+            currency="EUR",
             **kwargs,
             source_id=source.id,
             source_url=group.source_file.url,
@@ -588,12 +577,12 @@ def _upsert_financial(
             usage_policy=source.usage_policy,
             parser_version=EE_PARSER_VERSION,
             statement_scope=group.scope,
-            value_type="reported",
+            value_type="derived" if calculation_formula else "reported",
             filing_id=report.report_id,
             document_id=source_values[0]["document_id"] if source_values else report.document_id,
-            unit=None,
+            unit="EUR",
             restated=None,
-            calculation_formula=None,
+            calculation_formula=calculation_formula,
             ingestion_run_id=run.id,
             review_status="unreviewed",
             registry_code=report.registry_code,
@@ -606,8 +595,6 @@ def _upsert_financial(
     for metric in FINANCIAL_FIELDS:
         if metric not in values:
             counts[f"missing_{metric}"] = counts.get(f"missing_{metric}", 0) + 1
-    counts["missing_currency"] = counts.get("missing_currency", 0) + 1
-    counts["missing_unit"] = counts.get("missing_unit", 0) + 1
     counts["reports_imported"] += 1
 
 
@@ -723,7 +710,7 @@ def import_estonia(
                 continue
             scope, _ = _statement_scope(report, _text(row.get("tabel")), _text(row.get("elemendi_nimetus")))
             value = _parse_decimal(row.get("vaartus"))
-            if scope == "consolidated" or value is None:
+            if scope == "consolidated" or value is None or report.fiscal_year not in {2024, 2025}:
                 continue
             previous = fte_by_code.get(report.registry_code)
             if previous is None or report.fiscal_year >= previous[0]:
@@ -734,6 +721,14 @@ def import_estonia(
         if minimum <= 0
         else {code for code, (_, value, _) in fte_by_code.items() if value >= Decimal(minimum)}
     )
+    known_registry_codes = {
+        value.removeprefix("EE:")
+        for value in session.scalars(
+            select(CompanyIdentifier.value)
+            .join(Company, Company.id == CompanyIdentifier.company_id)
+            .where(Company.country == "EE", CompanyIdentifier.kind == "registry_id")
+        )
+    }
 
     # Current basic data supplies the company profile and the registered address. Only eligible, in-scope
     # registry codes are materialised; the full 378k-row file is never retained in memory.
@@ -759,7 +754,11 @@ def import_estonia(
     for row in iter_rows(basic_file):
         code = _text(row.get("ariregistri_kood"))
         form = _legal_form(row.get("ettevotja_oiguslik_vorm"))
-        if not code or code not in in_scope or form not in ALLOWED_LEGAL_FORMS:
+        if (
+            not code
+            or (code not in in_scope and code not in known_registry_codes)
+            or form not in ALLOWED_LEGAL_FORMS
+        ):
             continue
         parts = parse_registered_address(row)
         fte = fte_by_code.get(code)
@@ -793,6 +792,7 @@ def import_estonia(
                 "city": parts.city,
                 "industry_code": latest_activity.get(code, (None, None))[1],
                 "employees": employees,
+                "registry_status": row.get("ettevotja_staatus"),
                 "warnings": parts.warnings,
                 "evidence": evidence,
                 "provenance": provenance,

@@ -3,16 +3,19 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.connectors.ee_ariregister import DatasetFile
+from app.connectors.base import ConnectorError
+from app.connectors.ee_ariregister import DatasetFile, EeAriregisterFiles
 from app.domain.records import ParsedRecord, build_record
 from app.models import Company, CompanyFinancial, CompanyIdentifier, IngestionRun, Source
 from app.services.ee_import import (
     IndicatorGroup,
     Report,
     _financial_payload,
+    _legal_form,
     _row_snapshot,
     _upsert_financial,
 )
@@ -49,6 +52,7 @@ def _group() -> IndicatorGroup:
             ("revenue", "Revenue", "1000"),
             ("net_income", "TotalAnnualPeriodProfitLoss", "75"),
             ("depreciation_and_impairment", "DepreciationAndImpairmentLossReversal", "20"),
+            ("operating_profit", "TotalProfitLoss", "50"),
         ),
         start=1,
     ):
@@ -79,12 +83,14 @@ def test_reported_lines_map_directly_and_deferred_values_stay_null(session: Sess
         "revenue": Decimal("1000"),
         "net_income": Decimal("75"),
         "depreciation_and_impairment": Decimal("20"),
+        "operating_profit": Decimal("50"),
     }
     assert not warnings
     assert {item["element_name"] for item in source_values} == {
         "Revenue",
         "TotalAnnualPeriodProfitLoss",
         "DepreciationAndImpairmentLossReversal",
+        "TotalProfitLoss",
     }
 
     def import_group(hour: int) -> dict[str, int]:
@@ -118,25 +124,25 @@ def test_reported_lines_map_directly_and_deferred_values_stay_null(session: Sess
 
     first_counts = import_group(10)
     assert first_counts["financial_added"] == 1
-    assert first_counts["missing_currency"] == 1
-    assert first_counts["missing_unit"] == 1
+    assert first_counts.get("missing_currency", 0) == 0
+    assert first_counts.get("missing_unit", 0) == 0
     financial = session.scalar(select(CompanyFinancial).where(CompanyFinancial.company_id == company.id))
     assert financial is not None
     assert financial.revenue == Decimal("1000")
     assert financial.net_income == Decimal("75")
     assert financial.depreciation_and_impairment == Decimal("20")
     assert financial.depreciation is None
-    assert financial.ebitda is None
+    assert financial.ebitda == Decimal("70")
     assert financial.dividends is None
     assert financial.capex is None
-    assert financial.currency is None and financial.unit is None
-    assert financial.calculation_formula is None
+    assert financial.currency == "EUR" and financial.unit == "EUR"
+    assert financial.calculation_formula == "operating_profit + depreciation_and_impairment"
     assert financial.source_id == source.id
     assert financial.source_url == group.source_file.url
     assert financial.source_file == group.source_file.name
     assert financial.snapshot_id and financial.ingestion_run_id
     assert financial.observed_at == group.source_file.published_at
-    assert financial.value_type == "reported"
+    assert financial.value_type == "derived"
     assert financial.statement_scope == "standalone"
     assert import_group(11)["financial_unchanged"] == 1
     assert session.query(CompanyFinancial).filter_by(company_id=company.id).count() == 1
@@ -152,6 +158,50 @@ def test_non_estonian_company_is_rejected(monkeypatch) -> None:
     )
     assert not record.ok
     assert any("not an active country" in error for error in record.errors)
+
+
+def test_indicator_completeness_requires_each_target_year() -> None:
+    files = [
+        DatasetFile(
+            kind=kind,
+            name=f"{kind}.zip",
+            url="https://avaandmed.ariregister.rik.ee/sites/default/files/test.zip",
+            path="unused.zip",
+            sha256="a" * 64,
+            size=1,
+            last_modified="2026-09-03T11:04:00+00:00",
+        )
+        for kind in ("basic", "reports", "activity")
+    ]
+    files.append(
+        DatasetFile(
+            kind="indicators",
+            name="4.2024.zip",
+            url="https://avaandmed.ariregister.rik.ee/sites/default/files/4.2024.zip",
+            path="unused.zip",
+            sha256="a" * 64,
+            size=1,
+            last_modified="2026-09-03T11:04:00+00:00",
+            year=2024,
+        )
+    )
+    with pytest.raises(ConnectorError, match="2025"):
+        EeAriregisterFiles._check_complete(files, [2024, 2025])
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("Osaühing", "ou"),
+        ("Aktsiaselts", "as"),
+        ("Usaldusühing", "uu"),
+        ("Täisühing", "tu"),
+        ("Tulundusühistu", "tuh"),
+        ("Euroopa äriühing", "se"),
+    ],
+)
+def test_legal_forms_use_accent_normalized_canonical_keys(raw: str, expected: str) -> None:
+    assert _legal_form(raw) == expected
 
 
 def test_only_official_estonia_source_is_enabled() -> None:

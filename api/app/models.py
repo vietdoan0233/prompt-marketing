@@ -62,7 +62,7 @@ class Source(Base):
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     name: Mapped[str] = mapped_column(String(200))
     provider: Mapped[str] = mapped_column(String(200))
-    region: Mapped[str] = mapped_column(String(32))  # nordics | dach | baltics | internal
+    region: Mapped[str] = mapped_column(String(32))  # production: baltics | internal
     countries: Mapped[list[str]] = mapped_column(JsonType, default=list)
     tier: Mapped[str] = mapped_column(
         String(1), default="A"
@@ -74,7 +74,7 @@ class Source(Base):
     terms_url: Mapped[str | None] = mapped_column(String(500))
     permission_status: Mapped[str] = mapped_column(String(32), default="pending")
     approval_reference: Mapped[str | None] = mapped_column(String(300))
-    connector_type: Mapped[str] = mapped_column(String(32))  # csv | brreg | prh | manual
+    connector_type: Mapped[str] = mapped_column(String(32))  # csv | ee_ariregister | manual
     connector_config: Mapped[dict[str, Any]] = mapped_column(JsonType, default=dict)
     enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     allowed_fields: Mapped[list[str]] = mapped_column(JsonType, default=list)

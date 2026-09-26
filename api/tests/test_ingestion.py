@@ -48,13 +48,6 @@ def test_full_seed_rerun_is_idempotent(session):
     assert _state(session) == state1
 
 
-def test_discovery_rerun_is_idempotent_and_filters_headcount_at_source(session):
-    run1 = ingestion.start_discovery_run(session, source_id="no-brreg", query={}, actor="test")
-    run2 = ingestion.start_discovery_run(session, source_id="no-brreg", query={}, actor="test")
-    assert run1.counts["discovered"] == 3  # 18- and 1-employee entities filtered by fraAntallAnsatte=20
-    assert run2.counts["unchanged"] == 3 and run2.counts["accepted"] == 0
-
-
 def test_changed_value_supersedes_but_keeps_history(session):
     import_csv(session, "mergero-csv", MERGERO_HEADER + "M-1,Alpha Oy,FI,Espoo,2931457-2,,,30,,,,\n")
     import_csv(session, "mergero-csv", MERGERO_HEADER + "M-1,Alpha Oy,FI,Espoo,2931457-2,,,45,,,,\n")

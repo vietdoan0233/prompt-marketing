@@ -11,11 +11,6 @@ target-version = "py312"
 select = ["E", "F", "I", "B", "UP", "SIM"]
 ignore = ["B008"]
 
-[tool.ruff.lint.per-file-ignores]
-# Multilingual keyword lists and regexes read better unwrapped.
-"app/domain/website_extract.py" = ["E501", "SIM105"]
-"tests/test_live_connectors.py" = ["E501"]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

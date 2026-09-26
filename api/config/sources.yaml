@@ -24,7 +24,7 @@ sources:
     connector_type: ee_ariregister
     connector_config: {live: true}
     enabled: true
-    allowed_fields: [legal_name, registry_id, vat_id, city, industry_code, employees]
+    allowed_fields: [legal_name, registry_id, vat_id, city, registry_status, industry_code, employees]
     field_mapping: {}
     base_confidence: verified
     usage_policy: internal-only

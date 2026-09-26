@@ -1,5 +1,5 @@
 """Headcount-based qualification. Headcount is the primary viability proxy because timely
-financials are rarely public for Nordic/DACH private companies."""
+financials are rarely public for Estonian private companies."""
 
 from enum import StrEnum
 

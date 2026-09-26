@@ -19,8 +19,8 @@ def test_registry_and_vat_resolve_to_one_profile(session):
     sources = set(
         session.scalars(select(CompanyFact.source_id).where(CompanyFact.company_id == revontuli.id))
     )
-    # PRH (registry ID) + firmographics (VAT FI30188227 only) + Mergero CSV consolidated into one record.
-    assert sources == {"fi-prh-ytj", "licensed-firmographics", "mergero-csv"}
+    # A firmographic VAT-only match and the Mergero registry ID consolidate into one record.
+    assert sources == {"licensed-firmographics", "mergero-csv"}
     assert (
         session.scalar(
             select(func.count()).select_from(Company).where(Company.normalized_name == "revontuli systems")

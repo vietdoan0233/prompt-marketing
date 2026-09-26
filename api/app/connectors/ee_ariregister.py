@@ -34,6 +34,7 @@ PORTAL = "https://avaandmed.ariregister.rik.ee"
 DOWNLOAD_PAGE = f"{PORTAL}/et/avaandmete-allalaadimine"
 EE_PARSER_VERSION = "ee-ariregister-2026.09.1"
 MANIFEST = "manifest.json"
+QUALIFICATION_YEARS = {2024, 2025}
 
 _PATTERNS = {
     "basic": re.compile(r"/sites/default/files/avaandmed/ettevotja_rekvisiidid__lihtandmed\.csv\.zip"),
@@ -103,7 +104,8 @@ class EeAriregisterFiles:
         )
 
     def resolve(self, years: list[int]) -> list[DatasetFile]:
-        return self._resolve_live(years) if self.live else self._resolve_local(years)
+        required_years = sorted(set(years) | QUALIFICATION_YEARS)
+        return self._resolve_live(required_years) if self.live else self._resolve_local(required_years)
 
     def _resolve_local(self, years: list[int]) -> list[DatasetFile]:
         manifest = self._manifest()
@@ -200,8 +202,9 @@ class EeAriregisterFiles:
         if missing:
             raise ConnectorError(f"official dataset files not found on the portal: {sorted(missing)}")
         have_years = {f.year for f in files if f.kind == "indicators"}
-        if not have_years:
-            raise ConnectorError(f"no key-indicator files for fiscal years {years}")
+        missing_years = sorted(set(years) - have_years)
+        if missing_years:
+            raise ConnectorError(f"missing key-indicator files for fiscal years {missing_years}")
 
 
 def iter_rows(file: DatasetFile) -> Iterator[dict[str, str]]:

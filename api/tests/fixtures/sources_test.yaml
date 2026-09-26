@@ -11,54 +11,36 @@ regions:
     countries: [DE, AT, CH]
     source_modes: [public-approved, mergero-supplied, licensed]
     default_language: de
+  baltics:
+    countries: [EE]
+    source_modes: [public-approved, mergero-supplied]
+    default_language: et
 
 _company_fields: &company_fields
   [legal_name, trading_name, city, region, registry_id, vat_id, website, industry_code, sector, employees]
 
 sources:
-  # ---------------------------------------------------------------- Nordics: official registries
-  - id: fi-prh-ytj
-    name: PRH / YTJ open data (Finnish Trade Register)
-    provider: Finnish Patent and Registration Office (PRH)
-    region: nordics
-    countries: [FI]
+  - id: ee-ariregister
+    name: Estonian e-Business Register open data
+    provider: Registrite ja Infosüsteemide Keskus (RIK)
+    region: baltics
+    countries: [EE]
     source_type: registry
     source_mode: public-approved
-    terms_url: https://avoindata.prh.fi/en
+    terms_url: https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine
     permission_status: approved
-    approval_reference: DEMO-APPROVAL-FI-PRH
-    connector_type: prh
-    connector_config: {fixture: registry/prh_companies.json, live: false}
+    approval_reference: TEST-EE-RIK
+    connector_type: ee_ariregister
+    connector_config: {live: false}
     enabled: true
-    allowed_fields: [legal_name, trading_name, city, registry_id, website, industry_code, sector]
+    allowed_fields: [legal_name, registry_id, vat_id, city, registry_status, industry_code, employees]
     base_confidence: verified
     usage_policy: internal-only
     retention_days: 30
-    rate_limit_per_minute: 60
+    rate_limit_per_minute: 30
     trust_rank: 10
-    notes: Open data (CC BY 4.0). No headcount field; qualification needs another approved source.
 
-  - id: no-brreg
-    name: Brønnøysund Enhetsregisteret
-    provider: Brønnøysundregistrene
-    region: nordics
-    countries: ["NO"]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://data.brreg.no/enhetsregisteret/api/dokumentasjon/no/index.html
-    permission_status: approved
-    approval_reference: DEMO-APPROVAL-NO-BRREG
-    connector_type: brreg
-    connector_config: {fixture: registry/brreg_enheter.json, live: false}
-    enabled: true
-    allowed_fields: [legal_name, city, registry_id, vat_id, website, industry_code, sector, employees]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    rate_limit_per_minute: 60
-    trust_rank: 10
-    notes: Open API (NLOD). Supports fraAntallAnsatte so discovery can filter >= 20 employees at source.
-
+  # ---------------------------------------------------------------- CSV-backed test sources
   - id: se-bolagsverket-allabolag
     name: Allabolag / Bolagsverket export
     provider: Allabolag (Bolagsverket filings)
