@@ -326,9 +326,32 @@ class SellerProspectOut(BaseModel):
     financial_profile_index: float | None = None
     buyer_fit: Literal["not_assessed"] = "not_assessed"
     owner_intent: Literal["unknown"] = "unknown"
+    latest_employees_fte: float | None = None
+    consolidated_revenue_eur: float | None = None
+    # group_parent: also files consolidated accounts; holding_activity: EMTAK 64.2x/70.10 activity code
+    flags: list[Literal["group_parent", "holding_activity"]] = []
+    # Link to the official e-Business Register company page, built from the source-backed registry code.
+    registry_url: str | None = None
+    # Deterministic brief: what the filings show (each line cites a fiscal year) and what they cannot show.
+    review_reasons: list[str] = []
+    open_questions: list[str] = []
     filing_ids: list[str]
     source_urls: list[str]
     issues: list[str]
+
+
+class FunnelStageOut(BaseModel):
+    key: str
+    label: str
+    count: int
+    rule: str
+
+
+class PeerGroupOut(BaseModel):
+    group: str
+    peer_count: int
+    median_margin: float
+    median_equity_ratio: float
 
 
 class SellerFunnelOut(BaseModel):
@@ -336,6 +359,8 @@ class SellerFunnelOut(BaseModel):
     core_size: int
     three_year_profitable: int
     advisor_review: int
+    stages: list[FunnelStageOut] = []
+    peer_groups: list[PeerGroupOut] = []
     items: list[SellerProspectOut]
     methodology: str
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Fragment } from "react";
 
 import { Badge } from "@/components/Badge";
 import { apiGet } from "@/lib/api";
@@ -33,6 +34,7 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
     sector: sp.sector,
     limit: 100,
   });
+  const top = data.stages[0]?.count || 1;
 
   return (
     <>
@@ -40,7 +42,7 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
         <div>
           <h1>Seller prospect funnel</h1>
           <p className="subtitle">
-            Screen imported companies for an advisor to investigate. A financial profile is not evidence that an owner wants to sell.
+            Which companies deserve an advisor&apos;s research first, and why. A financial profile is not evidence that an owner wants to sell.
           </p>
         </div>
       </div>
@@ -62,16 +64,47 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
         <Link className="btn btn-ghost" href="/seller-prospects">Reset</Link>
       </form>
 
-      <div className="grid grid-4" style={{ marginBottom: 16 }}>
-        <div className="stat"><div className="n">{data.total_companies}</div><div className="l">Imported companies</div></div>
-        <div className="stat"><div className="n">{data.core_size}</div><div className="l">In size band</div></div>
-        <div className="stat"><div className="n">{data.three_year_profitable}</div><div className="l">In band, 3 profitable years</div></div>
-        <div className="stat"><div className="n">{data.advisor_review}</div><div className="l">Ready for advisor review</div></div>
-      </div>
+      <section className="panel">
+        <h2>From registry to advisor queue</h2>
+        <p className="muted">Each step keeps only the companies that pass its rule. Every count comes from the official annual-report files.</p>
+        {data.stages.length === 0 ? (
+          <p className="muted">No imported Estonian companies yet. Load the official register files first.</p>
+        ) : (
+          <div className="funnel">
+            {data.stages.map((stage, i) => {
+              const previous = i > 0 ? data.stages[i - 1].count : null;
+              const final = i === data.stages.length - 1;
+              return (
+                <div className="funnel-row" key={stage.key}>
+                  <div>
+                    <strong>{stage.label}</strong>
+                    <div className="small muted">{stage.rule}</div>
+                  </div>
+                  <div className="funnel-bar">
+                    <div
+                      className={final ? "funnel-fill final" : "funnel-fill"}
+                      style={{ width: `${Math.max(1, (stage.count / top) * 100)}%` }}
+                    />
+                  </div>
+                  <div className="num">
+                    <span className="count">{stage.count.toLocaleString("en")}</span>
+                    {previous !== null && previous > stage.count && (
+                      <div className="small muted">−{(previous - stage.count).toLocaleString("en")}</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <section className="panel">
         <h2>Prioritised companies</h2>
-        <p className="muted">Showing up to 100 companies. The peer index ranks a financial profile among comparable EMTAK groups; it does not score sale readiness.</p>
+        <p className="muted">
+          Showing up to 100 companies. The peer index ranks a financial profile inside its EMTAK group; it does not score sale readiness.
+          Open a row to see what the filings show and what they cannot.
+        </p>
         <div className="table-wrap">
           <table>
             <thead>
@@ -87,26 +120,68 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
             </thead>
             <tbody>
               {data.items.map((item) => (
-                <tr key={item.company_id}>
-                  <td>
-                    <Link href={`/companies/${item.company_id}`}><strong>{item.legal_name}</strong></Link>
-                    <div className="small muted">{item.registry_id ?? "No registry ID"} · {item.sector ?? "Sector unknown"}</div>
-                  </td>
-                  <td><Badge value={item.next_action} /></td>
-                  <td className="num">{money(item.latest_revenue_eur)}<div className="small muted">{item.latest_year ?? "—"}</div></td>
-                  <td className="num">{item.positive_profit_years === null ? "—" : `${item.positive_profit_years}/3`}</td>
-                  <td className="num">{percent(item.three_year_median_margin)}</td>
-                  <td className="num" title={item.peer_count ? `${item.peer_count} peers in EMTAK ${item.peer_group}` : "Insufficient comparable peers"}>
-                    {index(item.financial_profile_index)}
-                    <div className="small muted">{item.peer_group ? `EMTAK ${item.peer_group}` : "No peer group"}</div>
-                  </td>
-                  <td className="small">
-                    <Badge value={item.evidence_status} />
-                    <div>{item.filing_ids.join(", ") || "No comparable report"}</div>
-                    {item.source_urls[0] && <a href={item.source_urls[0]} target="_blank" rel="noreferrer">Official source ↗</a>}
-                    {item.issues.length > 0 && <div className="muted" title={item.issues.join("; ")}>{item.issues[0]}</div>}
-                  </td>
-                </tr>
+                <Fragment key={item.company_id}>
+                  <tr>
+                    <td>
+                      <Link href={`/companies/${item.company_id}`}><strong>{item.legal_name}</strong></Link>
+                      <div className="small muted">
+                        {item.registry_id?.replace("EE:", "") ?? "No registry ID"}
+                        {item.registry_url && (
+                          <> · <a href={item.registry_url} target="_blank" rel="noreferrer">Register card ↗</a></>
+                        )}
+                      </div>
+                      {item.flags.length > 0 && (
+                        <div>{item.flags.map((flag) => <Badge key={flag} value={flag} />)}</div>
+                      )}
+                    </td>
+                    <td><Badge value={item.next_action} /></td>
+                    <td className="num">
+                      {money(item.latest_revenue_eur)}
+                      <div className="small muted">
+                        {item.latest_year ? `FY${item.latest_year}` : "—"}
+                        {item.latest_employees_fte !== null && ` · ${item.latest_employees_fte.toFixed(0)} FTE`}
+                      </div>
+                    </td>
+                    <td className="num">{item.positive_profit_years === null ? "—" : `${item.positive_profit_years}/3`}</td>
+                    <td className="num">{percent(item.three_year_median_margin)}</td>
+                    <td className="num" title={item.peer_count ? `${item.peer_count} peers in EMTAK ${item.peer_group}` : "Insufficient comparable peers"}>
+                      {index(item.financial_profile_index)}
+                      <div className="small muted">
+                        {item.peer_group ? `EMTAK ${item.peer_group}` : "No peer group"}
+                        {item.peer_count ? ` · ${item.peer_count} peers` : ""}
+                      </div>
+                    </td>
+                    <td className="small">
+                      <Badge value={item.evidence_status} />
+                      <div>{item.filing_ids.join(", ") || "No comparable report"}</div>
+                      {item.source_urls[0] && (
+                        <a href={item.source_urls[0]} title="Official bulk dataset file (large ZIP)">Dataset file</a>
+                      )}
+                      {item.issues.length > 0 && <div className="muted" title={item.issues.join("; ")}>{item.issues[0]}</div>}
+                    </td>
+                  </tr>
+                  <tr className="brief-row">
+                    <td colSpan={7}>
+                      <details>
+                        <summary>Why review · what we don&apos;t know</summary>
+                        <div className="brief">
+                          <div>
+                            <strong>What the filings show</strong>
+                            {item.review_reasons.length > 0 ? (
+                              <ul>{item.review_reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
+                            ) : (
+                              <p className="muted">No comparable annual figures.</p>
+                            )}
+                          </div>
+                          <div>
+                            <strong>What they cannot show</strong>
+                            <ul>{item.open_questions.map((question) => <li key={question}>{question}</li>)}</ul>
+                          </div>
+                        </div>
+                      </details>
+                    </td>
+                  </tr>
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -114,10 +189,45 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
         {data.items.length === 0 && <p className="muted">No companies match, or the official Estonia files have not been loaded yet.</p>}
       </section>
 
+      {data.peer_groups.length > 0 && (
+        <section className="panel">
+          <h2>Where a peer index exists</h2>
+          <p className="muted">EMTAK groups with at least eight comparable, active companies in the size band. Smaller groups get no index.</p>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>EMTAK group</th>
+                  <th className="num">Peers</th>
+                  <th className="num">Median 3-year margin</th>
+                  <th className="num">Median equity / assets</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.peer_groups.map((group) => (
+                  <tr key={group.group}>
+                    <td><Link href={`/seller-prospects?sector=${group.group}&min_millions=${min}&max_millions=${max}`}>{group.group}</Link></td>
+                    <td className="num">{group.peer_count}</td>
+                    <td className="num">{percent(group.median_margin)}</td>
+                    <td className="num">{percent(group.median_equity_ratio)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       <section className="panel">
         <h2>How this funnel works</h2>
         <p>{data.methodology}</p>
-        <p className="muted">Next step for each shortlisted company: an advisor checks strategic buyer fit and a credible reason to approach. Both are currently unknown in this dataset.</p>
+        <p><strong>What an advisor does with a shortlisted company</strong></p>
+        <ol>
+          <li>Check who owns it on the register card: founder, family, group or fund.</li>
+          <li>Check whether Mergero&apos;s buyers want this profile in MGX.</li>
+          <li>If both hold, open with something useful to the owner: valuation insight or a discreet test of buyer appetite.</li>
+          <li>Record the outcome, so the funnel learns which profiles turn into conversations and mandates.</li>
+        </ol>
       </section>
     </>
   );

@@ -53,6 +53,8 @@ const TONE: Record<string, string> = {
   core: "good",
   adjacent: "muted",
   weak: "bad",
+  group_parent: "info",
+  holding_activity: "warn",
 };
 
 const LABEL: Record<string, string> = {
@@ -64,6 +66,8 @@ const LABEL: Record<string, string> = {
   advisor_review: "advisor review",
   outside_size_band: "outside size band",
   needs_data: "needs data",
+  group_parent: "group parent",
+  holding_activity: "holding / head office",
 };
 
 export function Badge({ value, title, label }: { value: string; title?: string; label?: string }) {

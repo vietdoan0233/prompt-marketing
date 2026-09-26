@@ -27,6 +27,45 @@ class AnnualFinancial:
     source_url: str
     source_file: str | None
     review_status: str
+    employees_fte: Decimal | None = None
+
+
+# EMTAK/NACE activity codes whose accounts describe an ownership vehicle rather than an operating business:
+# 64.2x holding companies and financing conduits, 70.10 head offices. Their margins are not comparable with
+# operating peers, so they are flagged instead of ranked.
+HOLDING_ACTIVITY_PREFIXES = ("642", "7010")
+
+
+def is_holding_activity(codes: list[str] | None) -> bool:
+    for code in codes or []:
+        digits = "".join(ch for ch in code if ch.isdigit())
+        if digits.startswith(HOLDING_ACTIVITY_PREFIXES):
+            return True
+    return False
+
+
+def consolidated_revenue(rows: list[AnnualFinancial], fiscal_year: int) -> Decimal | None:
+    """Reported group revenue for one year, if the company filed exactly one consolidated EUR statement."""
+    matches = [
+        row
+        for row in rows
+        if row.review_status != "superseded"
+        and row.fiscal_year == fiscal_year
+        and row.statement_scope == "consolidated"
+        and row.currency == "EUR"
+        and row.unit == "EUR"
+        and row.revenue is not None
+    ]
+    return matches[0].revenue if len(matches) == 1 else None
+
+
+def files_consolidated(rows: list[AnnualFinancial], fiscal_year: int) -> bool:
+    return any(
+        row.review_status != "superseded"
+        and row.fiscal_year == fiscal_year
+        and row.statement_scope == "consolidated"
+        for row in rows
+    )
 
 
 @dataclass
@@ -42,6 +81,7 @@ class FinancialSignal:
     positive_profit_years: int | None = None
     stable_revenue: bool | None = None
     latest_equity_ratio: float | None = None
+    latest_employees_fte: float | None = None
     filing_ids: list[str] = field(default_factory=list)
     source_urls: list[str] = field(default_factory=list)
     issues: list[str] = field(default_factory=list)
@@ -107,6 +147,8 @@ def financial_signal(
     )
     if latest.total_assets is not None and latest.total_assets > 0 and latest.equity is not None:
         signal.latest_equity_ratio = float(latest.equity / latest.total_assets)
+    if latest.employees_fte is not None:
+        signal.latest_employees_fte = float(latest.employees_fte)
 
     years = [latest_year - 2, latest_year - 1, latest_year]
     if not all(year in unique for year in years):

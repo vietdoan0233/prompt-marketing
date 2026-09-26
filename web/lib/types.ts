@@ -127,9 +127,29 @@ export type SellerProspect = {
   financial_profile_index: number | null;
   buyer_fit: "not_assessed";
   owner_intent: "unknown";
+  latest_employees_fte: number | null;
+  consolidated_revenue_eur: number | null;
+  flags: ("group_parent" | "holding_activity")[];
+  registry_url: string | null;
+  review_reasons: string[];
+  open_questions: string[];
   filing_ids: string[];
   source_urls: string[];
   issues: string[];
+};
+
+export type FunnelStage = {
+  key: string;
+  label: string;
+  count: number;
+  rule: string;
+};
+
+export type PeerGroup = {
+  group: string;
+  peer_count: number;
+  median_margin: number;
+  median_equity_ratio: number;
 };
 
 export type SellerFunnel = {
@@ -137,6 +157,8 @@ export type SellerFunnel = {
   core_size: number;
   three_year_profitable: number;
   advisor_review: number;
+  stages: FunnelStage[];
+  peer_groups: PeerGroup[];
   items: SellerProspect[];
   methodology: string;
 };

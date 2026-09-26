@@ -295,6 +295,7 @@ def list_seller_prospects(
         limit=limit,
     )
 
+
 SORTS = {
     "legal_name": Company.legal_name,
     "country": Company.country,

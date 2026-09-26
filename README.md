@@ -73,6 +73,17 @@ Unmatched indicator report IDs are rejected and included in the ingestion run's 
 
 The funnel applies an explainable sequence to the imported companies: annual revenue band, three consecutive comparable standalone EUR fiscal years, operating-profit persistence, and a peer-relative financial-profile index. It uses only reported revenue, operating profit, assets, and equity. The index combines robust Z-scores for median operating margin (70%) and equity/assets (30%) inside two-digit EMTAK groups with at least eight comparable peers. Smaller groups show no index. Report IDs, official source links, and data gaps remain visible. A shortlist is for advisor review, not automatic outreach. Buyer fit and owner intent are not assessed by these files. The dataset does not directly provide dividends or capex; the funnel does not use them or treat derived EBITDA as a reported value.
 
+The response also reports the funnel stage by stage (imported → active → size band → three comparable years → three profitable years → advisor review), the EMTAK groups that carry a peer index, and two flags. `group_parent` means the company also filed consolidated accounts for its latest year, so the standalone figures may understate the sellable group; the reported group revenue is shown when available. `holding_activity` marks EMTAK 64.2x or 70.10 activity codes; these are sent to research rather than ranked, because a holding's margins are not comparable with operating peers. Each company has a deterministic brief: what the filings show, each line tied to a fiscal year, and what they cannot show. It also links to the official e-Business Register company page built from the registry code.
+
+To see what the imported data actually covers, run the read-only coverage report from `api/`:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.analysis.seller_coverage            # Markdown
+.\.venv\Scripts\python.exe -m app.analysis.seller_coverage --json     # JSON
+```
+
+It lists field coverage by fiscal year and statement scope, fiscal-period lengths, the latest comparable revenue distribution, why in-band companies lack complete evidence, peer-group sizes, and flag counts.
+
 ## Checks
 
 Run from the repository root:

@@ -1,0 +1,229 @@
+"""Seller prospect funnel: evidence rules, peer index, flags, stages and the API contract."""
+
+from datetime import date
+from decimal import Decimal
+
+from sqlalchemy.orm import Session
+
+from app.domain.normalize import _ee_check
+from app.domain.seller_signals import (
+    AnnualFinancial,
+    financial_signal,
+    is_holding_activity,
+    robust_reference,
+    robust_z,
+)
+from app.models import Company, CompanyFact, CompanyFinancial, CompanyIdentifier, utcnow
+from app.services.seller_funnel import seller_funnel
+
+LATEST = date.today().year - 1
+YEARS = (LATEST - 2, LATEST - 1, LATEST)
+BAND = {"min_revenue_eur": 5_000_000, "max_revenue_eur": 50_000_000}
+
+
+def _registry_code(seed: int) -> str:
+    base = f"{1_000_000 + seed * 13:07d}"
+    return f"{base}{_ee_check(base)}"
+
+
+def _annual(year: int, revenue: str, profit: str, **kw) -> AnnualFinancial:
+    values = {
+        "fiscal_year": year,
+        "period_start": date(year, 1, 1),
+        "period_end": date(year, 12, 31),
+        "currency": "EUR",
+        "unit": "EUR",
+        "statement_scope": "standalone",
+        "revenue": Decimal(revenue),
+        "operating_profit": Decimal(profit),
+        "total_assets": Decimal("4000000"),
+        "equity": Decimal("2000000"),
+        "filing_id": f"R{year}",
+        "source_url": "https://avaandmed.ariregister.rik.ee/sites/default/files/4.x.zip",
+        "source_file": "4.x.zip",
+        "review_status": "unreviewed",
+    }
+    values.update(kw)
+    return AnnualFinancial(**values)
+
+
+def _add_company(
+    session: Session,
+    seed: int,
+    name: str,
+    *,
+    emtak: str = "62011",
+    status: str = "Registrisse kantud",
+    revenue: tuple[int, ...] = (10_000_000, 10_500_000, 11_000_000),
+    margin: float = 0.10,
+    equity_ratio: float = 0.5,
+    years: tuple[int, ...] = YEARS,
+    consolidated_revenue: int | None = None,
+) -> Company:
+    code = _registry_code(seed)
+    company = Company(legal_name=name, normalized_name=name.casefold(), country="EE", industry_codes=[emtak])
+    session.add(company)
+    session.flush()
+    session.add(CompanyIdentifier(company_id=company.id, kind="registry_id", value=f"EE:{code}"))
+    now = utcnow()
+    session.add(
+        CompanyFact(
+            company_id=company.id,
+            field_name="registry_status",
+            value_json=status,
+            value_hash=f"status-{seed}",
+            source_id="ee-ariregister",
+            observed_at=now,
+            valid_from=now,
+            base_confidence="verified",
+            confidence="verified",
+            usage_policy="internal-only",
+        )
+    )
+
+    def financial(year: int, value: int, scope: str) -> CompanyFinancial:
+        return CompanyFinancial(
+            company_id=company.id,
+            fiscal_year=year,
+            period_start=date(year, 1, 1),
+            period_end=date(year, 12, 31),
+            currency="EUR",
+            unit="EUR",
+            statement_scope=scope,
+            revenue=Decimal(value),
+            operating_profit=Decimal(round(value * margin)),
+            total_assets=Decimal(value // 2),
+            equity=Decimal(round(value // 2 * equity_ratio)),
+            employees_fte=Decimal(40),
+            source_id="ee-ariregister",
+            source_url="https://avaandmed.ariregister.rik.ee/sites/default/files/4.x.zip",
+            observed_at=now,
+            confidence="verified",
+            usage_policy="internal-only",
+            parser_version="test",
+            filing_id=f"{code}-{year}-{scope}",
+            registry_code=code,
+            source_key=f"{code}|{year}|{scope}",
+            content_hash=f"{code}-{year}-{scope}",
+        )
+
+    for year, value in zip(years, revenue, strict=False):
+        session.add(financial(year, value, "standalone"))
+    if consolidated_revenue is not None:
+        session.add(financial(years[-1], consolidated_revenue, "consolidated"))
+    session.flush()
+    return company
+
+
+def _seed_funnel(session: Session) -> None:
+    for seed in range(9):  # nine comparable operating peers in EMTAK 62 with spread in margin
+        _add_company(
+            session, seed, f"Peer {seed} OÜ", margin=0.04 + 0.02 * seed, equity_ratio=0.3 + 0.04 * seed
+        )
+    _add_company(session, 20, "Group Parent AS", margin=0.12, consolidated_revenue=60_000_000)
+    _add_company(session, 21, "Holding OÜ", emtak="64201", margin=0.30)
+    _add_company(session, 22, "Closing OÜ", status="Likvideerimisel")
+    _add_company(session, 23, "Large AS", revenue=(80_000_000, 81_000_000, 82_000_000))
+    _add_company(session, 24, "Gap OÜ", years=(LATEST - 2, LATEST), revenue=(9_000_000, 9_500_000))
+    session.commit()
+
+
+def test_financial_signal_requires_three_unique_comparable_years() -> None:
+    rows = [_annual(year, "10000000", "1000000") for year in YEARS]
+    signal = financial_signal(rows, **BAND)
+    assert signal.evidence_status == "complete" and signal.quality_band == "core"
+    assert signal.filing_ids == [f"{year}:R{year}" for year in YEARS]
+    assert signal.three_year_median_margin == 0.1
+
+    duplicated = [*rows, _annual(LATEST, "10000000", "900000", filing_id="R-dup")]
+    signal = financial_signal(duplicated, **BAND)
+    assert signal.evidence_status == "needs_data"
+    assert any("lacks one unique comparable" in issue for issue in signal.issues)
+
+    consolidated_only = [_annual(year, "10000000", "1", statement_scope="consolidated") for year in YEARS]
+    signal = financial_signal(consolidated_only, **BAND)
+    assert signal.issues[-1] == "No comparable annual revenue and operating profit"
+
+
+def test_robust_scores_and_holding_codes() -> None:
+    assert robust_z(0.5, robust_reference([0.1, 0.1, 0.1])) is None  # zero spread: no score
+    assert robust_z(10.0, robust_reference([0.0, 0.1, 0.2, 0.3])) == 3.0  # clipped
+    assert is_holding_activity(["64201"]) and is_holding_activity(["70101"])
+    assert not is_holding_activity(["62011"]) and not is_holding_activity(["64191"])
+
+
+def test_funnel_stages_flags_and_ranking(session: Session) -> None:
+    _seed_funnel(session)
+    funnel = seller_funnel(session, sector=None, limit=100, **BAND)
+
+    stages = {stage.key: stage.count for stage in funnel.stages}
+    assert stages == {
+        "imported": 14,
+        "registered": 13,
+        "in_size_band": 12,
+        "complete_evidence": 11,
+        "profitable": 11,
+        "advisor_review": 10,
+    }
+    assert funnel.advisor_review == 10
+
+    items = {item.legal_name: item for item in funnel.items}
+    assert items["Holding OÜ"].next_action == "research"
+    assert items["Holding OÜ"].flags == ["holding_activity"]
+    assert items["Holding OÜ"].financial_profile_index is None
+    assert items["Closing OÜ"].next_action == "exclude"
+    assert items["Large AS"].next_action == "outside_size_band"
+    assert items["Gap OÜ"].evidence_status == "needs_data"
+
+    parent = items["Group Parent AS"]
+    assert parent.flags == ["group_parent"] and parent.consolidated_revenue_eur == 60_000_000
+    assert any("group revenue €60.0m" in reason for reason in parent.review_reasons)
+
+    ranked = [item for item in funnel.items if item.next_action == "advisor_review"]
+    assert ranked[0].legal_name == "Peer 8 OÜ"  # highest margin peer ranks first
+    assert all(item.peer_count == 10 for item in ranked)
+    assert funnel.peer_groups[0].group == "62" and funnel.peer_groups[0].peer_count == 10
+
+    top = ranked[0]
+    assert top.registry_url == f"https://ariregister.rik.ee/eng/company/{_registry_code(8)}"
+    assert any(reason.startswith("Peer index") for reason in top.review_reasons)
+    assert top.open_questions[0].startswith("Is the owner open to a conversation?")
+    assert top.owner_intent == "unknown" and top.buyer_fit == "not_assessed"
+
+
+def test_sector_filter_keeps_peer_reference(session: Session) -> None:
+    _seed_funnel(session)
+    everything = {i.legal_name: i for i in seller_funnel(session, sector=None, limit=100, **BAND).items}
+    filtered = seller_funnel(session, sector="62", limit=100, **BAND)
+    assert {item.peer_group for item in filtered.items} == {"62"}
+    for item in filtered.items:
+        assert item.financial_profile_index == everything[item.legal_name].financial_profile_index
+
+
+def test_seller_prospects_endpoint(client, session: Session) -> None:
+    empty = client.get("/seller-prospects").json()
+    assert empty["total_companies"] == 0 and empty["items"] == []
+
+    _seed_funnel(session)
+    body = client.get("/seller-prospects", params={"limit": 5}).json()
+    assert len(body["items"]) == 5 and body["stages"][-1]["count"] == 10
+    assert body["items"][0]["next_action"] == "advisor_review"
+    assert (
+        client.get("/seller-prospects", params={"min_revenue_eur": 9, "max_revenue_eur": 1}).status_code
+        == 422
+    )
+
+
+def test_coverage_report_summarises_fields_and_peer_groups(session: Session) -> None:
+    from app.analysis.seller_coverage import coverage, to_markdown
+
+    _seed_funnel(session)
+    report = coverage(session, **BAND)
+    assert report["companies"] == 14
+    assert report["funnel_stages"]["advisor_review"] == 10
+    assert report["peer_groups_all_sizes"] == {"62": 10}
+    assert report["eligible_companies_with_index"] == 10
+    assert report["flags"] == {"group_parent": 1, "holding_activity": 1}
+    latest = report["financial_rows_by_year_and_scope"][f"{LATEST} standalone"]
+    assert latest["rows"] == 14 and latest["revenue"] == 14 and latest["employees_fte"] == 14
+    assert "## Field coverage" in to_markdown(report)

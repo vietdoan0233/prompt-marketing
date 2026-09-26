@@ -166,3 +166,18 @@ details summary { cursor: pointer; color: var(--accent); }
   .kv { grid-template-columns: 1fr; }
   .actor input { width: 140px; }
 }
+
+/* seller prospect funnel */
+.funnel { display: grid; gap: 10px; }
+.funnel-row { display: grid; grid-template-columns: minmax(180px, 280px) 1fr 72px; gap: 12px; align-items: center; }
+.funnel-bar { height: 22px; background: var(--neutral-bg); border-radius: 6px; overflow: hidden; }
+.funnel-fill { height: 100%; background: var(--accent-soft); border-right: 3px solid var(--accent); }
+.funnel-fill.final { background: var(--best-bg); border-right-color: var(--best); }
+.brief-row td { padding-top: 0; border-top: none; }
+.brief-row summary { cursor: pointer; color: var(--accent); font-size: 12px; }
+.brief { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 6px 0 10px; }
+.brief ul { margin: 6px 0 0; padding-left: 18px; }
+@media (max-width: 640px) {
+  .funnel-row { grid-template-columns: 1fr 64px; }
+  .funnel-bar { grid-column: 1 / -1; order: 3; }
+}
