@@ -360,7 +360,9 @@ class CompanyFinancial(Base):
     confidence: Mapped[str] = mapped_column(String(32))
     usage_policy: Mapped[str] = mapped_column(String(64))
     parser_version: Mapped[str] = mapped_column(String(64))
-    statement_scope: Mapped[str | None] = mapped_column(String(16))  # standalone | consolidated | NULL (unproven)
+    statement_scope: Mapped[str | None] = mapped_column(
+        String(16)
+    )  # standalone | consolidated | NULL (unproven)
     value_type: Mapped[str] = mapped_column(String(16), default="reported")  # reported | derived
     filing_id: Mapped[str] = mapped_column(String(64))
     document_id: Mapped[str | None] = mapped_column(String(64))
@@ -368,7 +370,9 @@ class CompanyFinancial(Base):
     restated: Mapped[bool | None] = mapped_column(Boolean)
     calculation_formula: Mapped[str | None] = mapped_column(Text)
     ingestion_run_id: Mapped[str | None] = mapped_column(ForeignKey("ingestion_runs.id", ondelete="SET NULL"))
-    review_status: Mapped[str] = mapped_column(String(32), default="unreviewed")  # unreviewed | superseded | ...
+    review_status: Mapped[str] = mapped_column(
+        String(32), default="unreviewed"
+    )  # unreviewed | superseded | ...
     registry_code: Mapped[str] = mapped_column(String(32))
     source_key: Mapped[str] = mapped_column(String(200))  # registry code + report_id + period + scope
     content_hash: Mapped[str] = mapped_column(String(64))
@@ -385,8 +389,8 @@ class RegisteredAddress(Base):
 
     __tablename__ = "registered_addresses"
     __table_args__ = (
-        UniqueConstraint("company_id", "source_id", "content_hash", name="uq_registered_address_version"),
         Index("ix_registered_address_current", "company_id", "valid_to"),
+        Index("ix_registered_address_hash", "company_id", "source_id", "content_hash"),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)

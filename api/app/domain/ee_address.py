@@ -18,7 +18,7 @@ identified unambiguously stays None and a warning is returned; nothing is guesse
 
 from dataclasses import dataclass, field
 
-ADDRESS_PARSER_VERSION = "ee-address-2026.09.1"
+ADDRESS_PARSER_VERSION = "ee-address-2026.09.4"
 
 # Source columns preserved verbatim in provenance.
 ADDRESS_SOURCE_COLUMNS = (
@@ -71,7 +71,7 @@ def classify(part: str) -> str:
         return "town"
     if part.endswith((" alevik", " alev")):
         return "borough"
-    if part.endswith(" küla") or "küla" in part.split(" / ")[0]:
+    if part.split(" / ", 1)[0].endswith("küla"):
         return "village"
     return "unknown"
 
@@ -90,8 +90,9 @@ def parse_registered_address(row: dict[str, str]) -> RegisteredAddressParts:
         ehak_code=_clean(row.get("asukoha_ehak_kood")),
     )
     if _clean(row.get("ettevotja_aadress")):
-        # Empty in every row of the file as of 2026-09; never silently used if it appears.
-        out.warnings.append("ettevotja_aadress is populated but not mapped; preserved in provenance only")
+        # This field is empty in the current official file. It may contain a composite address in a future
+        # file, so keep it as evidence but do not silently substitute it for the source's street-line field.
+        out.warnings.append("ettevotja_aadress is populated; preserved verbatim for review")
 
     text = _clean(row.get("asukoha_ehak_tekstina"))
     if not text:
@@ -119,15 +120,15 @@ def parse_registered_address(row: dict[str, str]) -> RegisteredAddressParts:
     else:
         out.warnings.append("no county in EHAK text; county left empty")
 
-    rural = by_type.get("rural_municipality", [])
+    rural = list(dict.fromkeys(by_type.get("rural_municipality", [])))
     towns = by_type.get("town", [])
-    tallinn = by_type.get("tallinn", [])
+    tallinn = list(dict.fromkeys(by_type.get("tallinn", [])))
     distinct_towns = list(dict.fromkeys(towns))
 
     # Municipality = the local-government unit.
     if len(rural) == 1 and not tallinn:
         out.municipality = rural[0]
-    elif tallinn and not rural:
+    elif len(tallinn) == 1 and not rural and not distinct_towns:
         out.municipality = "Tallinn"
     elif not rural and not tallinn and len(distinct_towns) == 1:
         out.municipality = distinct_towns[0]  # a town that is its own municipality (e.g. "Rakvere linn")
@@ -136,14 +137,16 @@ def parse_registered_address(row: dict[str, str]) -> RegisteredAddressParts:
 
     # City only when the address is unambiguously inside a town/city.
     settlement_types = {t for t, _ in typed if t in ("village", "borough")}
-    if tallinn:
+    if len(tallinn) == 1 and not rural and not distinct_towns and not settlement_types:
         out.city = "Tallinn"
     elif settlement_types:
-        out.city = None  # a village/borough, even when its municipality is a town (e.g. "Pihva küla, Tartu linn")
-    elif len(distinct_towns) == 1:
+        out.city = (
+            None  # a village/borough, even when its municipality is a town (e.g. "Pihva küla, Tartu linn")
+        )
+    elif len(distinct_towns) == 1 and not tallinn:
         out.city = distinct_towns[0].removesuffix(" linn")
-    elif len(distinct_towns) > 1:
-        out.warnings.append(f"several towns {distinct_towns}; city left empty")
+    elif tallinn or distinct_towns:
+        out.warnings.append(f"city ambiguous in '{text}'; city left empty")
     if not out.address_line:
         out.warnings.append("street address missing in source")
     return out

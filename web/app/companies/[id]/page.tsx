@@ -112,6 +112,8 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
               <dd>{d.registered_address.county ?? "—"}</dd>
               <dt>EHAK code</dt>
               <dd className="mono">{d.registered_address.ehak_code ?? "—"}</dd>
+              <dt>Country</dt>
+              <dd>{d.registered_address.country ?? "—"}</dd>
               <dt>Provenance</dt>
               <dd>
                 <a href={d.registered_address.source_url} target="_blank" rel="noreferrer">
@@ -119,6 +121,12 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                 </a>
                 <div className="small muted">observed {fmtDate(d.registered_address.observed_at)}</div>
               </dd>
+              {d.registered_address.warnings.length > 0 && (
+                <>
+                  <dt>Source warnings</dt>
+                  <dd>{d.registered_address.warnings.join("; ")}</dd>
+                </>
+              )}
             </dl>
           ) : (
             <p className="muted">No registered address was supplied.</p>

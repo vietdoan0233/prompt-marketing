@@ -396,9 +396,7 @@ def company_financials(company_id: str, session: SessionDep) -> list[schemas.Fin
 
 
 @router.get("/companies/{company_id}/registered-address", response_model=schemas.RegisteredAddressOut | None)
-def company_registered_address(
-    company_id: str, session: SessionDep
-) -> schemas.RegisteredAddressOut | None:
+def company_registered_address(company_id: str, session: SessionDep) -> schemas.RegisteredAddressOut | None:
     _company_or_404(session, company_id)
     row = session.scalar(
         select(RegisteredAddress)
@@ -408,7 +406,8 @@ def company_registered_address(
     if row is None:
         return None
     item = schemas.RegisteredAddressOut.model_validate(row)
-    item.source_name = session.get(Source, row.source_id).name if session.get(Source, row.source_id) else None
+    source = session.get(Source, row.source_id)
+    item.source_name = source.name if source else None
     return item
 
 

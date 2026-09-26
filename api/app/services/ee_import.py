@@ -8,11 +8,10 @@ addresses are stored in their dedicated append-only tables.
 
 from __future__ import annotations
 
-import math
 import unicodedata
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -21,12 +20,16 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.connectors.base import ConnectorError
-from app.connectors.ee_ariregister import DatasetFile, EeAriregisterFiles, EE_PARSER_VERSION, iter_rows
-from app.domain.ee_address import ADDRESS_SOURCE_COLUMNS, RegisteredAddressParts, parse_registered_address
+from app.connectors.ee_ariregister import EE_PARSER_VERSION, DatasetFile, EeAriregisterFiles, iter_rows
+from app.domain.ee_address import (
+    ADDRESS_PARSER_VERSION,
+    ADDRESS_SOURCE_COLUMNS,
+    RegisteredAddressParts,
+    parse_registered_address,
+)
 from app.domain.normalize import normalize_name
 from app.domain.records import build_record, stable_hash
 from app.models import (
-    AuditEvent,
     Company,
     CompanyFinancial,
     IngestionRecord,
@@ -134,19 +137,22 @@ def _legal_form(value: Any) -> str:
         "se": "se",
         "euroopaäriühing": "se",
         "euroopäriühing": "se",
-    }.get(value, {
-        "osaühing": "ou",
-        "osauhing": "ou",
-        "aktsiaselts": "as",
-        "usaldusühing": "uu",
-        "usaldusuhing": "uu",
-        "täisühing": "tu",
-        "taisuhing": "tu",
-        "tulundusühistu": "tuh",
-        "tulundusuhistu": "tuh",
-        "euroopaäriühing": "se",
-        "euroopariuhing": "se",
-    }.get(compact, compact))
+    }.get(
+        value,
+        {
+            "osaühing": "ou",
+            "osauhing": "ou",
+            "aktsiaselts": "as",
+            "usaldusühing": "uu",
+            "usaldusuhing": "uu",
+            "täisühing": "tu",
+            "taisuhing": "tu",
+            "tulundusühistu": "tuh",
+            "tulundusuhistu": "tuh",
+            "euroopaäriühing": "se",
+            "euroopariuhing": "se",
+        }.get(compact, compact),
+    )
 
 
 def _parse_date(value: Any) -> date | None:
@@ -291,7 +297,22 @@ def _row_snapshot(
             SourceSnapshot.content_hash == content_hash,
         )
     )
+    run_id = existing.ingestion_run_id if existing else run.id
+    payload = dict(raw)
+    if isinstance(payload.get("provenance"), dict):
+        payload["provenance"] = {
+            **payload["provenance"],
+            "source_file": file.name,
+            "source_csv_file": file.name.removesuffix(".zip"),
+            "download_url": file.url,
+            "file_date": file.published_at.date().isoformat(),
+            "observed_at": file.published_at.isoformat(),
+            "source_id": source.id,
+            "ingestion_run_id": run_id,
+        }
     if existing:
+        if existing.raw_payload is not None and existing.raw_payload != payload:
+            existing.raw_payload = payload
         return existing
     snapshot = SourceSnapshot(
         source_id=source.id,
@@ -299,7 +320,7 @@ def _row_snapshot(
         source_key=source_key,
         source_url=file.url,
         content_hash=content_hash,
-        raw_payload=raw,
+        raw_payload=payload,
         parser_version=EE_PARSER_VERSION,
         http_status=200,
         retrieved_at=run.started_at,
@@ -417,23 +438,13 @@ def _upsert_address(
     source: Source,
     company: Company,
     parts: RegisteredAddressParts,
-    raw: dict[str, Any],
     file: DatasetFile,
     counts: dict[str, int],
     snapshot: SourceSnapshot,
 ) -> None:
-    content_hash = stable_hash({"parts": parts.as_dict(), "raw": {k: raw.get(k) for k in ADDRESS_SOURCE_COLUMNS}})
-    existing = session.scalar(
-        select(RegisteredAddress).where(
-            RegisteredAddress.company_id == company.id,
-            RegisteredAddress.source_id == source.id,
-            RegisteredAddress.content_hash == content_hash,
-        )
-    )
-    if existing:
-        counts["address_unchanged"] += 1
-        return
-    now = utcnow()
+    # The original address columns and ADS identifiers are evidence, but only the mapped address determines
+    # whether a new address version is needed.
+    content_hash = stable_hash(parts.as_dict())
     current = session.scalar(
         select(RegisteredAddress).where(
             RegisteredAddress.company_id == company.id,
@@ -441,6 +452,18 @@ def _upsert_address(
             RegisteredAddress.valid_to.is_(None),
         )
     )
+    if current and current.content_hash == content_hash:
+        if current.snapshot_id != snapshot.id:
+            current.snapshot_id = snapshot.id
+            current.ingestion_run_id = run.id
+            current.observed_at = file.published_at
+            current.source_url = file.url
+            current.source_file = file.name
+            current.parser_version = ADDRESS_PARSER_VERSION
+            current.warnings = parts.warnings
+        counts["address_unchanged"] += 1
+        return
+    now = utcnow()
     for old in session.scalars(
         select(RegisteredAddress).where(
             RegisteredAddress.company_id == company.id,
@@ -459,7 +482,7 @@ def _upsert_address(
             snapshot_id=snapshot.id,
             ingestion_run_id=run.id,
             observed_at=file.published_at,
-            parser_version=EE_PARSER_VERSION,
+            parser_version=ADDRESS_PARSER_VERSION,
             content_hash=content_hash,
             warnings=parts.warnings,
             valid_from=now,
@@ -489,7 +512,8 @@ def _financial_payload(group: IndicatorGroup) -> tuple[dict[str, Decimal], list[
             other_value = _parse_decimal(other["value"])
             if parsed is not None and other_value is not None and other_value != parsed:
                 warnings.append(
-                    f"duplicate {metric} values differ; selected table '{first['table']}' over '{other['table']}'"
+                    f"duplicate {metric} values differ; selected table '{first['table']}' "
+                    f"over '{other['table']}'"
                 )
     source_values = [
         {
@@ -517,7 +541,9 @@ def _upsert_financial(
 ) -> None:
     values, source_values, warnings = _financial_payload(group)
     report = group.report
-    source_key = f"EE:{report.registry_code}:{report.report_id}:{report.fiscal_year}:{group.scope or 'unknown'}"
+    source_key = (
+        f"EE:{report.registry_code}:{report.report_id}:{report.fiscal_year}:{group.scope or 'unknown'}"
+    )
     content_hash = stable_hash(
         {
             "report": report.raw,
@@ -580,6 +606,8 @@ def _upsert_financial(
     for metric in FINANCIAL_FIELDS:
         if metric not in values:
             counts[f"missing_{metric}"] = counts.get(f"missing_{metric}", 0) + 1
+    counts["missing_currency"] = counts.get("missing_currency", 0) + 1
+    counts["missing_unit"] = counts.get("missing_unit", 0) + 1
     counts["reports_imported"] += 1
 
 
@@ -610,7 +638,9 @@ def _record_orphan(
     counts["orphan_reports"] += 1
 
 
-def _load_reports(files: list[DatasetFile], years: list[int]) -> tuple[dict[str, Report], dict[str, Report], dict[str, list[Report]]]:
+def _load_reports(
+    files: list[DatasetFile], years: list[int]
+) -> tuple[dict[str, Report], dict[str, Report], dict[str, list[Report]]]:
     report_file = next(f for f in files if f.kind == "reports")
     reports: dict[str, Report] = {}
     documents: dict[str, Report] = {}
@@ -626,7 +656,9 @@ def _load_reports(files: list[DatasetFile], years: list[int]) -> tuple[dict[str,
     return reports, documents, by_code
 
 
-def _resolve_report(report_id: str, reports: dict[str, Report], documents: dict[str, Report]) -> Report | None:
+def _resolve_report(
+    report_id: str, reports: dict[str, Report], documents: dict[str, Report]
+) -> Report | None:
     return reports.get(report_id) or documents.get(report_id)
 
 
@@ -638,9 +670,10 @@ def import_estonia(
     actor: str = "system:seed",
     min_employees: int | None = None,
     retry_of_id: str | None = None,
+    live_override: bool | None = None,
 ) -> IngestionRun:
     """Run an Estonia import from the configured live portal or a local manifest cache."""
-    from app.services.ingestion import _gate_or_reject, _new_run, _registered_or_deny, _fail
+    from app.services.ingestion import _fail, _gate_or_reject, _new_run, _registered_or_deny
 
     query = dict(query or {})
     settings = get_settings()
@@ -656,13 +689,15 @@ def import_estonia(
         query=query,
         retry_of_id=retry_of_id,
     )
-    live = bool((source.connector_config or {}).get("live"))
+    live = bool((source.connector_config or {}).get("live")) if live_override is None else live_override
     _gate_or_reject(session, run, source, live=live)
     years = _years(query)
     run.parser_version = EE_PARSER_VERSION
     run.config_hash = stable_hash({"source": source.id, "years": years, "min_employees": minimum})
     try:
-        resolver = EeAriregisterFiles(settings.ee_cache_dir, live=live, rate_limit_per_minute=source.rate_limit_per_minute)
+        resolver = EeAriregisterFiles(
+            settings.ee_cache_dir, live=live, rate_limit_per_minute=source.rate_limit_per_minute
+        )
         files = resolver.resolve(years)
     except (ConnectorError, OSError, ValueError) as exc:
         return _fail(session, run, "resolve", str(exc))
@@ -680,7 +715,7 @@ def import_estonia(
     for file in indicator_files:
         if file.year not in {2024, 2025}:
             continue
-        for line_number, row in enumerate(iter_rows(file), start=1):
+        for row in iter_rows(file):
             if row.get("elemendi_nimetus") != "AverageNumberOfEmployeesInFullTimeEquivalentUnits":
                 continue
             report = _resolve_report(_text(row.get("report_id")), reports, documents)
@@ -707,8 +742,10 @@ def import_estonia(
     latest_activity: dict[str, tuple[int, str]] = {}
     for row in iter_rows(activity_file):
         report = _resolve_report(_text(row.get("report_id")), reports, documents)
-        code = report.registry_code if report else None
-        if not code or code not in in_scope or _strip_accents(_text(row.get("põhitegevusala"))).casefold() not in {
+        if report is None:
+            continue
+        code = report.registry_code
+        if code not in in_scope or _strip_accents(_text(row.get("põhitegevusala"))).casefold() not in {
             "jah",
             "yes",
         }:
@@ -719,7 +756,6 @@ def import_estonia(
 
     company_rows: list[dict[str, Any]] = []
     address_parts: dict[str, RegisteredAddressParts] = {}
-    address_raw: dict[str, dict[str, Any]] = {}
     for row in iter_rows(basic_file):
         code = _text(row.get("ariregistri_kood"))
         form = _legal_form(row.get("ettevotja_oiguslik_vorm"))
@@ -754,7 +790,6 @@ def import_estonia(
                 "registry_id": code,
                 "vat_id": row.get("kmkr_nr"),
                 "country": "EE",
-                "region": "baltics",
                 "city": parts.city,
                 "industry_code": latest_activity.get(code, (None, None))[1],
                 "employees": employees,
@@ -764,16 +799,23 @@ def import_estonia(
             }
         )
         address_parts[code] = parts
-        address_raw[code] = row
     run.counts = {**run.counts, "discovered": len(company_rows)}
     run.status = "VALIDATED"
     companies = _upsert_companies(session, run, source, basic_file, company_rows, run.counts)
+    run.warnings = [
+        *run.warnings,
+        *(
+            {"row": index, "source_key": row["source_key"], "message": warning}
+            for index, row in enumerate(company_rows, start=1)
+            for warning in row.get("warnings", [])
+        ),
+    ]
 
     for code, company in companies.items():
         snapshot = session.scalar(
             select(SourceSnapshot)
             .where(SourceSnapshot.source_id == source.id, SourceSnapshot.source_key == f"company:{code}")
-            .order_by(SourceSnapshot.created_at.desc())
+            .order_by(SourceSnapshot.retrieved_at.desc())
         )
         if snapshot is None:
             raise ConnectorError(f"company snapshot missing for Estonia registry code {code}")
@@ -783,7 +825,6 @@ def import_estonia(
             source,
             company,
             address_parts[code],
-            address_raw[code],
             basic_file,
             run.counts,
             snapshot,
@@ -824,8 +865,8 @@ def import_estonia(
             )
 
     for (report_id, scope), group in grouped.items():
-        company = companies.get(group.report.registry_code)
-        if company is None:
+        matched_company: Company | None = companies.get(group.report.registry_code)
+        if matched_company is None:
             continue
         values, source_values, warnings = _financial_payload(group)
         report_raw = {
@@ -842,9 +883,15 @@ def import_estonia(
             raw=report_raw,
             file=group.source_file,
         )
-        _upsert_financial(session, run, source, company, group, snapshot, run.counts)
+        _upsert_financial(session, run, source, matched_company, group, snapshot, run.counts)
         if warnings:
-            run.warnings.extend({"source_key": f"EE:{report_id}:{scope or 'unknown'}", "message": warning} for warning in warnings)
+            run.warnings = [
+                *run.warnings,
+                *(
+                    {"source_key": f"EE:{report_id}:{scope or 'unknown'}", "message": warning}
+                    for warning in warnings
+                ),
+            ]
 
     run.counts = {**run.counts, "warnings": len(run.warnings)}
     run.status = "UPSERTED"

@@ -91,33 +91,33 @@ def resolve(session: Session, rec: ParsedRecord, source: Source) -> tuple[Resolu
     res = Resolution(company=None)
     for _, ident, company in matches:
         label = f"{ident.kind} {ident.value}" + (" (derived)" if ident.derived else "")
-        if res.company is None:
-            if ident.kind == "domain" and rec.registry_key:
-                other_regs = {
-                    r for r in _registry_keys(session, company.id) if r.startswith(rec.country or "")
-                }
-                if other_regs and rec.registry_key not in other_regs:
-                    # Same website, different legal entity (e.g. group subsidiaries). Link for review.
-                    res.duplicate_links.append(
-                        (
-                            company.id,
-                            [
-                                {
-                                    "signal": "domain",
-                                    "effect": "for",
-                                    "detail": f"shared domain {ident.value}",
-                                },
-                                {
-                                    "signal": "registry_id",
-                                    "effect": "against",
-                                    "detail": f"different registry IDs {rec.registry_key} vs "
-                                    f"{sorted(other_regs)}",
-                                },
-                            ],
-                        )
+        if rec.registry_key:
+            other_regs = {
+                registry
+                for registry in _registry_keys(session, company.id)
+                if registry.startswith(f"{rec.country}:")
+            }
+            if other_regs and rec.registry_key not in other_regs:
+                # A VAT registration may cover several legal entities. The official registry code identifies
+                # each entity, so a VAT or domain match cannot collapse different register entries.
+                res.duplicate_links.append(
+                    (
+                        company.id,
+                        [
+                            {"signal": ident.kind, "effect": "for", "detail": f"shared {label}"},
+                            {
+                                "signal": "registry_id",
+                                "effect": "against",
+                                "detail": (
+                                    f"different registry IDs {rec.registry_key} vs {sorted(other_regs)}"
+                                ),
+                            },
+                        ],
                     )
-                    res.blocked_keys.add((ident.kind, ident.value))
-                    continue
+                )
+                res.blocked_keys.add((ident.kind, ident.value))
+                continue
+        if res.company is None:
             res.company = company
             res.match_reasons.append(f"matched existing company on exact {label}")
         elif company.id == res.company.id:

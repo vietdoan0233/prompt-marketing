@@ -3,8 +3,8 @@
 Bump NORMALIZATION_VERSION whenever an output of this module changes for the same input.
 """
 
-import re
 import math
+import re
 import unicodedata
 from dataclasses import dataclass
 from urllib.parse import urlsplit

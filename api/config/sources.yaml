@@ -44,11 +44,11 @@ sources:
     countries: [EE]
     source_type: mergero_csv
     source_mode: mergero-supplied
-    permission_status: approved
+    permission_status: pending
     approval_reference: Mergero internal data supply
     connector_type: csv
     connector_config: {live: false}
-    enabled: true
+    enabled: false
     allowed_fields: [legal_name, registry_id, vat_id, city, industry_code, employees]
     field_mapping: {}
     base_confidence: estimated
@@ -56,4 +56,4 @@ sources:
     retention_days: 30
     rate_limit_per_minute: null
     trust_rank: 50
-    notes: Internal, manually supplied Estonia company rows only.
+    notes: Disabled in the official-source-only Estonia deployment; corrections remain available through the review API.

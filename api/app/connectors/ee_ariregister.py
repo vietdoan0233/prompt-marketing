@@ -10,7 +10,7 @@ No company pages or annual-report PDFs are scraped. The connector:
 Datasets used:
 - basic data   `ettevotja_rekvisiidid__lihtandmed.csv.zip` — name, registry code, legal form, VAT, status,
                                                             registered address
-- reports      `1.aruannete_yldandmed_kuni_*.zip`          — one row per annual report (report_id, period, ...)
+- reports      `1.aruannete_yldandmed_kuni_*.zip`          — annual report ID and period
 - activity     `2.EMTAK_myygitulu_kuni_*.zip`              — revenue split by EMTAK; main activity flag
 - indicators   `4.<year>_aruannete_elemendid_kuni_*.zip`   — key indicators per report (long format)
 """
@@ -98,7 +98,9 @@ class EeAriregisterFiles:
         return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
 
     def _save_manifest(self, manifest: dict[str, dict]) -> None:
-        (self.cache_dir / MANIFEST).write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+        (self.cache_dir / MANIFEST).write_text(
+            json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8"
+        )
 
     def resolve(self, years: list[int]) -> list[DatasetFile]:
         return self._resolve_live(years) if self.live else self._resolve_local(years)
@@ -111,7 +113,12 @@ class EeAriregisterFiles:
         for name, m in manifest.items():
             if m["kind"] == "indicators" and m.get("year") not in years:
                 continue
-            files.append(DatasetFile(path=str(self.cache_dir / name), **m))
+            path = self.cache_dir / name
+            if path.name != name or not m["url"].startswith(f"{PORTAL}/sites/default/files/"):
+                raise ConnectorError(f"{name}: cache entry is not an official portal file")
+            if not path.is_file() or path.stat().st_size != m["size"] or _sha256(path) != m["sha256"]:
+                raise ConnectorError(f"{name}: cached file is missing or does not match its recorded hash")
+            files.append(DatasetFile(path=str(path), **m))
         self._check_complete(files, years)
         return files
 
@@ -123,7 +130,9 @@ class EeAriregisterFiles:
                 raise ConnectorError(f"download page returned HTTP {page.status}")
             links = discover_links(page.text)
             manifest = self._manifest()
-            wanted = [(k, url, y) for k, lst in links.items() for url, y in lst if k != "indicators" or y in years]
+            wanted = [
+                (k, url, y) for k, lst in links.items() for url, y in lst if k != "indicators" or y in years
+            ]
             files = []
             for kind, url, year in wanted:
                 files.append(self._fetch(client, manifest, kind, url, year))
@@ -133,7 +142,9 @@ class EeAriregisterFiles:
         self._check_complete(files, years)
         return files
 
-    def _fetch(self, client: PoliteClient, manifest: dict, kind: str, url: str, year: int | None) -> DatasetFile:
+    def _fetch(
+        self, client: PoliteClient, manifest: dict, kind: str, url: str, year: int | None
+    ) -> DatasetFile:
         name = url.rsplit("/", 1)[1]
         path = self.cache_dir / name
         head = client._client.head(url)  # metadata only; polite client throttles the GETs below
@@ -142,15 +153,26 @@ class EeAriregisterFiles:
         size = int(head.headers.get("content-length", "0"))
         lm_header = head.headers.get("last-modified")
         last_modified = (
-            parsedate_to_datetime(lm_header).astimezone(UTC).isoformat() if lm_header else datetime.now(UTC).isoformat()
+            parsedate_to_datetime(lm_header).astimezone(UTC).isoformat()
+            if lm_header
+            else datetime.now(UTC).isoformat()
         )
         cached = manifest.get(name)
         if cached is None and path.exists() and path.stat().st_size == size:
-            # File already in the cache (e.g. an interrupted earlier run): same name + size as the portal copy.
-            cached = {"kind": kind, "name": name, "url": url, "sha256": _sha256(path), "size": size,
-                      "last_modified": last_modified, "year": year}
+            # A previous interrupted run may have cached a file with the same name and size.
+            cached = {
+                "kind": kind,
+                "name": name,
+                "url": url,
+                "sha256": _sha256(path),
+                "size": size,
+                "last_modified": last_modified,
+                "year": year,
+            }
             manifest[name] = cached
-        if not (cached and path.exists() and cached["size"] == size and cached["last_modified"] == last_modified):
+        if not (
+            cached and path.exists() and cached["size"] == size and cached["last_modified"] == last_modified
+        ):
             tmp = path.with_suffix(".part")
             with client._client.stream("GET", url) as resp:
                 if resp.status_code >= 400:

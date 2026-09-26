@@ -180,7 +180,9 @@ def build_record(
     if not country:
         rec.errors.append(f"missing or unrecognised country '{canonical.get('country') or ''}'")
     elif country not in active_countries():
-        rec.errors.append(f"country {country} is not an active country in this deployment {sorted(active_countries())}")
+        rec.errors.append(
+            f"country {country} is not an active country in this deployment {sorted(active_countries())}"
+        )
     elif country not in source_countries:
         rec.errors.append(f"country {country} is outside this source's approved coverage {source_countries}")
     rec.country = country

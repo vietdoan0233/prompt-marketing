@@ -9,9 +9,9 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 import app.models  # noqa: F401
-from sqlalchemy.dialects import postgresql
 
 revision: str = "0003"
 down_revision: str | None = "0002"

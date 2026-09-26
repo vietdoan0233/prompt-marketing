@@ -42,18 +42,18 @@ def sync_sources(
     cfg = config or load_config()
     changed: list[str] = []
     configured_ids = {entry["id"] for entry in cfg["sources"]}
-    for source in session.query(Source).all():
-        if source.id not in configured_ids and source.enabled:
-            source.enabled = False
+    for existing_source in session.query(Source).all():
+        if existing_source.id not in configured_ids and existing_source.enabled:
+            existing_source.enabled = False
             audit.record(
                 session,
                 actor=actor,
                 action="source.disabled",
                 entity_type="source",
-                entity_id=source.id,
+                entity_id=existing_source.id,
                 details={"reason": "source is no longer present in the active catalog"},
             )
-            changed.append(source.id)
+            changed.append(existing_source.id)
 
     for entry in cfg["sources"]:
         countries = entry.get("countries", [])

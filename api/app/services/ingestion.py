@@ -478,7 +478,9 @@ def _upsert_one(
             session.flush()
             is_new = company is None
             if company is None:
-                if rec.country not in active_countries():  # defence in depth; build_record rejects these first
+                if (
+                    rec.country not in active_countries()
+                ):  # defence in depth; build_record rejects these first
                     raise ValueError(f"refusing to create a company in inactive country {rec.country}")
                 company = Company(
                     legal_name=rec.facts["legal_name"],

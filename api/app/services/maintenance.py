@@ -1,7 +1,7 @@
 """Database maintenance used by the Estonia replacement seed.
 
 Replacement is intentionally explicit: make a recoverable backup first, remove source-derived data, keep the
-audit trail and GDPR suppression tombstones, then let the normal source sync/import rebuild the active catalog.
+audit trail and GDPR suppression tombstones, then let source sync/import rebuild the active catalog.
 """
 
 from __future__ import annotations
@@ -11,16 +11,13 @@ import sqlite3
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 from sqlalchemy import select, update
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.db import engine
 from app.models import (
-    AuditEvent,
     Company,
     CompanyFact,
     CompanyFinancial,

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import and_, not_, select
 from sqlalchemy.orm import Session
 
 from app.models import IngestionRun, SourceSnapshot, utcnow
@@ -12,7 +12,18 @@ from app.services import audit
 def expire_raw_data(session: Session, *, actor: str, now: datetime | None = None) -> dict[str, int]:
     now = now or utcnow()
     snapshots = session.scalars(
-        select(SourceSnapshot).where(SourceSnapshot.expired_at.is_(None), SourceSnapshot.expires_at <= now)
+        select(SourceSnapshot).where(
+            SourceSnapshot.expired_at.is_(None),
+            SourceSnapshot.expires_at <= now,
+            # The official company snapshot is the only copy of the nine original registered-address
+            # columns. Keep that source evidence for as long as its relational address may be reviewed.
+            not_(
+                and_(
+                    SourceSnapshot.source_id == "ee-ariregister",
+                    SourceSnapshot.source_key.like("company:%"),
+                )
+            ),
+        )
     ).all()
     for snap in snapshots:
         # Keep the reproducibility metadata (hash, parser version, URL); drop the raw payload.

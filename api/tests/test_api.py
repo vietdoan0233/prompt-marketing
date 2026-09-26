@@ -1,6 +1,6 @@
 """API contract smoke tests + migration check."""
 
-from pathlib import Path
+from uuid import uuid4
 
 from alembic import command
 from alembic.config import Config
@@ -111,22 +111,32 @@ def test_audit_events_filter(client, session):
     assert events and all(e["action"].startswith("ingestion.") for e in events)
 
 
-def test_migrations_match_models(tmp_path: Path):
-    url = f"sqlite:///{(tmp_path / 'mig.db').as_posix()}"
+def test_migrations_match_models():
+    path = API_ROOT / f".migration-check-{uuid4().hex}.db"
+    url = f"sqlite:///{path.as_posix()}"
     cfg = Config(str(API_ROOT / "alembic.ini"))
     cfg.set_main_option("script_location", str(API_ROOT / "migrations"))
     cfg.set_main_option("sqlalchemy.url", url)
-    command.upgrade(cfg, "head")
-    tables = set(inspect(create_engine(url)).get_table_names())
-    assert {
-        "companies",
-        "company_facts",
-        "contacts",
-        "sources",
-        "source_snapshots",
-        "ingestion_runs",
-        "audit_events",
-        "company_identifiers",
-        "duplicate_candidates",
-    } <= tables
-    command.check(cfg)  # raises if models drifted from migrations
+    try:
+        command.upgrade(cfg, "head")
+        engine = create_engine(url)
+        try:
+            tables = set(inspect(engine).get_table_names())
+        finally:
+            engine.dispose()
+        assert {
+            "companies",
+            "company_facts",
+            "company_financials",
+            "registered_addresses",
+            "contacts",
+            "sources",
+            "source_snapshots",
+            "ingestion_runs",
+            "audit_events",
+            "company_identifiers",
+            "duplicate_candidates",
+        } <= tables
+        command.check(cfg)  # raises if models drifted from migrations
+    finally:
+        path.unlink(missing_ok=True)

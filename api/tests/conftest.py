@@ -1,6 +1,5 @@
 import os
 from collections.abc import Iterator
-from pathlib import Path
 
 import pytest
 import yaml
@@ -9,10 +8,10 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import get_settings
 from app.db import Base, get_session, make_engine
+from app.domain import records as record_domain
 from app.main import app
 from app.models import Source
 from app.services import ingestion, permissions
-from app.domain import records as record_domain
 from app.services.source_registry import sync_sources
 
 FIXTURES = get_settings().fixtures_dir
@@ -38,9 +37,9 @@ def _test_policy(monkeypatch):
 
 
 @pytest.fixture
-def session(tmp_path: Path) -> Iterator[Session]:
+def session() -> Iterator[Session]:
     # Default: throwaway SQLite per test. Set TEST_DATABASE_URL to run the suite against PostgreSQL.
-    url = os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{(tmp_path / 'test.db').as_posix()}"
+    url = os.environ.get("TEST_DATABASE_URL") or "sqlite://"
     engine = make_engine(url)
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
