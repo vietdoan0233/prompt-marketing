@@ -1,503 +1,59 @@
-# Mergero source registry — production catalog (A = official/public/API, L = licensed/commercial, C = company website).
+# Mergero source registry — Estonia-only production catalog.
 #
-# Only sources with permission_status: approved AND enabled: true can ingest; everything else fails closed.
-# Access status verified 2026-09-26 from the development environment:
-#   live + credential-free : NO Brreg, FI PRH (v3). Company websites (robots.txt respected).
-#   needs free credentials : CH Zefix PublicREST (HTTP 401), DK CVR distribution (HTTP 401), SE Bolagsverket API (OAuth).
-#   no API / restricted    : DE Handelsregister & Unternehmensregister (no API; robots disallow search), AT Firmenbuch
-#                            (paid extracts), IS Skatturinn (no open API), Virre (paid extracts).
-#   L sources              : need a licence/API contract before they can be approved.
-# Quote "NO" (Norway) — unquoted it parses as boolean false and the loader rejects it.
+# The official register files are public-approved bulk data. Person, shareholder and
+# beneficial-owner datasets are intentionally not part of this catalog.
 
 regions:
-  nordics:
-    countries: [FI, SE, "NO", DK, IS]
-    source_modes: [public-approved, mergero-supplied, licensed]
-    default_language: en
-  dach:
-    countries: [DE, AT, CH]
-    source_modes: [public-approved, mergero-supplied, licensed]
-    default_language: de
-
-_registry_fields: &registry_fields [legal_name, trading_name, city, registry_id, vat_id, website, industry_code, sector, employees]
-_licensed_fields: &licensed_fields [legal_name, city, registry_id, vat_id, website, industry_code, sector, employees, revenue, currency]
-_web_fields: &web_fields [legal_name, registry_id, vat_id, website, open_positions, founder_signal, family_business_signal]
+  baltics:
+    countries: [EE]
+    source_modes: [public-approved, mergero-supplied]
+    default_language: et
 
 sources:
-  # ============================================================ A — official registries: live
-  - id: no-brreg
+  - id: ee-ariregister
     tier: A
-    name: Brønnøysundregistrene — Enhetsregisteret open API
-    provider: Brønnøysundregistrene
-    region: nordics
-    countries: ["NO"]
+    name: Estonian e-Business Register open data
+    provider: Registrite ja Infosüsteemide Keskus (RIK)
+    region: baltics
+    countries: [EE]
     source_type: registry
     source_mode: public-approved
-    terms_url: https://data.brreg.no/enhetsregisteret/api/dokumentasjon/no/index.html
+    terms_url: https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine
     permission_status: approved
-    approval_reference: NLOD-2.0 open data licence
-    connector_type: brreg
+    approval_reference: Estonia national open-data licence guide (portal terms)
+    connector_type: ee_ariregister
     connector_config: {live: true}
     enabled: true
-    allowed_fields: [legal_name, city, registry_id, vat_id, website, industry_code, sector, employees]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    rate_limit_per_minute: 60
-    trust_rank: 10
-    notes: Registered headcount (antallAnsatte, from the Aa-register). Discovery filters fraAntallAnsatte >= 20 at source.
-
-  - id: fi-prh-ytj
-    tier: A
-    name: PRH / YTJ open data API v3
-    provider: Finnish Patent and Registration Office (PRH)
-    region: nordics
-    countries: [FI]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://avoindata.prh.fi/en/ytj/swagger-ui
-    permission_status: approved
-    approval_reference: CC BY 4.0 open data licence
-    connector_type: prh
-    connector_config: {live: true}
-    enabled: true
-    allowed_fields: [legal_name, trading_name, city, registry_id, website, industry_code, sector]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    rate_limit_per_minute: 60
-    trust_rank: 10
-    notes: Registered, active companies only (tradeRegisterStatus 1). No headcount field — Finnish companies stay "headcount unknown" until a licensed headcount source is approved. The legacy /bis/v1 endpoint is retired (404).
-
-  # ============================================================ A — official registries: credential-gated (fail closed)
-  - id: ch-zefix
-    tier: A
-    name: Zefix PublicREST (central business name index)
-    provider: Federal Office of Justice (FOJ)
-    region: dach
-    countries: [CH]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://www.zefix.admin.ch/ZefixPublicREST/swagger-ui/index.html
-    permission_status: approved
-    approval_reference: Public register (Art. 936 CO); REST access by registration
-    connector_type: zefix
-    connector_config: {live: true}
-    enabled: true
-    allowed_fields: [legal_name, city, registry_id]
+    allowed_fields: [legal_name, registry_id, vat_id, city, industry_code, employees]
+    field_mapping: {}
     base_confidence: verified
     usage_policy: internal-only
     retention_days: 30
     rate_limit_per_minute: 30
     trust_rank: 10
-    notes: "BLOCKER: needs ZEFIX_USERNAME/ZEFIX_PASSWORD (free, request from zefix@bj.admin.ch). Discovery is by company name only; no headcount. zefix.ch web UI disallows crawling (robots.txt)."
-
-  - id: dk-cvr
-    tier: A
-    name: CVR system-to-system data distribution
-    provider: Erhvervsstyrelsen (Danish Business Authority)
-    region: nordics
-    countries: [DK]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://datacvr.virk.dk/artikel/system-til-system-adgang-til-cvr-data
-    permission_status: approved
-    approval_reference: Danish public data (CVR); access by registration
-    connector_type: cvr
-    connector_config: {live: true}
-    enabled: true
-    allowed_fields: [legal_name, city, registry_id, vat_id, website, industry_code, sector, employees]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    rate_limit_per_minute: 30
-    trust_rank: 10
-    notes: "BLOCKER: needs CVR_USERNAME/CVR_PASSWORD (free system-to-system access from Erhvervsstyrelsen). Has annual employment figures, so >= 20 filtering happens at source."
-
-  - id: se-bolagsverket
-    tier: A
-    name: Bolagsverket — Värdefulla datamängder API
-    provider: Bolagsverket
-    region: nordics
-    countries: [SE]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://bolagsverket.se/apierochoppnadata.2531.html
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, city, registry_id, industry_code, sector]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 10
-    notes: "BLOCKER: OAuth client credentials required (gateway returns 'Missing Credentials'). No headcount — Swedish headcount needs a licensed source (Allabolag/UC)."
-
-  - id: se-verksamt
-    tier: A
-    name: Verksamt.se
-    provider: Bolagsverket / Skatteverket / Tillväxtverket
-    region: nordics
-    countries: [SE]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://verksamt.se/
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: []
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 10
-    notes: Guidance portal, not a data API. Use Bolagsverket API instead.
-
-  - id: is-skatturinn
-    tier: A
-    name: Skatturinn — Fyrirtækjaskrá (companies register)
-    provider: Iceland Revenue and Customs
-    region: nordics
-    countries: [IS]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://www.skatturinn.is/fyrirtaekjaskra/
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, city, registry_id, industry_code, sector]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 10
-    notes: "BLOCKER: no open bulk API; web search only. Needs a data agreement (or island.is API gateway access) before automated retrieval."
-
-  - id: is-ja-gagnatorg
-    tier: A
-    name: Já Gagnatorg (national registers API)
-    provider: Já hf.
-    region: nordics
-    countries: [IS]
-    source_type: registry
-    source_mode: licensed
-    terms_url: https://gagnatorg.ja.is/
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, city, registry_id, industry_code, sector]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 15
-    notes: "BLOCKER: paid API key required."
-
-  - id: fi-virre
-    tier: A
-    name: Virre (PRH trade register extracts)
-    provider: PRH
-    region: nordics
-    countries: [FI]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://virre.prh.fi/
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, registry_id]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 10
-    notes: Paid extracts (officers, filings). Covered by PRH open data for basic facts.
-
-  - id: dk-finanstilsynet
-    tier: A
-    name: Finanstilsynet virksomhedsregister
-    provider: Danish FSA
-    region: nordics
-    countries: [DK]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://www.finanstilsynet.dk/
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, registry_id]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 10
-    notes: Licensed financial undertakings only; niche for Mergero targets.
-
-  - id: de-handelsregister
-    tier: A
-    name: Handelsregister (Gemeinsames Registerportal)
-    provider: Landesjustizverwaltungen
-    region: dach
-    countries: [DE]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://www.handelsregister.de/rp_web/information.xhtml
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, city, registry_id]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 10
-    notes: "BLOCKER: no API; portal usage terms restrict automated/bulk retrieval. German coverage needs a licensed register API (OpenRegister, North Data, handelsregister.ai)."
-
-  - id: de-unternehmensregister
-    tier: A
-    name: Unternehmensregister
-    provider: Bundesanzeiger Verlag (for BMJ)
-    region: dach
-    countries: [DE]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://www.unternehmensregister.de/
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, registry_id]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 10
-    notes: "BLOCKER: robots.txt disallows /de/suche and /de/registerinformationen; no API."
-
-  - id: de-bundesanzeiger
-    tier: A
-    name: Bundesanzeiger (published financial statements)
-    provider: Bundesanzeiger Verlag
-    region: dach
-    countries: [DE]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://www.bundesanzeiger.de/
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, registry_id, employees, revenue, currency]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 10
-    notes: Annual accounts (incl. average headcount for larger GmbHs). No API; captcha-protected search — do not automate.
-
-  - id: at-justiz-firmenbuch
-    tier: A
-    name: JustizOnline Firmenbuch
-    provider: Bundesministerium für Justiz
-    region: dach
-    countries: [AT]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://justizonline.gv.at/
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, city, registry_id]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 10
-    notes: "BLOCKER: extracts are fee-based via authorised clearing agencies (Verrechnungsstellen)."
-
-  - id: at-wko-firmen
-    tier: A
-    name: WKO Firmen A-Z
-    provider: Wirtschaftskammer Österreich
-    region: dach
-    countries: [AT]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://firmen.wko.at/
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, city, website, industry_code, sector]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 15
-    notes: Member directory (not the legal register). Needs a terms-of-use review before automated retrieval.
-
-  - id: ch-shab
-    tier: A
-    name: SHAB / FOSC (Swiss Official Gazette of Commerce)
-    provider: SECO
-    region: dach
-    countries: [CH]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://www.shab.ch/
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, registry_id]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 10
-    notes: Publication feed (registrations, changes). API access requires registration.
-
-  - id: ch-zh-handelsregister
-    tier: A
-    name: Handelsregisteramt Kanton Zürich
-    provider: Kanton Zürich
-    region: dach
-    countries: [CH]
-    source_type: registry
-    source_mode: public-approved
-    terms_url: https://www.zh.ch/de/wirtschaft-arbeit/handelsregister.html
-    permission_status: pending
-    connector_type: none
-    enabled: false
-    allowed_fields: [legal_name, registry_id]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 10
-    notes: Cantonal extracts; superseded for discovery by Zefix.
-
-  # ============================================================ C — company-website enrichment (live, robots.txt respected)
-  - id: web-company-dach
-    tier: C
-    name: Company websites — DACH (/impressum, /ueber-uns, /team, /karriere)
-    provider: Target companies (legally mandated Impressum, §5 DDG / §25 MedienG / Art. 3 UWG)
-    region: dach
-    countries: [DE, AT, CH]
-    source_type: website
-    source_mode: public-approved
-    permission_status: approved
-    approval_reference: Public company self-disclosure; robots.txt enforced
-    connector_type: website
-    connector_config: {live: true}
-    enabled: true
-    allowed_fields: [legal_name, registry_id, vat_id, website, open_positions, founder_signal, family_business_signal, contacts]
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 14
-    rate_limit_per_minute: 60
-    trust_rank: 25
-    notes: Enrichment only (never creates companies). Managing directors from the Impressum are stored as public-business contacts; no emails/phones extracted. Signals are estimated.
-
-  - id: web-company-nordics
-    tier: C
-    name: Company websites — Nordics (om-oss / tietoa-meista / um-okkur, team, karriere / ura / laus-storf)
-    provider: Target companies
-    region: nordics
-    countries: [FI, SE, "NO", DK, IS]
-    source_type: website
-    source_mode: public-approved
-    permission_status: approved
-    approval_reference: Public company self-disclosure; robots.txt enforced
-    connector_type: website
-    connector_config: {live: true}
-    enabled: true
-    allowed_fields: *web_fields
-    base_confidence: verified
-    usage_policy: internal-only
-    retention_days: 14
-    rate_limit_per_minute: 60
-    trust_rank: 25
-    notes: Enrichment only. Self-stated org/business IDs (checksum-validated) confirm registry identity; hiring and founder/family signals are estimated. No personal names are extracted from Nordic team pages (data minimisation).
-
-  # ============================================================ L — licensed / commercial (need a contract before approval)
-  - {id: de-northdata, tier: L, name: North Data, provider: North Data GmbH, region: dach, countries: [DE, AT, CH], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.northdata.com/_api", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Register data + financials via paid API. Licence required."}
-  - {id: de-openregister, tier: L, name: OpenRegister, provider: OpenRegister GmbH, region: dach, countries: [DE], source_type: licensed_feed, source_mode: licensed, terms_url: "https://openregister.de/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Handelsregister API (API key). Recommended first German A-equivalent feed."}
-  - {id: de-handelsregister-ai, tier: L, name: Handelsregister.ai, provider: handelsregister.ai, region: dach, countries: [DE], source_type: licensed_feed, source_mode: licensed, terms_url: "https://handelsregister.ai/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Paid register API."}
-  - {id: de-firmenwissen, tier: L, name: Firmenwissen (Creditreform), provider: Verband der Vereine Creditreform, region: dach, countries: [DE], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.firmenwissen.de/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 30, notes: "Headcount/revenue estimates. Licence required."}
-  - {id: de-wlw, tier: L, name: Wer liefert was (wlw), provider: Visable GmbH, region: dach, countries: [DE, AT, CH], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.wlw.de/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 35, notes: "B2B supplier directory; terms prohibit scraping."}
-  - {id: de-11880, tier: L, name: 11880.com, provider: 11880 Internet Services AG, region: dach, countries: [DE], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.11880.com/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, website, sector], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 40, notes: "Directory; company fields only."}
-  - {id: de-gelbeseiten, tier: L, name: Gelbe Seiten, provider: Gelbe Seiten Marketing GmbH, region: dach, countries: [DE], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.gelbeseiten.de/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, website, sector], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 40, notes: "Directory; company fields only."}
-  - {id: at-firmenabc, tier: L, name: FirmenABC, provider: FirmenABC GmbH, region: dach, countries: [AT], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.firmenabc.at/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Firmenbuch-derived data. Licence required."}
-  - {id: at-compass, tier: L, name: Compass / Firmeninfo, provider: Compass-Verlag GmbH, region: dach, countries: [AT], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.firmeninfo.at/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Licence required."}
-  - {id: at-herold, tier: L, name: Herold, provider: Herold Business Data GmbH, region: dach, countries: [AT], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.herold.at/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, website, sector, employees], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 35, notes: "Licence required."}
-  - {id: at-wlw, tier: L, name: wlw Austria, provider: Visable GmbH, region: dach, countries: [AT], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.wlw.at/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 35, notes: "Licence required."}
-  - {id: ch-moneyhouse, tier: L, name: Moneyhouse, provider: Moneyhouse AG, region: dach, countries: [CH], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.moneyhouse.ch/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Licence required."}
-  - {id: ch-localch, tier: L, name: local.ch, provider: localsearch (Swisscom Directories AG), region: dach, countries: [CH], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.local.ch/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, website, sector], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 40, notes: "Directory; licence required."}
-  - {id: ch-searchch, tier: L, name: search.ch, provider: search.ch AG, region: dach, countries: [CH], source_type: licensed_feed, source_mode: licensed, terms_url: "https://search.ch/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, website, sector], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 40, notes: "Directory API (key required)."}
-  - {id: ch-dnb, tier: L, name: D&B Switzerland, provider: Dun & Bradstreet (Schweiz) AG, region: dach, countries: [CH], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.dnb.com/ch-de/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 25, notes: "Headcount estimates. Licence required."}
-  - {id: fi-finder, tier: L, name: Finder.fi, provider: Fonecta Oy, region: nordics, countries: [FI], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.finder.fi/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 25, notes: "Finnish headcount/revenue. Licence required — unlocks FI qualification."}
-  - {id: fi-kauppalehti, tier: L, name: Kauppalehti Yrityshaku, provider: Alma Media, region: nordics, countries: [FI], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.kauppalehti.fi/yritykset", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 25, notes: "Licence required."}
-  - {id: fi-asiakastieto, tier: L, name: Asiakastieto, provider: Enento Group, region: nordics, countries: [FI], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.asiakastieto.fi/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Financial statements incl. headcount. Licence required."}
-  - {id: fi-fonecta, tier: L, name: Fonecta, provider: Fonecta Oy, region: nordics, countries: [FI], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.fonecta.fi/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, website, sector], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 35, notes: "Directory; licence required."}
-  - {id: se-allabolag, tier: L, name: Allabolag, provider: Bisnode/Dun & Bradstreet Sverige, region: nordics, countries: [SE], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.allabolag.se/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Filed financials, headcount, roles. Licence/export agreement required."}
-  - {id: se-uc, tier: L, name: UC, provider: UC AB (Enento), region: nordics, countries: [SE], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.uc.se/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Licence required."}
-  - {id: se-creditsafe, tier: L, name: Creditsafe Sverige, provider: Creditsafe, region: nordics, countries: [SE], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.creditsafe.com/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Licence required."}
-  - {id: se-hitta, tier: L, name: Hitta.se, provider: Hitta.se AB, region: nordics, countries: [SE], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.hitta.se/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, website, sector], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 40, notes: "Person-heavy directory; company fields only."}
-  - {id: se-eniro, tier: L, name: Eniro, provider: Eniro Group, region: nordics, countries: [SE], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.eniro.se/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, website, sector], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 40, notes: "Directory; company fields only."}
-  - {id: se-ratsit, tier: L, name: Ratsit, provider: Ratsit AB, region: nordics, countries: [SE], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.ratsit.se/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, registry_id], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 40, notes: "Primarily personal data; company fields only — privacy review required."}
-  - {id: no-proff, tier: L, name: Proff Norway, provider: Proff AS (Enin), region: nordics, countries: ["NO"], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.proff.no/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Financials + roles. Licence required."}
-  - {id: no-purehelp, tier: L, name: Purehelp, provider: Purehelp AS, region: nordics, countries: ["NO"], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.purehelp.no/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 30, notes: "Licence required."}
-  - {id: no-1881, tier: L, name: 1881, provider: 1881 AS, region: nordics, countries: ["NO"], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.1881.no/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, website, sector], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 40, notes: "Directory; company fields only."}
-  - {id: no-gulesider, tier: L, name: Gule Sider, provider: Eniro Norge, region: nordics, countries: ["NO"], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.gulesider.no/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, website, sector], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 40, notes: "Directory; company fields only."}
-  - {id: no-creditsafe, tier: L, name: Creditsafe Norway, provider: Creditsafe, region: nordics, countries: ["NO"], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.creditsafe.com/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Licence required."}
-  - {id: dk-proff, tier: L, name: Proff Denmark, provider: Proff (Enin), region: nordics, countries: [DK], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.proff.dk/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Licence required."}
-  - {id: dk-cvrdb, tier: L, name: CVRDB, provider: CVRDB, region: nordics, countries: [DK], source_type: licensed_feed, source_mode: licensed, terms_url: "https://cvrdb.dk/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 25, notes: "CVR-derived. Prefer the official CVR distribution."}
-  - {id: dk-virmo, tier: L, name: Virmo, provider: Virmo ApS, region: nordics, countries: [DK], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.virmo.dk/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 25, notes: "Licence required."}
-  - {id: dk-krak, tier: L, name: Krak, provider: Eniro Danmark, region: nordics, countries: [DK], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.krak.dk/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: [legal_name, city, website, sector], base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 40, notes: "Directory; company fields only."}
-  - {id: dk-ownr, tier: L, name: Ownr, provider: Ownr ApS, region: nordics, countries: [DK], source_type: licensed_feed, source_mode: licensed, terms_url: "https://ownr.dk/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 25, notes: "Ownership data. Licence required."}
-  - {id: is-creditinfo, tier: L, name: Creditinfo Iceland, provider: Creditinfo Lánstraust hf., region: nordics, countries: [IS], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.creditinfo.is/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Icelandic financials + headcount. Licence required."}
-  - {id: is-overit, tier: L, name: Overit Iceland, provider: Overit, region: nordics, countries: [IS], source_type: licensed_feed, source_mode: licensed, terms_url: "https://www.overit.is/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: estimated, usage_policy: restricted, retention_days: 30, trust_rank: 30, notes: "Licence required."}
-  - {id: is-keldan, tier: L, name: Keldan, provider: Keldan ehf., region: nordics, countries: [IS], source_type: licensed_feed, source_mode: licensed, terms_url: "https://keldan.is/", permission_status: pending, connector_type: csv, enabled: false, allowed_fields: *licensed_fields, base_confidence: verified, usage_policy: restricted, retention_days: 30, trust_rank: 20, notes: "Licence required."}
-
-  # ============================================================ Internal
-  - id: mergero-csv
-    tier: I
-    name: Mergero-supplied CSV
-    provider: Mergero
-    region: internal
-    countries: [FI, SE, "NO", DK, IS, DE, AT, CH]
-    source_type: mergero_csv
-    source_mode: mergero-supplied
-    permission_status: approved
-    approval_reference: MERGERO-INTERNAL
-    connector_type: csv
-    enabled: true
-    allowed_fields: [legal_name, trading_name, city, region, registry_id, vat_id, website, industry_code, sector, employees, revenue, currency, ownership_type, description, contacts]
-    base_confidence: estimated
-    usage_policy: internal-only
-    retention_days: 30
-    trust_rank: 40
-    notes: Mergero's own lists (upload real exports only). Facts start as estimated.
-
-  - id: linkedin-scrape
-    tier: L
-    name: LinkedIn page scraping
-    provider: LinkedIn (unlicensed scraping)
-    region: internal
-    countries: [FI, SE, "NO", DK, IS, DE, AT, CH]
-    source_type: website
-    source_mode: public-approved
-    terms_url: https://www.linkedin.com/legal/user-agreement
-    permission_status: unapproved
-    connector_type: csv
-    enabled: false
-    allowed_fields: []
-    base_confidence: estimated
-    usage_policy: prohibited
-    retention_days: 0
-    trust_rank: 90
-    notes: Scraping violates the LinkedIn User Agreement. Headcount must come from a licensed feed.
+    notes: >-
+      Official basic-data, annual-report and EMTAK bulk files. Only OÜ, AS, UÜ, TÜ,
+      TÜH and SE entities are eligible; person, shareholder and beneficial-owner files
+      are not used. The source supplies registered addresses and reported financial lines.
 
   - id: mergero-manual
     tier: I
-    name: Manual correction (Mergero reviewer)
+    name: Mergero manual Estonia input
     provider: Mergero
-    region: internal
-    countries: [FI, SE, "NO", DK, IS, DE, AT, CH]
-    source_type: manual
+    region: baltics
+    countries: [EE]
+    source_type: mergero_csv
     source_mode: mergero-supplied
     permission_status: approved
-    approval_reference: MERGERO-INTERNAL
-    connector_type: manual
+    approval_reference: Mergero internal data supply
+    connector_type: csv
+    connector_config: {live: false}
     enabled: true
-    allowed_fields: [legal_name, trading_name, city, website, industry_code, sector, employees, revenue, ownership_type, description]
-    base_confidence: verified
+    allowed_fields: [legal_name, registry_id, vat_id, city, industry_code, employees]
+    field_mapping: {}
+    base_confidence: estimated
     usage_policy: internal-only
-    retention_days: 365
-    trust_rank: 0
-    notes: Not ingestible. Holds reviewer corrections; original source facts are preserved.
+    retention_days: 30
+    rate_limit_per_minute: null
+    trust_rank: 50
+    notes: Internal, manually supplied Estonia company rows only.

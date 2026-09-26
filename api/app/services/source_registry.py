@@ -9,7 +9,7 @@ from app.models import Source
 from app.services import audit
 from app.services.permissions import APPROVED, load_config
 
-VALID_COUNTRIES = {"FI", "SE", "NO", "DK", "IS", "DE", "AT", "CH"}
+VALID_COUNTRIES = {"FI", "SE", "NO", "DK", "IS", "DE", "AT", "CH", "EE"}
 _SYNCED_FIELDS = [
     "name",
     "tier",
@@ -41,6 +41,20 @@ def sync_sources(
     but config never silently re-enables a source an operator disabled."""
     cfg = config or load_config()
     changed: list[str] = []
+    configured_ids = {entry["id"] for entry in cfg["sources"]}
+    for source in session.query(Source).all():
+        if source.id not in configured_ids and source.enabled:
+            source.enabled = False
+            audit.record(
+                session,
+                actor=actor,
+                action="source.disabled",
+                entity_type="source",
+                entity_id=source.id,
+                details={"reason": "source is no longer present in the active catalog"},
+            )
+            changed.append(source.id)
+
     for entry in cfg["sources"]:
         countries = entry.get("countries", [])
         bad = [c for c in countries if not isinstance(c, str) or c not in VALID_COUNTRIES]

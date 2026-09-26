@@ -62,7 +62,7 @@ class Source(Base):
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     name: Mapped[str] = mapped_column(String(200))
     provider: Mapped[str] = mapped_column(String(200))
-    region: Mapped[str] = mapped_column(String(32))  # nordics | dach | internal
+    region: Mapped[str] = mapped_column(String(32))  # nordics | dach | baltics | internal
     countries: Mapped[list[str]] = mapped_column(JsonType, default=list)
     tier: Mapped[str] = mapped_column(
         String(1), default="A"
@@ -377,7 +377,7 @@ class CompanyFinancial(Base):
 
 
 class RegisteredAddress(Base):
-    """The registered seat (asukoht) from the official register. Not an operating headquarters.
+    """The registered seat (asukoht) from the official register, not an operating location.
 
     Versioned: an unchanged address (same content hash) never creates a new row; a changed one closes the
     previous row (valid_to) and adds a new one.

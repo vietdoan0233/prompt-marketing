@@ -209,7 +209,6 @@ NOT_NAMES = {
     "Privacy",
     "Terms",
     "General",
-    "Headquarters",
     "Company",
     "Office",
     "Phone",
