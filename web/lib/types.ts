@@ -102,6 +102,45 @@ export type CompanyPage = {
   filters: Record<string, unknown>;
 };
 
+export type SellerProspect = {
+  company_id: string;
+  legal_name: string;
+  registry_id: string | null;
+  registry_status: string | null;
+  sector: string | null;
+  peer_group: string | null;
+  focus_band: string;
+  quality_band: string;
+  evidence_status: string;
+  next_action: string;
+  latest_year: number | null;
+  latest_revenue_eur: number | null;
+  latest_operating_margin: number | null;
+  three_year_median_margin: number | null;
+  three_year_revenue_cagr: number | null;
+  stable_revenue: boolean | null;
+  positive_profit_years: number | null;
+  latest_equity_ratio: number | null;
+  peer_count: number | null;
+  margin_peer_z: number | null;
+  equity_peer_z: number | null;
+  financial_profile_index: number | null;
+  buyer_fit: "not_assessed";
+  owner_intent: "unknown";
+  filing_ids: string[];
+  source_urls: string[];
+  issues: string[];
+};
+
+export type SellerFunnel = {
+  total_companies: number;
+  core_size: number;
+  three_year_profitable: number;
+  advisor_review: number;
+  items: SellerProspect[];
+  methodology: string;
+};
+
 export type Fact = {
   id: string;
   field_name: string;

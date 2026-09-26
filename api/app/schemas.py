@@ -301,6 +301,45 @@ class CompanyPage(BaseModel):
     filters: dict[str, Any]
 
 
+class SellerProspectOut(BaseModel):
+    company_id: str
+    legal_name: str
+    registry_id: str | None
+    registry_status: str | None
+    sector: str | None
+    peer_group: str | None
+    focus_band: str
+    quality_band: str
+    evidence_status: str
+    next_action: str
+    latest_year: int | None
+    latest_revenue_eur: float | None
+    latest_operating_margin: float | None
+    three_year_median_margin: float | None
+    three_year_revenue_cagr: float | None
+    stable_revenue: bool | None
+    positive_profit_years: int | None
+    latest_equity_ratio: float | None
+    peer_count: int | None = None
+    margin_peer_z: float | None = None
+    equity_peer_z: float | None = None
+    financial_profile_index: float | None = None
+    buyer_fit: Literal["not_assessed"] = "not_assessed"
+    owner_intent: Literal["unknown"] = "unknown"
+    filing_ids: list[str]
+    source_urls: list[str]
+    issues: list[str]
+
+
+class SellerFunnelOut(BaseModel):
+    total_companies: int
+    core_size: int
+    three_year_profitable: int
+    advisor_review: int
+    items: list[SellerProspectOut]
+    methodology: str
+
+
 class DuplicateOut(ORM):
     id: str
     company_a_id: str

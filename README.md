@@ -69,6 +69,9 @@ Unmatched indicator report IDs are rejected and included in the ingestion run's 
 - `GET /companies/{id}/registered-address` returns the current registered-address version.
 - `GET /companies/{id}/financials` returns the financial time series.
 - `GET /ingestion-runs/{id}` exposes accepted, unchanged, rejected, orphan, and warning records.
+- `GET /seller-prospects` powers the read-only seller prospect funnel in `/seller-prospects`. It accepts `min_revenue_eur`, `max_revenue_eur`, `sector`, and `limit`. The default €5m–€50m annual-revenue band is a provisional Nordic size proxy until Mergero confirms which size metric it uses.
+
+The funnel applies an explainable sequence to the imported companies: annual revenue band, three consecutive comparable standalone EUR fiscal years, operating-profit persistence, and a peer-relative financial-profile index. It uses only reported revenue, operating profit, assets, and equity. The index combines robust Z-scores for median operating margin (70%) and equity/assets (30%) inside two-digit EMTAK groups with at least eight comparable peers. Smaller groups show no index. Report IDs, official source links, and data gaps remain visible. A shortlist is for advisor review, not automatic outreach. Buyer fit and owner intent are not assessed by these files. The dataset does not directly provide dividends or capex; the funnel does not use them or treat derived EBITDA as a reported value.
 
 ## Checks
 

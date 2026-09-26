@@ -31,6 +31,7 @@ from app.services import audit, ingestion, quality, retention
 from app.services.contacts import erase_contact
 from app.services.corrections import CorrectionError, apply_correction
 from app.services.permissions import PermissionDenied, enable_gate, ingestion_gate
+from app.services.seller_funnel import seller_funnel
 from app.views import company_detail, duplicate_out, freshness, summaries
 
 router = APIRouter()
@@ -274,6 +275,25 @@ def retry(run_id: str, session: SessionDep, actor: ActorDep) -> schemas.Ingestio
 
 
 # ------------------------------------------------------------------ companies
+
+
+@router.get("/seller-prospects", response_model=schemas.SellerFunnelOut)
+def list_seller_prospects(
+    session: SessionDep,
+    min_revenue_eur: int = Query(5_000_000, ge=1),
+    max_revenue_eur: int = Query(50_000_000, ge=1),
+    sector: str | None = None,
+    limit: int = Query(100, ge=1, le=500),
+) -> schemas.SellerFunnelOut:
+    if min_revenue_eur > max_revenue_eur:
+        raise HTTPException(422, "min_revenue_eur must be <= max_revenue_eur")
+    return seller_funnel(
+        session,
+        min_revenue_eur=min_revenue_eur,
+        max_revenue_eur=max_revenue_eur,
+        sector=sector,
+        limit=limit,
+    )
 
 SORTS = {
     "legal_name": Company.legal_name,
