@@ -22,20 +22,24 @@ REGISTER_COMPANY_URL = "https://ariregister.rik.ee/eng/company/{code}"
 MIN_PEERS = 8
 
 
-def _registered(status: str | None) -> bool:
-    # The official Estonian export uses "Registrisse kantud"; older fixtures also use English.
+def is_registered_status(status: str | None) -> bool:
+    # The official CSV uses R; other inputs may carry the Estonian or English label.
     return status is not None and status.strip().casefold() in {
+        "r",
         "registrisse kantud",
         "registered",
     }
 
 
-def _inactive(status: str | None) -> bool:
+def is_inactive_status(status: str | None) -> bool:
     return status is not None and status.strip().casefold() in {
+        "l",
         "likvideerimisel",
         "in liquidation",
+        "n",
         "pankrotis",
         "bankrupt",
+        "k",
         "kustutatud",
         "deleted",
     }
@@ -55,7 +59,7 @@ def _registry_url(registry_id: str | None) -> str | None:
 
 
 def _next_action(status: str | None, focus: str, quality: str, evidence: str, holding: bool) -> str:
-    if _inactive(status):
+    if is_inactive_status(status):
         return "exclude"
     if focus == "adjacent":
         return "outside_size_band"
@@ -63,7 +67,7 @@ def _next_action(status: str | None, focus: str, quality: str, evidence: str, ho
         focus == "core"
         and quality == "core"
         and evidence == "complete"
-        and _registered(status)
+        and is_registered_status(status)
         and not holding
     ):
         return "advisor_review"
@@ -152,7 +156,7 @@ def _stages(items: list[schemas.SellerProspectOut], min_revenue_eur: int, max_re
             "registered",
             "Active in the register",
             "Official status is registered",
-            lambda i: _registered(i.registry_status),
+            lambda i: is_registered_status(i.registry_status),
         ),
         (
             "in_size_band",
@@ -325,7 +329,7 @@ def seller_funnel(
             and item.evidence_status == "complete"
             and item.three_year_median_margin is not None
             and item.latest_equity_ratio is not None
-            and _registered(item.registry_status)
+            and is_registered_status(item.registry_status)
             and "holding_activity" not in item.flags
         ):
             peers[item.peer_group].append(item)

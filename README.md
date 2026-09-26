@@ -68,7 +68,7 @@ Open the UI at `http://localhost:3000` and the API documentation at `http://loca
 
 ## Data and provenance
 
-The importer uses the official basic-data, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs. Company facts retain source and snapshot provenance. Legal status such as `Registered`, `In Liquidation`, `Bankrupt`, or `Deleted` is stored as the first-class `registry_status` fact and included in the company summary and detail view.
+The importer uses the official basic-data, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs. Company facts retain source and snapshot provenance. The official CSV currently stores registry status as codes (`R` registered, `L` in liquidation, `N` bankrupt); the original value is kept in the first-class `registry_status` fact and included in the company summary and detail view. The seller funnel interprets these codes alongside text labels.
 
 `registered_addresses` represents the official registered seat (`asukoht`), not an inferred operating location. Address parts are nullable when the source is incomplete or ambiguous. A changed mapped address closes the previous version and adds a current one; unchanged addresses do not add a version.
 

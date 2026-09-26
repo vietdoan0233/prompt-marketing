@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Company, CompanyFact, CompanyFinancial
-from app.services.seller_funnel import MIN_PEERS, seller_funnel
+from app.services.seller_funnel import MIN_PEERS, is_registered_status, seller_funnel
 
 FIELDS = (
     "revenue",
@@ -88,7 +88,7 @@ def coverage(session: Session, *, min_revenue_eur: int, max_revenue_eur: int) ->
         session, min_revenue_eur=min_revenue_eur, max_revenue_eur=max_revenue_eur, sector=None, limit=10**9
     )
     items = funnel.items
-    registered = [item for item in items if item.registry_status in {"Registrisse kantud", "Registered"}]
+    registered = [item for item in items if is_registered_status(item.registry_status)]
     revenue_buckets = Counter(
         _bucket(item.latest_revenue_eur) for item in registered if item.latest_revenue_eur is not None
     )
