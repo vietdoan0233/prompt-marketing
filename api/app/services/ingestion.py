@@ -259,6 +259,17 @@ def start_discovery_run(
 ) -> IngestionRun:
     min_emp = min_employees if min_employees is not None else get_settings().min_employees_default
     source = _registered_or_deny(session, source_id, actor)
+    if source.connector_type == "ee_ariregister":
+        from app.services.ee_import import import_estonia
+
+        return import_estonia(
+            session,
+            source_id=source_id,
+            query=query,
+            actor=actor,
+            min_employees=min_emp,
+            retry_of_id=retry_of_id,
+        )
     run = _new_run(
         session,
         source,

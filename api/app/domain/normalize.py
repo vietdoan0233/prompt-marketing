@@ -4,6 +4,7 @@ Bump NORMALIZATION_VERSION whenever an output of this module changes for the sam
 """
 
 import re
+import math
 import unicodedata
 from dataclasses import dataclass
 from urllib.parse import urlsplit
@@ -323,6 +324,10 @@ def parse_employee_range(value: str | int | None) -> tuple[int, int | None] | No
     if not text or text in {"unknown", "n/a", "na", "-", "?"}:
         return None
     text = re.sub(r"(\d)[\s .](?=\d{3}\b)", r"\1", text)  # 1 200 / 1.200 thousands separators
+    decimal = re.fullmatch(r"\D*(\d+(?:[\.,]\d+))\D*", text)
+    if decimal:
+        number = float(decimal.group(1).replace(",", "."))
+        return (math.floor(number), math.ceil(number))
     m = re.fullmatch(r"\D*(\d+)\s*(?:-|–|—|to|bis)\s*(\d+)\D*", text)
     if m:
         lo, hi = int(m.group(1)), int(m.group(2))

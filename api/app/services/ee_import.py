@@ -23,6 +23,7 @@ from app.config import get_settings
 from app.connectors.base import ConnectorError
 from app.connectors.ee_ariregister import DatasetFile, EeAriregisterFiles, EE_PARSER_VERSION, iter_rows
 from app.domain.ee_address import ADDRESS_SOURCE_COLUMNS, RegisteredAddressParts, parse_registered_address
+from app.domain.normalize import normalize_name
 from app.domain.records import build_record, stable_hash
 from app.models import (
     AuditEvent,
@@ -348,6 +349,7 @@ def _upsert_companies(
             counts["duplicates"] += 1
             continue
         seen.add(rec.source_key or "")
+        nested = session.begin_nested()
         try:
             resolution, keys = resolve(session, rec, source)
             company = resolution.company
@@ -355,7 +357,7 @@ def _upsert_companies(
             if company is None:
                 company = Company(
                     legal_name=rec.facts["legal_name"],
-                    normalized_name=rec.facts["legal_name"].casefold(),
+                    normalized_name=normalize_name(rec.facts["legal_name"]),
                     country=rec.country or "EE",
                     region=rec.region,
                     first_seen_at=rec.observed_at or run.started_at,
@@ -399,18 +401,12 @@ def _upsert_companies(
             outcome.qualification = company.qualification_status
             counts[company.qualification_status] = counts.get(company.qualification_status, 0) + 1
             companies[str(row["registry_id"])] = company
+            nested.commit()
         except Exception as exc:  # isolate one malformed row from the rest of the official file
-            session.rollback()
+            nested.rollback()
             counts["rejected"] += 1
-            outcome = _new_record(
-                run,
-                row_number,
-                rec.source_key,
-                outcome="rejected",
-                warnings=list(rec.warnings),
-                errors=[*rec.errors, f"upsert failed: {type(exc).__name__}: {exc}"],
-            )
-            session.add(outcome)
+            outcome.outcome = "rejected"
+            outcome.errors = [*outcome.errors, f"upsert failed: {type(exc).__name__}: {exc}"]
     session.flush()
     return companies
 
@@ -438,6 +434,13 @@ def _upsert_address(
         counts["address_unchanged"] += 1
         return
     now = utcnow()
+    current = session.scalar(
+        select(RegisteredAddress).where(
+            RegisteredAddress.company_id == company.id,
+            RegisteredAddress.source_id == source.id,
+            RegisteredAddress.valid_to.is_(None),
+        )
+    )
     for old in session.scalars(
         select(RegisteredAddress).where(
             RegisteredAddress.company_id == company.id,
@@ -462,7 +465,7 @@ def _upsert_address(
             valid_from=now,
         )
     )
-    counts["address_changed" if existing is not None else "address_added"] += 1
+    counts["address_changed" if current is not None else "address_added"] += 1
 
 
 def _financial_payload(group: IndicatorGroup) -> tuple[dict[str, Decimal], list[dict[str, Any]], list[str]]:
@@ -561,7 +564,7 @@ def _upsert_financial(
             statement_scope=group.scope,
             value_type="reported",
             filing_id=report.report_id,
-            document_id=report.document_id,
+            document_id=source_values[0]["document_id"] if source_values else report.document_id,
             unit=None,
             restated=None,
             calculation_formula=None,
@@ -665,7 +668,8 @@ def import_estonia(
         return _fail(session, run, "resolve", str(exc))
 
     run.status = "FETCHED"
-    file_snapshots = {file.name: _file_snapshot(session, run, source, file) for file in files}
+    for file in files:
+        _file_snapshot(session, run, source, file)
     run.status = "PARSED"
     reports, documents, reports_by_code = _load_reports(files, years)
     run.counts = {**run.counts, **{field: 0 for field in COUNT_FIELDS}}
@@ -716,14 +720,9 @@ def import_estonia(
     company_rows: list[dict[str, Any]] = []
     address_parts: dict[str, RegisteredAddressParts] = {}
     address_raw: dict[str, dict[str, Any]] = {}
-    address_snapshots: dict[str, SourceSnapshot] = {}
     for row in iter_rows(basic_file):
         code = _text(row.get("ariregistri_kood"))
-        if not code or code not in in_scope or _legal_form(row.get("ettevõtja_õigusliku_vormi_alaliik")) == "mtu":
-            # The basic-data file's legal-form fields are named differently from the report file and may be
-            # blank in the subtype column. The primary field is checked below after the fallback is resolved.
-            pass
-        form = _legal_form(row.get("ettevõtja_õiguslik_vorm"))
+        form = _legal_form(row.get("ettevotja_oiguslik_vorm"))
         if not code or code not in in_scope or form not in ALLOWED_LEGAL_FORMS:
             continue
         parts = parse_registered_address(row)
@@ -742,8 +741,8 @@ def import_estonia(
                 "file_name": basic_file.name,
                 "file_url": basic_file.url,
                 "file_last_modified": basic_file.last_modified,
-                "legal_form": row.get("ettevõtja_õiguslik_vorm", ""),
-                "status": row.get("ettevõtja_staatus", ""),
+                "legal_form": row.get("ettevotja_oiguslik_vorm", ""),
+                "status": row.get("ettevotja_staatus", ""),
             }
         )
         company_rows.append(
@@ -771,16 +770,13 @@ def import_estonia(
     companies = _upsert_companies(session, run, source, basic_file, company_rows, run.counts)
 
     for code, company in companies.items():
-        basic_row = next(row for row in company_rows if row["registry_id"] == code)
-        snapshot = _row_snapshot(
-            session,
-            run,
-            source,
-            source_key=f"company:{code}",
-            raw=basic_row["provenance"] | {"legal_name": basic_row["legal_name"], "registry_id": code},
-            file=basic_file,
+        snapshot = session.scalar(
+            select(SourceSnapshot)
+            .where(SourceSnapshot.source_id == source.id, SourceSnapshot.source_key == f"company:{code}")
+            .order_by(SourceSnapshot.created_at.desc())
         )
-        address_snapshots[code] = snapshot
+        if snapshot is None:
+            raise ConnectorError(f"company snapshot missing for Estonia registry code {code}")
         _upsert_address(
             session,
             run,
