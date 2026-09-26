@@ -62,6 +62,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
   const d = await apiGet<CompanyDetail>(`/companies/${id}`);
   const c = d.company;
   const conflicts = d.fields.filter((f) => f.status === "conflicting");
+  const shareCapital = d.fields.find((f) => f.field_name === "share_capital") ?? null;
 
   return (
     <>
@@ -212,6 +213,69 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
           {d.financials.length === 0 && <p className="muted">No annual financial lines were imported.</p>}
         </section>
       </div>
+
+      <section className="panel">
+        <h2>Ownership</h2>
+        <p className="small muted" style={{ marginTop: -6 }}>
+          Current share capital and shareholders (osanikud) from the official register. A person shareholder
+          is shown by name and holding only — the register&apos;s national ID code is never stored.
+        </p>
+        <dl className="kv">
+          <dt>Share capital</dt>
+          <dd>
+            {shareCapital && shareCapital.value !== null ? (
+              <>
+                {fmtValue(shareCapital.value)} <Badge value={shareCapital.label} />
+              </>
+            ) : (
+              <span className="muted">unknown</span>
+            )}
+          </dd>
+        </dl>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Holder</th>
+                <th>Type</th>
+                <th className="num">Holding</th>
+                <th className="num">%</th>
+                <th>Since</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.shareholders.map((s) => (
+                <tr key={s.id}>
+                  <td className={s.holder_type === "person" ? "pii" : undefined}>
+                    {s.holder_name}
+                    {s.holder_registry_code && (
+                      <div className="small muted mono">
+                        {s.holder_registry_code}
+                        {s.holder_country ? ` (${s.holder_country})` : ""}
+                      </div>
+                    )}
+                    {s.role && <div className="small muted">{s.role}</div>}
+                  </td>
+                  <td className="small">
+                    {s.holder_type === "person" ? "Person" : s.holder_type === "legal_entity" ? "Company" : "Unknown"}
+                    {s.holding_type && <div className="muted">{s.holding_type}</div>}
+                  </td>
+                  <td className="num">{fmtMoney(s.holding_amount, s.holding_currency ?? "EUR")}</td>
+                  <td className="num">{s.holding_percent === null ? "—" : `${s.holding_percent}%`}</td>
+                  <td className="small">{fmtDate(s.effective_from)}</td>
+                  <td className="small">
+                    <a href={s.source_url} target="_blank" rel="noreferrer">
+                      {s.source_file ?? s.source_id}
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {d.shareholders.length === 0 && <p className="muted">No current shareholders were supplied.</p>}
+      </section>
 
       <div className="grid grid-2">
         <section className="panel">

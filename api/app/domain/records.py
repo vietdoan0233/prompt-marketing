@@ -29,6 +29,7 @@ COMPANY_FIELDS = [
     "currency",
     "ownership_type",
     "description",
+    "share_capital",
     # C-tier website signals (estimated): hiring volume and self-described leadership/ownership signals
     "open_positions",
     "founder_signal",
@@ -58,6 +59,7 @@ FACT_FIELDS = [
     "revenue",
     "ownership_type",
     "description",
+    "share_capital",
     "registry_id",
     "vat_id",
     "open_positions",
@@ -295,6 +297,17 @@ def build_record(
             rec.warnings.append("revenue without currency was dropped")
         else:
             put("revenue", {"min": money[0], "max": money[1], "currency": currency}, canonical["revenue"])
+
+    if canonical.get("share_capital"):
+        currency = (canonical.get("currency") or "").upper() or None
+        if not currency:
+            rec.warnings.append("share capital without currency was dropped")
+        else:
+            put(
+                "share_capital",
+                {"amount": canonical["share_capital"], "currency": currency},
+                canonical["share_capital"],
+            )
 
     if canonical.get("ownership_type"):
         own = n.normalize_ownership(canonical["ownership_type"])

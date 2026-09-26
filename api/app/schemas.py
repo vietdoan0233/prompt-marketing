@@ -242,6 +242,32 @@ class FinancialOut(ORM):
     source_values: list[dict[str, Any]]
 
 
+class ShareholderOut(ORM):
+    id: str
+    holder_type: str  # person | legal_entity | unknown
+    holder_name: str
+    holder_registry_code: str | None
+    holder_country: str | None
+    role: str | None
+    holding_amount: Decimal | None
+    holding_currency: str | None
+    holding_percent: Decimal | None
+    holding_type: str | None
+    effective_from: date | None
+    effective_to: date | None
+    source_id: str
+    source_name: str | None = None
+    source_url: str
+    source_file: str | None
+    snapshot_id: str | None
+    ingestion_run_id: str | None
+    observed_at: datetime
+    parser_version: str
+    content_hash: str
+    valid_from: datetime
+    valid_to: datetime | None
+
+
 class RegisteredAddressOut(ORM):
     id: str
     address_line: str | None
@@ -358,6 +384,7 @@ class CompanyDetail(BaseModel):
     identifiers: list[IdentifierOut]
     financials: list[FinancialOut]
     registered_address: RegisteredAddressOut | None
+    shareholders: list[ShareholderOut]
     contacts: list[ContactOut]
     duplicates: list[DuplicateOut]
     audit_events: list[AuditEventOut]

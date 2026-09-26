@@ -202,6 +202,7 @@ export type CompanyDetail = {
   identifiers: { kind: string; value: string; source_id: string | null; derived: boolean }[];
   financials: Financial[];
   registered_address: RegisteredAddress | null;
+  shareholders: Shareholder[];
   contacts: Contact[];
   duplicates: Duplicate[];
   audit_events: AuditEvent[];
@@ -273,6 +274,32 @@ export type RegisteredAddress = {
   parser_version: string;
   content_hash: string;
   warnings: string[];
+  valid_from: string;
+  valid_to: string | null;
+};
+
+export type Shareholder = {
+  id: string;
+  holder_type: "person" | "legal_entity" | "unknown";
+  holder_name: string;
+  holder_registry_code: string | null;
+  holder_country: string | null;
+  role: string | null;
+  holding_amount: number | null;
+  holding_currency: string | null;
+  holding_percent: number | null;
+  holding_type: string | null;
+  effective_from: string | null;
+  effective_to: string | null;
+  source_id: string;
+  source_name: string | null;
+  source_url: string;
+  source_file: string | null;
+  snapshot_id: string | null;
+  ingestion_run_id: string | null;
+  observed_at: string;
+  parser_version: string;
+  content_hash: string;
   valid_from: string;
   valid_to: string | null;
 };

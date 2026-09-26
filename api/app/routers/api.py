@@ -21,6 +21,7 @@ from app.models import (
     CompanyFact,
     CompanyFinancial,
     CompanyIdentifier,
+    CompanyShareholder,
     Contact,
     DuplicateCandidate,
     IngestionRun,
@@ -409,6 +410,23 @@ def company_registered_address(company_id: str, session: SessionDep) -> schemas.
     source = session.get(Source, row.source_id)
     item.source_name = source.name if source else None
     return item
+
+
+@router.get("/companies/{company_id}/shareholders", response_model=list[schemas.ShareholderOut])
+def company_shareholders(company_id: str, session: SessionDep) -> list[schemas.ShareholderOut]:
+    _company_or_404(session, company_id)
+    source_names = {s.id: s.name for s in session.scalars(select(Source))}
+    rows = session.scalars(
+        select(CompanyShareholder)
+        .where(CompanyShareholder.company_id == company_id, CompanyShareholder.valid_to.is_(None))
+        .order_by(CompanyShareholder.holding_percent.desc().nulls_last(), CompanyShareholder.holder_name)
+    ).all()
+    out: list[schemas.ShareholderOut] = []
+    for row in rows:
+        item = schemas.ShareholderOut.model_validate(row)
+        item.source_name = source_names.get(row.source_id)
+        out.append(item)
+    return out
 
 
 @router.post(

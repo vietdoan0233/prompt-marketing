@@ -68,21 +68,24 @@ Open the UI at `http://localhost:3000` and the API documentation at `http://loca
 
 ## Data and provenance
 
-The importer uses the official basic-data, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs. Company facts retain source and snapshot provenance. Legal status such as `Registered`, `In Liquidation`, `Bankrupt`, or `Deleted` is stored as the first-class `registry_status` fact and included in the company summary and detail view.
+The importer uses the official basic-data, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs, plus two optional JSON ZIPs for general company data (current share capital) and shareholders (osanikud). Company facts retain source and snapshot provenance. Legal status such as `Registered`, `In Liquidation`, `Bankrupt`, or `Deleted` is stored as the first-class `registry_status` fact and included in the company summary and detail view.
 
 `registered_addresses` represents the official registered seat (`asukoht`), not an inferred operating location. Address parts are nullable when the source is incomplete or ambiguous. A changed mapped address closes the previous version and adds a current one; unchanged addresses do not add a version.
 
+`company_shareholders` represents the current shareholder set, versioned the same way as a registered address. A person shareholder is stored by name, role, and holding only: the register's national ID code, its one-way hash, birth date, and home address are never read by the importer. A legal-entity shareholder also keeps its registry (or foreign) code. The beneficial-owner (kasusaajad) file and board-event history are not ingested.
+
 `company_financials` stores financial observations by company, filing, fiscal period, and statement scope. Estonian monetary values use `currency="EUR"` and `unit="EUR"`. Reported values retain the source lines and provenance. Reported EBITDA takes precedence. Otherwise, when operating profit and depreciation/impairment are present, EBITDA is derived as `operating_profit - depreciation_and_impairment`. The official statement preserves expenses as negative numbers, so subtracting the signed expense adds it back. Such a row is marked `value_type="derived"` with the applied formula in `calculation_formula`. Missing measures remain null.
 
-Financial rows expose the inclusive `period_days` and a `period_length_class` (`short`, `standard_12_month`, `long`, or `invalid`). Missing period dates leave these fields unknown. Amounts are not annualized, so compare rows using their actual filing periods. EMTAK industry-code facts preserve the official `emtak_version` label as taxonomy metadata; the importer does not infer a code version from fiscal year. Shareholder and board event histories are not currently ingested.
+Financial rows expose the inclusive `period_days` and a `period_length_class` (`short`, `standard_12_month`, `long`, or `invalid`). Missing period dates leave these fields unknown. Amounts are not annualized, so compare rows using their actual filing periods. EMTAK industry-code facts preserve the official `emtak_version` label as taxonomy metadata; the importer does not infer a code version from fiscal year.
 
 Unmatched indicator report IDs are rejected and included in the ingestion run's outcome log; their values are not imported. Raw snapshot payloads follow the configured retention policy.
 
 ## API and review
 
 - `GET /companies` lists companies and supports headcount, qualification, and review filters.
-- `GET /companies/{id}` returns the summary (including registry status), source-backed facts and history, registered address, annual financials, identifiers, warnings, and review information.
+- `GET /companies/{id}` returns the summary (including registry status), source-backed facts and history (including share capital), registered address, current shareholders, annual financials, identifiers, warnings, and review information.
 - `GET /companies/{id}/registered-address` returns the current registered-address version.
+- `GET /companies/{id}/shareholders` returns the current shareholder set.
 - `GET /companies/{id}/financials` returns the financial time series.
 - `GET /ingestion-runs/{id}` exposes accepted, unchanged, rejected, orphan, and warning records.
 

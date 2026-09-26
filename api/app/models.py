@@ -421,3 +421,48 @@ class RegisteredAddress(Base):
     valid_from: Mapped[datetime] = mapped_column(UTCDateTime)
     valid_to: Mapped[datetime | None] = mapped_column(UTCDateTime)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class CompanyShareholder(Base):
+    """Current shareholders (osanikud) from the official register.
+
+    A person shareholder is stored by name, role and holding only. The official file's national ID code,
+    its one-way hash, birth date and home address are personal data and are never read by the importer, so
+    they can never reach this table or a source snapshot. A legal-entity shareholder keeps its registry (or,
+    for a foreign entity, its foreign) code, which identifies a company, not a person.
+
+    Versioned like RegisteredAddress, but as one group per company: the whole reported shareholder set is
+    replaced together when any part of it changes, since the set — not any single holder — is what the
+    source asserts as current.
+    """
+
+    __tablename__ = "company_shareholders"
+    __table_args__ = (
+        Index("ix_company_shareholder_current", "company_id", "valid_to"),
+        Index("ix_company_shareholder_hash", "company_id", "source_id", "content_hash"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id", ondelete="CASCADE"))
+    holder_type: Mapped[str] = mapped_column(String(16))  # person | legal_entity | unknown
+    holder_name: Mapped[str] = mapped_column(String(300))
+    holder_registry_code: Mapped[str | None] = mapped_column(String(32))  # legal entities only
+    holder_country: Mapped[str | None] = mapped_column(String(8))  # foreign legal entities only
+    role: Mapped[str | None] = mapped_column(String(64))  # e.g. "Osanik"
+    holding_amount: Mapped[Decimal | None] = mapped_column(Money)
+    holding_currency: Mapped[str | None] = mapped_column(String(3))
+    holding_percent: Mapped[Decimal | None] = mapped_column(Numeric(9, 4))
+    holding_type: Mapped[str | None] = mapped_column(String(64))  # e.g. "Ainuomand" (sole ownership)
+    effective_from: Mapped[date | None] = mapped_column(Date)  # registry-entry date for this holding
+    effective_to: Mapped[date | None] = mapped_column(Date)
+    source_id: Mapped[str] = mapped_column(ForeignKey("sources.id"))
+    source_url: Mapped[str] = mapped_column(String(500))
+    source_file: Mapped[str | None] = mapped_column(String(300))
+    snapshot_id: Mapped[str | None] = mapped_column(ForeignKey("source_snapshots.id", ondelete="SET NULL"))
+    ingestion_run_id: Mapped[str | None] = mapped_column(ForeignKey("ingestion_runs.id", ondelete="SET NULL"))
+    observed_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    parser_version: Mapped[str] = mapped_column(String(64))
+    content_hash: Mapped[str] = mapped_column(String(64))  # of the whole reported set, shared by its rows
+    valid_from: Mapped[datetime] = mapped_column(UTCDateTime)
+    valid_to: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)

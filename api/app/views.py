@@ -15,6 +15,7 @@ from app.models import (
     CompanyFact,
     CompanyFinancial,
     CompanyIdentifier,
+    CompanyShareholder,
     Contact,
     DuplicateCandidate,
     RegisteredAddress,
@@ -47,6 +48,7 @@ FIELD_ORDER = [
     "revenue",
     "ownership_type",
     "description",
+    "share_capital",
     "open_positions",
     "founder_signal",
     "family_business_signal",
@@ -208,6 +210,11 @@ def company_detail(session: Session, company: Company) -> schemas.CompanyDetail:
         .where(RegisteredAddress.company_id == company.id, RegisteredAddress.valid_to.is_(None))
         .order_by(RegisteredAddress.observed_at.desc())
     )
+    shareholder_rows = session.scalars(
+        select(CompanyShareholder)
+        .where(CompanyShareholder.company_id == company.id, CompanyShareholder.valid_to.is_(None))
+        .order_by(CompanyShareholder.holding_percent.desc().nulls_last(), CompanyShareholder.holder_name)
+    ).all()
     dupes = session.scalars(
         select(DuplicateCandidate)
         .where(
@@ -277,6 +284,11 @@ def company_detail(session: Session, company: Company) -> schemas.CompanyDetail:
     if address:
         address_out = schemas.RegisteredAddressOut.model_validate(address)
         address_out.source_name = source_names.get(address.source_id)
+    shareholder_out = []
+    for row in shareholder_rows:
+        shareholder_item = schemas.ShareholderOut.model_validate(row)
+        shareholder_item.source_name = source_names.get(row.source_id)
+        shareholder_out.append(shareholder_item)
     return schemas.CompanyDetail(
         company=summary,
         description=company.description,
@@ -288,6 +300,7 @@ def company_detail(session: Session, company: Company) -> schemas.CompanyDetail:
         identifiers=[schemas.IdentifierOut.model_validate(i) for i in identifiers],
         financials=financial_out,
         registered_address=address_out,
+        shareholders=shareholder_out,
         contacts=[schemas.ContactOut.model_validate(c) for c in contacts],
         duplicates=[duplicate_out(session, d) for d in dupes],
         audit_events=[schemas.AuditEventOut.model_validate(a) for a in audits],

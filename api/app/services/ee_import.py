@@ -2,8 +2,15 @@
 
 The importer deliberately keeps the bulk-file resolver separate from the normal connector protocol. The
 source consists of several related files and needs two passes over the indicator data before a company can be
-qualified. Company facts still use the normal resolution/versioning services; financials and registered
-addresses are stored in their dedicated append-only tables.
+qualified. Company facts still use the normal resolution/versioning services; financials, registered
+addresses and shareholders are stored in their dedicated append-only tables. Share capital is a versioned
+company fact, like registry status or industry code.
+
+The general (yldandmed) and shareholders (osanikud) files are optional: their absence — an offline
+`--from-cache` manifest predating them, or a portal that temporarily drops one — only skips that section
+with a run warning. A person shareholder's national ID code, its one-way hash, birth date and home address
+are never read from the shareholders file, so they can never reach a company_shareholders row or a source
+snapshot; only their name, role and holding are used.
 """
 
 from __future__ import annotations
@@ -25,6 +32,7 @@ from app.connectors.ee_ariregister import (
     QUALIFICATION_YEARS,
     DatasetFile,
     EeAriregisterFiles,
+    iter_json_records,
     iter_rows,
 )
 from app.domain.ee_address import (
@@ -40,6 +48,7 @@ from app.models import (
     Company,
     CompanyFinancial,
     CompanyIdentifier,
+    CompanyShareholder,
     IngestionRecord,
     IngestionRun,
     RegisteredAddress,
@@ -86,6 +95,9 @@ COUNT_FIELDS = (
     "address_added",
     "address_changed",
     "address_unchanged",
+    "shareholders_added",
+    "shareholders_changed",
+    "shareholders_unchanged",
     "orphan_reports",
     "reports_imported",
     "missing_revenue",
@@ -480,6 +492,135 @@ def _upsert_address(
     counts["address_changed" if current is not None else "address_added"] += 1
 
 
+def _current_capital(record: dict[str, Any]) -> tuple[Decimal, str | None] | None:
+    """The current share-capital entry (kapitalid) from one company's general-data record, if any."""
+    entries = (record.get("yldandmed") or {}).get("kapitalid") or []
+    current = [e for e in entries if not e.get("lopp_kpv")]
+    if not current:
+        return None
+    latest = max(current, key=lambda e: e.get("kande_nr") or 0)
+    value = _parse_decimal(latest.get("kapitali_suurus"))
+    if value is None:
+        return None
+    return value, _text(latest.get("kapitali_valuuta")) or None
+
+
+def _json_safe(value: Any) -> Any:
+    """Recursively convert Decimal/date leaves so a parsed row can go straight into a JSON snapshot column."""
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_json_safe(v) for v in value]
+    return value
+
+
+def _shareholder_from_record(entry: dict[str, Any]) -> dict[str, Any] | None:
+    """Map one official `osanikud[]` entry to the columns this database stores.
+
+    This is an allow-list, not a filter: every field this function does not explicitly read — the national
+    ID code, its one-way hash, birth date, home address and control-basis metadata the source also carries
+    — is dropped by construction and can never reach `CompanyShareholder` or a source snapshot, regardless
+    of what the official file contains.
+    """
+    holder_type_code = _text(entry.get("isiku_tyyp"))
+    if holder_type_code == "F":  # füüsiline isik — a person
+        holder_type = "person"
+        name = " ".join(
+            part for part in (_text(entry.get("eesnimi")), _text(entry.get("nimi_arinimi"))) if part
+        )
+        holder_registry_code = None
+        holder_country = None
+    elif holder_type_code == "J":  # juriidiline isik — a company or other legal entity
+        holder_type = "legal_entity"
+        name = _text(entry.get("nimi_arinimi"))
+        holder_registry_code = (
+            _text(entry.get("isikukood_registrikood")) or _text(entry.get("valis_kood")) or None
+        )
+        holder_country = _text(entry.get("valis_kood_riik")) or None
+    else:
+        holder_type, name, holder_registry_code, holder_country = (
+            "unknown",
+            _text(entry.get("nimi_arinimi")),
+            None,
+            None,
+        )
+    if not name:
+        return None
+    return {
+        "holder_type": holder_type,
+        "holder_name": name,
+        "holder_registry_code": holder_registry_code,
+        "holder_country": holder_country,
+        "role": _text(entry.get("isiku_roll_tekstina")) or None,
+        "holding_amount": _parse_decimal(entry.get("osaluse_suurus")),
+        "holding_currency": _text(entry.get("osaluse_valuuta")) or None,
+        "holding_percent": _parse_decimal(entry.get("osaluse_protsent")),
+        "holding_type": _text(entry.get("osaluse_omandiliik_tekstina")) or None,
+        "effective_from": _parse_date(entry.get("algus_kpv")),
+        "effective_to": _parse_date(entry.get("lopp_kpv")),
+    }
+
+
+def _upsert_shareholders(
+    session: Session,
+    run: IngestionRun,
+    source: Source,
+    company: Company,
+    holders: list[dict[str, Any]],
+    file: DatasetFile,
+    counts: dict[str, int],
+    snapshot: SourceSnapshot,
+) -> None:
+    """Versioned like the registered address, but as one group: the reported set is what the source
+    asserts as current, so an unchanged set is confirmed in place and a changed set is replaced together.
+    """
+    current_rows = session.scalars(
+        select(CompanyShareholder).where(
+            CompanyShareholder.company_id == company.id,
+            CompanyShareholder.source_id == source.id,
+            CompanyShareholder.valid_to.is_(None),
+        )
+    ).all()
+    if not current_rows and not holders:
+        counts["shareholders_unchanged"] += 1
+        return
+    content_hash = stable_hash(holders)
+    if current_rows and current_rows[0].content_hash == content_hash:
+        for row in current_rows:
+            if row.snapshot_id != snapshot.id:
+                row.snapshot_id = snapshot.id
+                row.ingestion_run_id = run.id
+                row.observed_at = file.published_at
+                row.source_url = file.url
+                row.source_file = file.name
+        counts["shareholders_unchanged"] += 1
+        return
+    now = utcnow()
+    for row in current_rows:
+        row.valid_to = now
+    for holder in holders:
+        session.add(
+            CompanyShareholder(
+                company_id=company.id,
+                **holder,
+                source_id=source.id,
+                source_url=file.url,
+                source_file=file.name,
+                snapshot_id=snapshot.id,
+                ingestion_run_id=run.id,
+                observed_at=file.published_at,
+                parser_version=EE_PARSER_VERSION,
+                content_hash=content_hash,
+                valid_from=now,
+            )
+        )
+    counts["shareholders_changed" if current_rows else "shareholders_added"] += 1
+
+
 def _financial_payload(group: IndicatorGroup) -> tuple[dict[str, Decimal], list[dict[str, Any]], list[str]]:
     warnings = list(group.warnings)
     candidates: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -779,6 +920,26 @@ def import_estonia(
         if candidate[1] and (code not in latest_activity or candidate[0] >= latest_activity[code][0]):
             latest_activity[code] = candidate
 
+    # General data (yldandmed) supplies the current share capital; it is optional (see module docstring).
+    general_file = next((f for f in files if f.kind == "general"), None)
+    capital_by_code: dict[str, tuple[Decimal, str | None]] = {}
+    if general_file is not None:
+        for record in iter_json_records(general_file):
+            code = _text(record.get("ariregistri_kood"))
+            if code not in in_scope and code not in known_registry_codes:
+                continue
+            capital = _current_capital(record)
+            if capital is not None:
+                capital_by_code[code] = capital
+    else:
+        run.warnings = [
+            *run.warnings,
+            {
+                "message": "general (yldandmed) dataset file not found on the portal; share_capital was not "
+                "imported this run"
+            },
+        ]
+
     company_rows: list[dict[str, Any]] = []
     address_parts: dict[str, RegisteredAddressParts] = {}
     for row in iter_rows(basic_file):
@@ -801,6 +962,9 @@ def import_estonia(
         activity = latest_activity.get(code)
         if latest_report and code in latest_activity:
             evidence["industry_code"] = activity_file.url
+        capital = capital_by_code.get(code)
+        if capital is not None and general_file is not None:
+            evidence["share_capital"] = general_file.url
         provenance = {column: row.get(column, "") for column in ADDRESS_SOURCE_COLUMNS}
         provenance.update(
             {
@@ -826,6 +990,8 @@ def import_estonia(
                 if activity
                 else {},
                 "employees": employees,
+                "share_capital": str(capital[0]) if capital else None,
+                "currency": capital[1] if capital else None,
                 "registry_status": row.get("ettevotja_staatus"),
                 "warnings": parts.warnings,
                 "evidence": evidence,
@@ -863,6 +1029,41 @@ def import_estonia(
             run.counts,
             snapshot,
         )
+
+    # Shareholders (osanikud) is another current-state file, like basic data; it is optional (see module
+    # docstring). Its raw payload is the already-sanitized holder list, so no personal data beyond a
+    # person's name, role and holding ever reaches a source snapshot either.
+    shareholders_file = next((f for f in files if f.kind == "shareholders"), None)
+    if shareholders_file is not None:
+        for record in iter_json_records(shareholders_file):
+            holder_code = _text(record.get("ariregistri_kood"))
+            holder_company = companies.get(holder_code)
+            if holder_company is None:
+                continue
+            holders = [
+                holder
+                for holder in (_shareholder_from_record(entry) for entry in record.get("osanikud") or [])
+                if holder is not None
+            ]
+            snapshot = _row_snapshot(
+                session,
+                run,
+                source,
+                source_key=f"shareholders:{holder_code}",
+                raw={"shareholders": _json_safe(holders)},
+                file=shareholders_file,
+            )
+            _upsert_shareholders(
+                session, run, source, holder_company, holders, shareholders_file, run.counts, snapshot
+            )
+    else:
+        run.warnings = [
+            *run.warnings,
+            {
+                "message": "shareholders (osanikud) dataset file not found on the portal; shareholders were "
+                "not imported this run"
+            },
+        ]
 
     # Pass B: retain only mapped indicator rows for in-scope reports and build one report snapshot per scope.
     grouped: dict[tuple[str, str | None], IndicatorGroup] = {}

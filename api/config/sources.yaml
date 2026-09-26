@@ -1,7 +1,9 @@
 # Mergero source registry — Estonia-only production catalog.
 #
-# The official register files are public-approved bulk data. Person, shareholder and
-# beneficial-owner datasets are intentionally not part of this catalog.
+# The official register files are public-approved bulk data. Current share capital and current
+# shareholders (osanikud) are in scope; the beneficial-owner (kasusaajad) file is not, and the
+# official register's own national ID code, its hash, birth date and home address for a person
+# shareholder are never read by the importer regardless of catalog configuration.
 
 regions:
   baltics:
@@ -24,7 +26,11 @@ sources:
     connector_type: ee_ariregister
     connector_config: {live: true}
     enabled: true
-    allowed_fields: [legal_name, registry_id, vat_id, city, registry_status, industry_code, employees]
+    allowed_fields:
+      [
+        legal_name, registry_id, vat_id, city, registry_status, industry_code, employees,
+        share_capital, currency,
+      ]
     field_mapping: {}
     base_confidence: verified
     usage_policy: internal-only
@@ -32,9 +38,11 @@ sources:
     rate_limit_per_minute: 30
     trust_rank: 10
     notes: >-
-      Official basic-data, annual-report and EMTAK bulk files. Only OÜ, AS, UÜ, TÜ,
-      TÜH and SE entities are eligible; person, shareholder and beneficial-owner files
-      are not used. The source supplies registered addresses and reported financial lines.
+      Official basic-data, annual-report, EMTAK, general-data and shareholder bulk files. Only OÜ, AS, UÜ,
+      TÜ, TÜH and SE entities are eligible. The beneficial-owner (kasusaajad) file is not used. The source
+      supplies registered addresses, share capital, current shareholders and reported financial lines. A
+      person shareholder is stored by name and holding only; the file's national ID code, its hash, birth
+      date and home address are never read into the importer.
 
   - id: mergero-manual
     tier: I
