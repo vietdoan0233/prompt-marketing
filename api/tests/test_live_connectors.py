@@ -328,23 +328,19 @@ def test_production_catalog_is_real_and_fail_closed():
     blob = (API_ROOT / "config" / "sources.yaml").read_text(encoding="utf-8")
     assert ".example" not in blob and "fixture" not in blob.replace("fixtures", "")
     sources = cfg["sources"]
-    by_tier = {t: [s for s in sources if s["tier"] == t] for t in "ALCI"}
-    # Every licensed source needs a contract before it can ingest.
-    assert all(
-        s["permission_status"] != "approved" and not s["enabled"]
-        for s in by_tier["L"]
-        if s["id"] != "linkedin-scrape"
-    )
-    # Every approved registry/website connector is a live connector.
-    for s in sources:
-        if s["permission_status"] == "approved" and s["connector_type"] in {
-            "brreg",
-            "prh",
-            "zefix",
-            "cvr",
-            "website",
-        }:
-            assert s["connector_config"]["live"] is True
-    covered = {c for s in by_tier["A"] for c in s["countries"]}
-    assert covered == {"DE", "AT", "CH", "FI", "SE", "NO", "DK", "IS"}
-    assert {c for s in by_tier["C"] for c in s["countries"]} == covered
+    assert set(cfg["regions"]) == {"baltics"}
+    assert {s["id"] for s in sources} == {"ee-ariregister", "mergero-manual"}
+    official = next(s for s in sources if s["id"] == "ee-ariregister")
+    assert official["countries"] == ["EE"]
+    assert official["connector_type"] == "ee_ariregister"
+    assert official["connector_config"]["live"] is True
+    assert official["permission_status"] == "approved" and official["enabled"] is True
+    assert set(official["allowed_fields"]) == {
+        "legal_name",
+        "registry_id",
+        "vat_id",
+        "city",
+        "industry_code",
+        "employees",
+    }
+    assert all("person" not in str(s).lower() or s["id"] == "ee-ariregister" for s in sources)

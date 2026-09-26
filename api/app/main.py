@@ -29,7 +29,7 @@ for handler in logging.getLogger().handlers:
 app = FastAPI(
     title="Mergero Company Database API",
     version="0.1.0",
-    description="Permission-gated, provenance-linked company database for Nordic and DACH ingestion.",
+    description="Permission-gated, provenance-linked Estonia company database.",
 )
 app.add_middleware(
     CORSMiddleware,

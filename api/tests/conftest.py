@@ -11,7 +11,8 @@ from app.config import get_settings
 from app.db import Base, get_session, make_engine
 from app.main import app
 from app.models import Source
-from app.services import ingestion
+from app.services import ingestion, permissions
+from app.domain import records as record_domain
 from app.services.source_registry import sync_sources
 
 FIXTURES = get_settings().fixtures_dir
@@ -23,6 +24,17 @@ TEST_SOURCES = yaml.safe_load((FIXTURES / "sources_test.yaml").read_text(encodin
 def _no_live_network(monkeypatch):
     # A developer's api/.env may enable live connectors; the test suite must never hit the network.
     monkeypatch.setattr(get_settings(), "live_connectors_enabled", False)
+
+
+@pytest.fixture(autouse=True)
+def _test_policy(monkeypatch):
+    """Keep the production catalog Estonia-only without changing the countries of legacy test fixtures."""
+    countries = {c for entry in TEST_SOURCES["sources"] for c in entry.get("countries", [])}
+    monkeypatch.setattr(get_settings(), "active_countries", ",".join(sorted(countries)))
+    monkeypatch.setattr(record_domain, "active_countries", lambda: countries)
+    monkeypatch.setattr(ingestion, "active_countries", lambda: countries)
+    monkeypatch.setattr(permissions, "active_countries", lambda: countries)
+    monkeypatch.setattr(permissions, "region_policy", lambda: TEST_SOURCES["regions"])
 
 
 @pytest.fixture

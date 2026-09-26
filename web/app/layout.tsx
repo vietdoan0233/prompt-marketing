@@ -8,7 +8,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Mergero Company Database",
-  description: "Internal, permission-gated, provenance-linked company database (Nordics + DACH).",
+  description: "Internal, permission-gated, provenance-linked Estonia company database.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

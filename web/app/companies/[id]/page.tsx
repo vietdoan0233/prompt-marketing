@@ -94,6 +94,87 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
 
       <div className="grid grid-2">
         <section className="panel">
+          <h2>Registered address</h2>
+          <p className="small muted" style={{ marginTop: -6 }}>
+            This is the official registered seat from the Estonian register, not an inferred operating location.
+          </p>
+          {d.registered_address ? (
+            <dl className="kv">
+              <dt>Address</dt>
+              <dd>{d.registered_address.address_line ?? "—"}</dd>
+              <dt>Postal code</dt>
+              <dd>{d.registered_address.postal_code ?? "—"}</dd>
+              <dt>City</dt>
+              <dd>{d.registered_address.city ?? "—"}</dd>
+              <dt>Municipality</dt>
+              <dd>{d.registered_address.municipality ?? "—"}</dd>
+              <dt>County</dt>
+              <dd>{d.registered_address.county ?? "—"}</dd>
+              <dt>EHAK code</dt>
+              <dd className="mono">{d.registered_address.ehak_code ?? "—"}</dd>
+              <dt>Provenance</dt>
+              <dd>
+                <a href={d.registered_address.source_url} target="_blank" rel="noreferrer">
+                  {d.registered_address.source_file ?? d.registered_address.source_id}
+                </a>
+                <div className="small muted">observed {fmtDate(d.registered_address.observed_at)}</div>
+              </dd>
+            </dl>
+          ) : (
+            <p className="muted">No registered address was supplied.</p>
+          )}
+        </section>
+
+        <section className="panel">
+          <h2>Financials by year</h2>
+          <p className="small muted" style={{ marginTop: -6 }}>
+            Reported values only. A dash means the source did not provide that measure; no value is inferred.
+          </p>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th>Scope</th>
+                  <th>Value type</th>
+                  <th>Revenue</th>
+                  <th>Net income</th>
+                  <th>Operating profit</th>
+                  <th>EBITDA</th>
+                  <th>Dividends</th>
+                  <th>Capex</th>
+                  <th>Provenance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.financials.map((f) => (
+                  <tr key={f.id}>
+                    <td>{f.fiscal_year}</td>
+                    <td>{f.statement_scope ?? "—"}</td>
+                    <td>{f.value_type}</td>
+                    <td>{fmtValue(f.revenue)}</td>
+                    <td>{fmtValue(f.net_income)}</td>
+                    <td>{fmtValue(f.operating_profit)}</td>
+                    <td>{fmtValue(f.ebitda)}</td>
+                    <td>{fmtValue(f.dividends)}</td>
+                    <td>{fmtValue(f.capex)}</td>
+                    <td className="small">
+                      <a href={f.source_url} target="_blank" rel="noreferrer">
+                        {f.source_file ?? f.source_id}
+                      </a>
+                      <div className="muted mono">{f.source_key}</div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {d.financials.length === 0 && <p className="muted">No annual financial lines were imported.</p>}
+        </section>
+      </div>
+
+      <div className="grid grid-2">
+        <section className="panel">
           <h2>Consolidated profile</h2>
           <p className="small muted" style={{ marginTop: -6 }}>
             Each value is resolved from source facts; the label says how well it is supported.
