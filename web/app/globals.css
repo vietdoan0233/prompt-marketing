@@ -90,6 +90,9 @@ th { font-size: 12px; color: var(--muted); font-weight: 600; white-space: nowrap
 th a { color: var(--muted); }
 tr:hover td { background: color-mix(in srgb, var(--accent-soft) 35%, transparent); }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.financial-table { min-width: 1160px; }
+.financial-table td.num { white-space: nowrap; }
+.financial-table .financial-source { min-width: 170px; max-width: 240px; overflow-wrap: anywhere; }
 .row-muted td { opacity: 0.62; }
 
 .badge {

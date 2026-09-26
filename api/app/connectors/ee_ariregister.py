@@ -32,7 +32,7 @@ from app.connectors.http import PoliteClient
 
 PORTAL = "https://avaandmed.ariregister.rik.ee"
 DOWNLOAD_PAGE = f"{PORTAL}/et/avaandmete-allalaadimine"
-EE_PARSER_VERSION = "ee-ariregister-2026.09.2"
+EE_PARSER_VERSION = "ee-ariregister-2026.09.3"
 MANIFEST = "manifest.json"
 QUALIFICATION_YEARS = {2024, 2025}
 

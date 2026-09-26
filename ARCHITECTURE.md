@@ -4,7 +4,7 @@
 
 This internal application imports and presents source-backed company information for Estonia. Production configuration is Estonia-only (`ACTIVE_COUNTRIES=EE`) in the `baltics` region. The only enabled production ingestion source is the official [Estonian e-Business Register open-data portal](https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine), connector ID `ee-ariregister`.
 
-The importer uses the portal's basic company, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs. It does not scrape company websites, download annual-report PDFs, or ingest shareholder, beneficial-owner, or personal-register datasets. Source permission and allowed fields are checked before an import.
+The importer uses the portal's basic company, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs. It does not scrape company websites, download annual-report PDFs, or ingest shareholder, beneficial-owner, or personal-register datasets. If event data is added later, legal effective dates, registry-entry dates, and ingestion dates must remain distinct; the 1 September 2023 ownership-register change is a structural break and its bulk of resulting entries must not be presented as ordinary acquisitions without corroboration. Source permission and allowed fields are checked before an import.
 
 ## System shape
 
@@ -32,7 +32,7 @@ Stores the consolidated company profile, identity, headcount range, review state
 
 ### `company_facts`
 
-Stores versioned, source-backed claims including `registry_status`, legal name, registry ID, headcount, and industry code. Each fact retains its source, source key and URL, observed time, confidence, usage policy, review state, and link to an import run and source snapshot. `GET /companies/{id}` returns the active facts and superseded history.
+Stores versioned, source-backed claims including `registry_status`, legal name, registry ID, headcount, and industry code. Each fact retains its source, source key and URL, observed time, confidence, usage policy, review state, and link to an import run and source snapshot. Industry-code facts also retain `code_system` and `code_version` from the official EMTAK `emtak_version` column; a version is never inferred from report year. The company list and `GET /companies/{id}` expose versioned industry-code details. `GET /companies/{id}` returns active facts and superseded history.
 
 ### `registered_addresses`
 
@@ -40,7 +40,7 @@ Stores the official registered seat (`asukoht`) separately from the consolidated
 
 ### `company_financials`
 
-Stores one financial observation per company, filing, period, and statement scope. It retains reported values, source lines, currency/unit, source file, snapshot, parser version, confidence, usage policy, ingestion run, and review state. Estonian monetary values are recorded in EUR. If EBITDA is absent but both operating profit and depreciation plus impairment are reported, EBITDA is stored as derived with formula `operating_profit + depreciation_and_impairment`; the row is marked `value_type="derived"`. Other absent measures remain null.
+Stores one financial observation per company, filing, period, and statement scope. It retains reported values, source lines, currency/unit, source file, snapshot, parser version, confidence, usage policy, ingestion run, and review state. `period_days` is the inclusive day count between `period_start` and `period_end`; `period_length_class` is `short`, `standard_12_month` (365 or 366 days), `long`, or `invalid`. Missing dates leave both fields null. These values are returned by the financial API and shown in the company detail table. Financial amounts are never annualized. Estonian monetary values are recorded in EUR. Reported EBITDA takes precedence. If EBITDA is absent but operating profit and depreciation/impairment are both present, the importer derives it using `operating_profit - depreciation_and_impairment`: the official statement preserves expenses as negative values, so subtracting that signed expense adds it back. Derived rows use `value_type="derived"`. Other absent measures remain null.
 
 ### Provenance and operations
 

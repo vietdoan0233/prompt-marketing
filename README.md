@@ -2,16 +2,29 @@
 
 This FastAPI and Next.js application stores company identities, official registry statuses, registered-address versions, and annual financial observations for Estonian entities. Production ingestion uses the official [Estonian e-Business Register open-data portal](https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine) bulk files. The active country is `EE`; the region is `baltics`.
 
+## Prerequisites
+
+- Python 3.12 or newer (`api/pyproject.toml` requires `>=3.12`). On Windows, install the Python launcher (`py`) as well.
+- Node.js 20 or newer with npm for the web UI.
+- Git.
+
+The API uses SQLite by default. It creates `api/mergero_dev.db` when migrations run; no separate database server or `.env` file is required for local development. The database and downloaded register data are local and git-ignored.
+
 ## First-time setup
 
-Use Python 3.12 or newer (`api/pyproject.toml` requires `>=3.12`). From the repository root, create the API environment and install dependencies:
+Run these commands from the repository root to create the API environment, apply the database schema, and install the web dependencies:
 
 ```powershell
 cd api
 py -3.12 -m venv .venv
 .\.venv\Scripts\pip.exe install -r requirements.txt
 .\.venv\Scripts\alembic.exe upgrade head
+cd ..\web
+npm ci
+cd ..
 ```
+
+The API and UI can be started without importing registry data, but the company list will be empty until you load data. Follow one of the cache/bootstrap options below to populate it.
 
 The SQLite database and official dataset cache are git-ignored. A clean checkout has no `api/data/ee_ariregister/` cache, so `--from-cache` will fail until the cache is bootstrapped. Choose one of these options:
 
@@ -37,20 +50,21 @@ The default import covers fiscal years 2019–2025 and legal forms OÜ, AS, UÜ,
 
 ## Run the application
 
-From `api/`:
+Start the API in one terminal from the repository root:
 
 ```powershell
-.\.venv\Scripts\uvicorn.exe app.main:app --port 8000
+cd api
+.\.venv\Scripts\uvicorn.exe app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-In another terminal, from `web/`:
+Start the web UI in a second terminal from the repository root:
 
 ```powershell
-npm ci
+cd web
 npm run dev
 ```
 
-The API docs are at `http://localhost:8000/docs`; the UI is at `http://localhost:3000`.
+Open the UI at `http://localhost:3000` and the API documentation at `http://localhost:8000/docs`. Stop either process with `Ctrl+C`. For later runs, start both processes again; migrations and `npm ci` are only needed during setup or after dependency/schema changes.
 
 ## Data and provenance
 
@@ -58,7 +72,9 @@ The importer uses the official basic-data, annual-report metadata, EMTAK activit
 
 `registered_addresses` represents the official registered seat (`asukoht`), not an inferred operating location. Address parts are nullable when the source is incomplete or ambiguous. A changed mapped address closes the previous version and adds a current one; unchanged addresses do not add a version.
 
-`company_financials` stores financial observations by company, filing, fiscal period, and statement scope. Estonian monetary values use `currency="EUR"` and `unit="EUR"`. Reported values retain the source lines and provenance. EBITDA is calculated only when it is not explicitly reported and both `operating_profit` and `depreciation_and_impairment` are present. Such a row is marked `value_type="derived"` with `calculation_formula="operating_profit + depreciation_and_impairment"`. Missing measures remain null.
+`company_financials` stores financial observations by company, filing, fiscal period, and statement scope. Estonian monetary values use `currency="EUR"` and `unit="EUR"`. Reported values retain the source lines and provenance. Reported EBITDA takes precedence. Otherwise, when operating profit and depreciation/impairment are present, EBITDA is derived as `operating_profit - depreciation_and_impairment`. The official statement preserves expenses as negative numbers, so subtracting the signed expense adds it back. Such a row is marked `value_type="derived"` with the applied formula in `calculation_formula`. Missing measures remain null.
+
+Financial rows expose the inclusive `period_days` and a `period_length_class` (`short`, `standard_12_month`, `long`, or `invalid`). Missing period dates leave these fields unknown. Amounts are not annualized, so compare rows using their actual filing periods. EMTAK industry-code facts preserve the official `emtak_version` label as taxonomy metadata; the importer does not infer a code version from fiscal year. Shareholder and board event histories are not currently ingested.
 
 Unmatched indicator report IDs are rejected and included in the ingestion run's outcome log; their values are not imported. Raw snapshot payloads follow the configured retention policy.
 

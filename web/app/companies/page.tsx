@@ -176,7 +176,15 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
                   <td>{c.country}</td>
                   <td className="small">
                     {c.sector ?? <span className="muted">—</span>}
-                    {c.industry_codes[0] && <div className="muted mono">{c.industry_codes[0]}</div>}
+                    {c.industry_code_details.length > 0 ? (
+                      c.industry_code_details.map((item) => (
+                        <div className="muted mono" key={`${item.code_system}:${item.code_version}:${item.code}`}>
+                          {item.code_system ?? "Code system unknown"} {item.code_version ?? "version unknown"}: {item.code}
+                        </div>
+                      ))
+                    ) : (
+                      c.industry_codes[0] && <div className="muted mono">{c.industry_codes[0]} · version unknown</div>
+                    )}
                   </td>
                   <td className="num">
                     {fmtEmployees(c.estimated_employee_min, c.estimated_employee_max)}

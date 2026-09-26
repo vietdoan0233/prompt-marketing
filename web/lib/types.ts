@@ -73,6 +73,7 @@ export type CompanySummary = {
   website: string | null;
   sector: string | null;
   industry_codes: string[];
+  industry_code_details: { code: string; code_system: string | null; code_version: string | null }[];
   estimated_employee_min: number | null;
   estimated_employee_max: number | null;
   ownership_type: string;
@@ -168,6 +169,8 @@ export type Fact = {
   field_name: string;
   value_json: unknown;
   original_value: string | null;
+  code_system: string | null;
+  code_version: string | null;
   source_id: string;
   source_name: string | null;
   source_key: string | null;
@@ -271,6 +274,8 @@ export type Financial = {
   id: string;
   period_start: string | null;
   period_end: string | null;
+  period_days: number | null;
+  period_length_class: "short" | "standard_12_month" | "long" | "invalid" | null;
   fiscal_year: number;
   currency: string | null;
   revenue: number | null;

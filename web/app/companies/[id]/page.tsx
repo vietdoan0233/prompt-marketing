@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/Badge";
-import { apiGet, fmtDate, fmtEmployees, fmtValue } from "@/lib/api";
+import { apiGet, fmtDate, fmtEmployees, fmtMoney, fmtValue } from "@/lib/api";
 import type { CompanyDetail, Fact } from "@/lib/types";
 
 import { CorrectionForm, EraseContactButton, ReviewControls } from "./ClientControls";
@@ -16,6 +16,11 @@ function FactRow({ f }: { f: Fact }) {
         {fmtValue(f.value_json)}
         {f.original_value && f.original_value !== fmtValue(f.value_json) && (
           <div className="small muted">source value: “{f.original_value}”</div>
+        )}
+        {f.code_system && (
+          <div className="small muted">
+            {f.code_system} {f.code_version ?? "version unknown"}
+          </div>
         )}
         {f.correction_reason && <div className="small">reason: {f.correction_reason}</div>}
       </td>
@@ -137,23 +142,23 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
         <section className="panel">
           <h2>Financials by year</h2>
           <p className="small muted" style={{ marginTop: -6 }}>
-            Reported lines retain source provenance. EBITDA is derived only when operating profit and depreciation
-            and impairment are both reported.
+            Amounts are formatted in EUR. Reported values keep their source signs and provenance. Reported EBITDA
+            takes precedence; otherwise EBITDA = operating profit − the signed depreciation/impairment line (adding
+            back a negative expense). Values are not annualized.
           </p>
           <div className="table-wrap">
-            <table>
+            <table className="financial-table">
               <thead>
                 <tr>
                   <th>Year</th>
-                  <th>Scope</th>
-                  <th>Currency / unit</th>
-                  <th>Value type</th>
-                  <th>Revenue</th>
-                  <th>Net income</th>
-                  <th>Operating profit</th>
-                  <th>EBITDA</th>
-                  <th>Dividends</th>
-                  <th>Capex</th>
+                  <th>Period / scope</th>
+                  <th className="num">Revenue</th>
+                  <th className="num">Net income</th>
+                  <th className="num">Operating profit</th>
+                  <th className="num">D&amp;A (reported sign)</th>
+                  <th className="num">EBITDA</th>
+                  <th className="num">Dividends</th>
+                  <th className="num">Capex</th>
                   <th>Provenance</th>
                 </tr>
               </thead>
@@ -161,19 +166,39 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                 {d.financials.map((f) => (
                   <tr key={f.id}>
                     <td>{f.fiscal_year}</td>
-                    <td>{f.statement_scope ?? "—"}</td>
-                    <td>{f.currency ?? "—"} / {f.unit ?? "—"}</td>
-                    <td>{f.value_type}</td>
-                    <td>{fmtValue(f.revenue)}</td>
-                    <td>{fmtValue(f.net_income)}</td>
-                    <td>{fmtValue(f.operating_profit)}</td>
-                    <td>
-                      {fmtValue(f.ebitda)}
-                      {f.calculation_formula && <div className="small muted">{f.calculation_formula}</div>}
-                    </td>
-                    <td>{fmtValue(f.dividends)}</td>
-                    <td>{fmtValue(f.capex)}</td>
                     <td className="small">
+                      {f.period_start ?? "—"} – {f.period_end ?? "—"}
+                      <div className="muted">
+                        {f.period_days === null
+                          ? "period length unknown"
+                          : `${f.period_days} days · ${
+                              f.period_length_class === "standard_12_month"
+                                ? "standard 12-month"
+                                : f.period_length_class ?? "unclassified"
+                            }`}
+                      </div>
+                      <div className="muted">{f.statement_scope ?? "scope unknown"}</div>
+                    </td>
+                    <td className="num">{fmtMoney(f.revenue, f.currency ?? "EUR")}</td>
+                    <td className="num">{fmtMoney(f.net_income, f.currency ?? "EUR")}</td>
+                    <td className="num">{fmtMoney(f.operating_profit, f.currency ?? "EUR")}</td>
+                    <td className="num">{fmtMoney(f.depreciation_and_impairment, f.currency ?? "EUR")}</td>
+                    <td className="num">
+                      <strong>{fmtMoney(f.ebitda, f.currency ?? "EUR")}</strong>
+                      <div className="small muted">
+                        {f.value_type === "derived" ? "Derived" : "Reported"}
+                        {f.value_type === "derived" && f.operating_profit !== null &&
+                          f.depreciation_and_impairment !== null && (
+                            <div>
+                              {fmtMoney(f.operating_profit, f.currency ?? "EUR")} − (
+                              {fmtMoney(f.depreciation_and_impairment, f.currency ?? "EUR")})
+                            </div>
+                          )}
+                      </div>
+                    </td>
+                    <td className="num">{fmtMoney(f.dividends, f.currency ?? "EUR")}</td>
+                    <td className="num">{fmtMoney(f.capex, f.currency ?? "EUR")}</td>
+                    <td className="small financial-source">
                       <a href={f.source_url} target="_blank" rel="noreferrer">
                         {f.source_file ?? f.source_id}
                       </a>

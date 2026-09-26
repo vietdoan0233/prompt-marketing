@@ -24,7 +24,8 @@ Read `ARCHITECTURE.md` before making implementation decisions. The source catalo
 - `companies` stores the consolidated company profile and qualification status.
 - `company_facts` stores versioned facts such as `registry_status`, headcount, registry ID, and industry code with source provenance.
 - `registered_addresses` stores versioned official registered seats (`asukoht`), not operating locations.
-- `company_financials` stores annual report values by filing and statement scope. Estonia rows use EUR. EBITDA is derived only when operating profit and depreciation plus impairment are both present and EBITDA was not reported; the formula and `value_type="derived"` are recorded.
+- `company_financials` stores annual report values by filing, statement scope, and explicit period length. Estonia rows use EUR. Period days and the short/standard/long class are exposed; values are never annualized. Reported EBITDA takes precedence, otherwise it is derived only when operating profit and depreciation plus impairment are both present; the formula and `value_type="derived"` are recorded.
+- EMTAK code facts retain the official `emtak_version` metadata. Never infer taxonomy version from fiscal year.
 - `source_snapshots`, `ingestion_runs`, `ingestion_records`, and `audit_events` preserve dataset evidence and import outcomes.
 
 Company detail is served by `GET /companies/{id}`. It includes the company summary and registry status, source-backed facts, registered address, financials, identifiers, warnings, and review history. Dedicated time-series endpoints are `GET /companies/{id}/financials` and `GET /companies/{id}/registered-address`. Other relevant routes include `GET /companies`, `GET /ingestion-runs`, and `GET /ingestion-runs/{id}`.
@@ -41,7 +42,7 @@ Company detail is served by `GET /companies/{id}`. It includes the company summa
 
 ## Data quality and safety
 
-Imports must be deterministic for the same source snapshot, parser version, and configuration. Explain accepted, rejected, skipped, duplicate, incomplete, stale, and conflicting records with source references. A missing field reduces completeness; it does not justify inventing a value. Corrections preserve the original fact and provenance.
+Imports must be deterministic for the same source snapshot, parser version, and configuration. Explain accepted, rejected, skipped, duplicate, incomplete, stale, and conflicting records with source references. A missing field reduces completeness; it does not justify inventing a value. Corrections preserve the original fact and provenance. Financial observations keep their source duration and must not be annualized. If ownership-event data enters scope, retain legal effective, registry-entry, and ingestion dates separately and flag the 2023-09-01 reporting change before interpreting clustered entries as acquisitions.
 
 Keep raw snapshots short-lived and configurable. Redact personal contact data and credentials from debug logs. Do not put unnecessary personal data or raw source payloads into LLM prompts. Generated summaries must cite supplied facts and remain marked as generated until reviewed.
 

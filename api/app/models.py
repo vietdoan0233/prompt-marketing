@@ -220,6 +220,8 @@ class CompanyFact(Base):
     field_name: Mapped[str] = mapped_column(String(64))
     value_json: Mapped[Any] = mapped_column(JsonType)
     original_value: Mapped[str | None] = mapped_column(Text)  # source value before normalization
+    code_system: Mapped[str | None] = mapped_column(String(32))
+    code_version: Mapped[str | None] = mapped_column(String(64))
     value_hash: Mapped[str] = mapped_column(String(64))
     source_id: Mapped[str] = mapped_column(ForeignKey("sources.id"))
     source_key: Mapped[str | None] = mapped_column(String(300))
@@ -319,10 +321,13 @@ Money = Numeric(20, 2)
 
 
 class CompanyFinancial(Base):
-    """One row per company, filing and statement scope. Values are exactly as reported; nothing is derived.
+    """One row per company, filing and statement scope, with source-period length made explicit.
 
-    Deferred measures (ebitda, dividends, capex) stay NULL until an explicit source or a reviewed formula
-    exists; a derived value must set value_type='derived' and calculation_formula.
+    Reported values retain their source provenance. When EBITDA is absent but operating profit and
+    depreciation/impairment are both reported, the Estonia importer derives EBITDA from operating profit
+    minus the signed depreciation/impairment source line. This adds back negative reported expenses and
+    records the formula with value_type='derived'. Reported EBITDA always takes precedence. Values are
+    never annualized: consumers should use period_days and period_length_class when comparing filings.
     """
 
     __tablename__ = "company_financials"
@@ -336,6 +341,8 @@ class CompanyFinancial(Base):
     company_id: Mapped[str] = mapped_column(ForeignKey("companies.id", ondelete="CASCADE"), index=True)
     period_start: Mapped[date | None] = mapped_column(Date)
     period_end: Mapped[date | None] = mapped_column(Date)
+    period_days: Mapped[int | None] = mapped_column(Integer)
+    period_length_class: Mapped[str | None] = mapped_column(String(24))
     fiscal_year: Mapped[int] = mapped_column(Integer, index=True)
     currency: Mapped[str | None] = mapped_column(String(3))
     revenue: Mapped[Decimal | None] = mapped_column(Money)

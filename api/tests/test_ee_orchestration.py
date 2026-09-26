@@ -18,6 +18,7 @@ from app.connectors.ee_ariregister import PORTAL
 from app.models import (
     AuditEvent,
     Company,
+    CompanyFact,
     CompanyFinancial,
     IngestionRecord,
     RegisteredAddress,
@@ -70,6 +71,9 @@ def _datasets(
     address: str = "Regati pst 12",
     employees_2024: str = "24",
     employees_2025: str = "22",
+    period_2025_start: str = "01.01.2025",
+    period_2025_end: str = "31.12.2025",
+    emtak_version: str = "EMTAK 2025",
 ) -> None:
     cache.mkdir(parents=True, exist_ok=True)
     basic = _csv(
@@ -141,8 +145,8 @@ def _datasets(
                 "2025",
                 "accepted",
                 "Ei",
-                "01.01.2025",
-                "31.12.2025",
+                period_2025_start,
+                period_2025_end,
                 "D2025",
             ],
         ],
@@ -150,8 +154,8 @@ def _datasets(
     _write_zip(cache, "1.aruannete_yldandmed_kuni_31082026.zip", reports, kind="reports")
 
     activity = _csv(
-        ["report_id", "põhitegevusala", "emtak"],
-        [["D2025", "Jah", "62011"]],
+        ["report_id", "emtak", "Jaotatud müügitulu", "põhitegevusala", "emtak_version"],
+        [["D2025", "62011", "1000", "Jah", emtak_version]],
     )
     _write_zip(cache, "2.EMTAK_myygitulu_kuni_31082026.zip", activity, kind="activity")
 
@@ -189,7 +193,7 @@ def _datasets(
                 "R2025",
                 "DepreciationAndImpairmentLossReversal",
                 "Kasumiaruanne",
-                "20",
+                "-20",
                 "Depreciation and impairment",
             ],
         ],
@@ -224,9 +228,17 @@ def test_import_estonia_full_lifecycle_and_idempotency(
     assert len(detail["financials"]) == 2
     derived = next(row for row in detail["financials"] if row["fiscal_year"] == 2025)
     assert derived["ebitda"] == "120.00"
+    assert derived["period_days"] == 365 and derived["period_length_class"] == "standard_12_month"
+    leap_year = next(row for row in detail["financials"] if row["fiscal_year"] == 2024)
+    assert leap_year["period_days"] == 366 and leap_year["period_length_class"] == "standard_12_month"
     assert derived["currency"] == "EUR" and derived["unit"] == "EUR"
     assert derived["value_type"] == "derived"
-    assert derived["calculation_formula"] == "operating_profit + depreciation_and_impairment"
+    assert derived["calculation_formula"] == "operating_profit - depreciation_and_impairment"
+    assert detail["company"]["industry_code_details"] == [
+        {"code": "62011", "code_system": "EMTAK", "code_version": "2025"}
+    ]
+    activity_fact = next(f for f in detail["facts"] if f["field_name"] == "industry_code")
+    assert activity_fact["code_system"] == "EMTAK" and activity_fact["code_version"] == "2025"
     orphan = session.scalar(
         select(IngestionRecord).where(
             IngestionRecord.run_id == first.id, IngestionRecord.source_key.like("orphan:%")
@@ -296,3 +308,55 @@ def test_2025_qualification_file_is_used_for_single_year_import(
     company = session.scalar(select(Company).where(Company.country == "EE"))
     assert company is not None
     assert company.estimated_employee_min == 22 and company.qualification_status == "qualified"
+
+
+def test_short_reporting_period_is_exposed_without_annualizing_values(
+    cache_dir: Path, monkeypatch, session: Session, client
+) -> None:
+    _datasets(cache_dir, period_2025_start="01.04.2025")
+    settings = get_settings().model_copy(update={"ee_cache_dir": cache_dir})
+    monkeypatch.setattr("app.services.ee_import.get_settings", lambda: settings)
+
+    run = import_estonia(session, query={"years": [2024, 2025]}, min_employees=20, live_override=False)
+
+    assert run.status == "UPSERTED"
+    company = session.scalar(select(Company).where(Company.country == "EE"))
+    assert company is not None
+    detail = client.get(f"/companies/{company.id}").json()
+    financial = next(row for row in detail["financials"] if row["fiscal_year"] == 2025)
+    assert financial["period_start"] == "2025-04-01"
+    assert financial["period_end"] == "2025-12-31"
+    assert financial["period_days"] == 275
+    assert financial["period_length_class"] == "short"
+    assert financial["revenue"] == "1000.00"
+
+
+def test_same_bare_activity_code_keeps_source_taxonomy_versions_distinct(
+    cache_dir: Path, monkeypatch, session: Session, client
+) -> None:
+    settings = get_settings().model_copy(update={"ee_cache_dir": cache_dir})
+    monkeypatch.setattr("app.services.ee_import.get_settings", lambda: settings)
+    _datasets(cache_dir, emtak_version="EMTAK 2008")
+    import_estonia(session, query={"years": [2024, 2025]}, min_employees=20, live_override=False)
+    company = session.scalar(select(Company).where(Company.country == "EE"))
+    assert company is not None
+
+    _datasets(cache_dir, emtak_version="EMTAK 2025")
+    import_estonia(session, query={"years": [2024, 2025]}, min_employees=20, live_override=False)
+
+    facts = session.scalars(
+        select(CompanyFact)
+        .where(CompanyFact.company_id == company.id, CompanyFact.field_name == "industry_code")
+        .order_by(CompanyFact.valid_from)
+    ).all()
+    assert len(facts) == 2
+    assert [(fact.value_json, fact.code_system, fact.code_version) for fact in facts] == [
+        ("62011", "EMTAK", "2008"),
+        ("62011", "EMTAK", "2025"),
+    ]
+    assert facts[0].valid_to is not None and facts[1].valid_to is None
+
+    detail = client.get(f"/companies/{company.id}").json()
+    assert detail["company"]["industry_code_details"] == [
+        {"code": "62011", "code_system": "EMTAK", "code_version": "2025"}
+    ]
