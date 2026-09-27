@@ -1,14 +1,33 @@
-# Estonia company register
+# Mergero Seller Signals — Estonia
 
-This FastAPI and Next.js application stores company identities, official registry statuses, registered-address versions, and annual financial observations for Estonian entities. Production ingestion uses the official [Estonian e-Business Register open-data portal](https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine) bulk files. The active country is `EE`; the region is `baltics`.
+Mergero is an explainable **seller-prospect signal engine** built on official Estonian register and annual-report evidence. It helps advisors decide which companies to research first, and shows the filings, thresholds, source links, and gaps behind each result. The company database is the evidence layer that makes those signals traceable; it is not the product in itself.
+
+The main signals are:
+
+- **Cash Harvesting candidate** — stable revenue (CAGR from -2% to +3% across three consecutive comparable years) together with a latest-year EBITDA margin strictly above 15%. This describes a financial pattern; it does not show that an owner is extracting cash or wants to sell.
+- **Peer-relative financial-profile index** — combines robust peer comparisons of median operating margin (70%) and equity-to-assets (30%) inside two-digit EMTAK groups with at least eight comparable companies. It describes a financial profile, not sale readiness.
+- **Digital Decay (opt-in)** — checks public website activity and reads it alongside reported revenue and register headcount as an operational-stagnation signal. It is disabled by default.
+
+Missing or incomparable inputs stay `insufficient_evidence`. The product does not infer owner intent or buyer fit, and it does not perform outreach. The evidence comes from the official [Estonian e-Business Register open-data portal](https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine); the active country is `EE` and the region is `baltics`.
 
 ## Prerequisites
 
 - Python 3.12 or newer (`api/pyproject.toml` requires `>=3.12`). On Windows, install the Python launcher (`py`) as well.
 - Node.js 20 or newer with npm for the web UI.
 - Git.
+- Docker Desktop (optional, for the container-based setup).
 
 The API uses SQLite by default. It creates `api/mergero_dev.db` when migrations run; no separate database server or `.env` file is required for local development. The database and downloaded register data are local and git-ignored.
+
+## Run with Docker Compose
+
+From the repository root, run:
+
+```powershell
+docker compose up --build
+```
+
+Compose starts PostgreSQL, applies migrations, imports the official register data, and starts the API and web UI. The initial import needs internet access to the official portal and can take several minutes. Open Seller Prospects at `http://localhost:3000/seller-prospects`; the API docs are at `http://localhost:8000/docs`. Stop the stack with `Ctrl+C`.
 
 ## First-time setup
 
@@ -24,27 +43,39 @@ npm ci
 cd ..
 ```
 
-The API and UI can be started without importing registry data, but the company list will be empty until you load data. Follow one of the cache/bootstrap options below to populate it.
+The API and UI can be started without importing register data, but Seller Prospects will have no leads until you load data. Follow one of the cache/bootstrap options below to populate it.
 
 The SQLite database and official dataset cache are git-ignored. A clean checkout has no `api/data/ee_ariregister/` cache, so `--from-cache` will fail until the cache is bootstrapped. Choose one of these options:
 
-1. **Download from the official portal once.** Set `LIVE_CONNECTORS_ENABLED=true` in `api/.env`, then run:
+1. **Download from the official portal once.** From the repository root, enable live access in this PowerShell session and import:
 
    ```powershell
+   cd api
+   $env:LIVE_CONNECTORS_ENABLED = "true"
    .\.venv\Scripts\python.exe -m app.seed --replace
+   cd ..
    ```
 
    This downloads and verifies the required official ZIPs into `api/data/ee_ariregister/`, then imports them. Keep `LIVE_CONNECTORS_ENABLED=true` for the live import.
 
-2. **Use a teammate's verified cache.** Copy the complete `api/data/ee_ariregister/` directory, including `manifest.json`, from a trusted checkout, then run:
+2. **Use a teammate's verified cache.** Copy the complete `api/data/ee_ariregister/` directory, including `manifest.json`, from a trusted checkout, then from the repository root run:
 
    ```powershell
+   cd api
    .\.venv\Scripts\python.exe -m app.seed --from-cache --replace
+   cd ..
    ```
 
 `--from-cache` intentionally does not access the network. It verifies each ZIP against the manifest's official URL, size, and SHA-256. Both cache resolution and required-year validation finish before `--replace` backs up and purges the existing imported data. The import requires files for every requested year plus indicator files for both 2024 and 2025. If either qualification-year file is missing, the import fails before company upserts and the replacement command exits before purge.
 
-For later incremental imports, use `python -m app.seed --reimport` with live access, or add `--from-cache` to use the verified local files. `--replace` makes a timestamped database backup in `api/backups/` before purging imported data. Do not delete the database file by hand; that removes audit and correction history.
+For later incremental imports, run these commands from `api/`:
+
+```powershell
+$env:LIVE_CONNECTORS_ENABLED = "true"
+.\.venv\Scripts\python.exe -m app.seed --reimport
+```
+
+Add `--from-cache` to use the verified local files without network access. `--replace` makes a timestamped database backup in `api/backups/` before purging imported data. Do not delete the database file by hand; that removes audit and correction history.
 
 The default import covers fiscal years 2019–2025 and legal forms OÜ, AS, UÜ, TÜ, TÜH, and SE. Company qualification uses non-consolidated reported FTE from 2024 or 2025 and defaults to at least 20 employees. Previously imported companies with newer below-threshold FTE are refreshed and shown with their updated qualification status.
 
@@ -64,7 +95,7 @@ cd web
 npm run dev
 ```
 
-Open the UI at `http://localhost:3000` and the API documentation at `http://localhost:8000/docs`. Stop either process with `Ctrl+C`. For later runs, start both processes again; migrations and `npm ci` are only needed during setup or after dependency/schema changes.
+Open Seller Prospects at `http://localhost:3000/seller-prospects` and the API documentation at `http://localhost:8000/docs`. The root URL redirects to Seller Prospects. Stop either process with `Ctrl+C`. For later runs, start both processes again; migrations and `npm ci` are only needed during setup or after dependency/schema changes.
 
 ## Data and provenance
 
@@ -80,7 +111,7 @@ Financial rows expose the inclusive `period_days` and a `period_length_class` (`
 
 Unmatched indicator report IDs are rejected and included in the ingestion run's outcome log; their values are not imported. Raw snapshot payloads follow the configured retention policy.
 
-## API and review
+## Signals and evidence API
 
 - `GET /companies` lists companies and supports headcount, qualification, and review filters.
 - `GET /companies/{id}` returns the summary (including registry status), source-backed facts and history (including share capital), registered address, current shareholders, annual financials, identifiers, warnings, and review information.
@@ -216,6 +247,14 @@ Unknown checks never count as stale. Thresholds are configurable with `DECAY_COP
 ## Checks
 
 Run from the repository root:
+
+Install the development tools once before running these checks:
+
+```powershell
+cd api
+.\.venv\Scripts\pip.exe install -r requirements-dev.txt
+cd ..
+```
 
 ```powershell
 cd api

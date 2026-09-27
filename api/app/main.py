@@ -27,9 +27,12 @@ for handler in logging.getLogger().handlers:
     handler.addFilter(_RedactingFilter())
 
 app = FastAPI(
-    title="Mergero Company Database API",
+    title="Mergero Seller Signals API",
     version="0.1.0",
-    description="Permission-gated, provenance-linked Estonia company database.",
+    description=(
+        "Explainable seller-prospect signals backed by permission-gated, provenance-linked "
+        "Estonia register evidence."
+    ),
 )
 app.add_middleware(
     CORSMiddleware,

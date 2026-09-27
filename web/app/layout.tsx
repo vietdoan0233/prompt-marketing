@@ -7,8 +7,8 @@ import { Nav } from "@/components/Nav";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mergero Company Database",
-  description: "Internal, permission-gated, provenance-linked Estonia company database.",
+  title: "Mergero Seller Signals",
+  description: "Explainable seller-prospect signals backed by Estonia register and annual-report evidence.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -16,15 +16,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <header className="topbar">
-          <Link href="/companies" className="brand">
-            Mergero <span>company database</span>
+          <Link href="/seller-prospects" className="brand">
+            Mergero <span>seller signals</span>
           </Link>
           <Nav />
           <ActorPicker />
         </header>
         <main className="main">{children}</main>
         <footer className="footer">
-          Internal use only · Scope ends at ingestion, review and data-quality reporting · No outreach actions
+          Internal use only · Signals support advisor review; they do not establish owner intent or buyer fit
         </footer>
       </body>
     </html>
