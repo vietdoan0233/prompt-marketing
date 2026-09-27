@@ -73,10 +73,19 @@ class _SSRFSafeTransport(httpx.BaseTransport):
     def handle_request(self, request: httpx.Request) -> httpx.Response:
         host = request.url.host
         safe_ip = _safe_ip_for_host(host)
-        if safe_ip != host:
-            request.url = request.url.copy_with(host=safe_ip)
-            request.extensions = {**request.extensions, "sni_hostname": host}
-        return self._inner.handle_request(request)
+        if safe_ip == host:
+            return self._inner.handle_request(request)
+        # Connect to the pinned IP, but restore the hostname URL afterwards: httpx derives `response.url`
+        # and relative redirect targets from this same request object, and callers build follow-up URLs
+        # (and the recorded domain) from `response.url`, so leaving the IP in place would send every later
+        # request to a bare IP with no SNI or Host name.
+        original_url = request.url
+        request.url = original_url.copy_with(host=safe_ip)
+        request.extensions = {**request.extensions, "sni_hostname": host}
+        try:
+            return self._inner.handle_request(request)
+        finally:
+            request.url = original_url
 
     def close(self) -> None:
         self._inner.close()
