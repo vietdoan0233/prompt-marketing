@@ -2,9 +2,9 @@
 
 ## Purpose and production scope
 
-This internal application imports and presents source-backed company information for Estonia. Production configuration is Estonia-only (`ACTIVE_COUNTRIES=EE`) in the `baltics` region. The only enabled production ingestion source is the official [Estonian e-Business Register open-data portal](https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine), connector ID `ee-ariregister`.
+This internal application imports and presents source-backed company information for Estonia. Production configuration is Estonia-only (`ACTIVE_COUNTRIES=EE`) in the `baltics` region. The only enabled bulk-import source is the official [Estonian e-Business Register open-data portal](https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine), connector ID `ee-ariregister`. A separate approved website-activity enrichment may run only when explicitly enabled and opted into; it must never create a company.
 
-The importer uses the portal's basic company, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs, plus two optional JSON ZIPs: general company data (current share capital) and shareholders (osanikud). It does not scrape company websites, download annual-report PDFs, or ingest the beneficial-owner (kasusaajad) or personal-register datasets. A person shareholder is stored by name, role, and holding only: the official file's national ID code, its one-way hash, birth date, and home address are never read by the importer, so they can never reach storage. If event data is added later, legal effective dates, registry-entry dates, and ingestion dates must remain distinct; the 1 September 2023 ownership-register change is a structural break and its bulk of resulting entries must not be presented as ordinary acquisitions without corroboration. Source permission and allowed fields are checked before an import.
+The importer uses the portal's basic company, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs, plus two optional JSON ZIPs: general company data (current share capital) and shareholders (osanikud). The official importer does not scrape company websites or download annual-report PDFs, and the system does not ingest the beneficial-owner (kasusaajad) or personal-register datasets. A person shareholder is stored by name, role, and holding only: the official file's national ID code, its one-way hash, birth date, and home address are never read by the importer, so they can never reach storage. If event data is added later, legal effective dates, registry-entry dates, and ingestion dates must remain distinct; the 1 September 2023 ownership-register change is a structural break and its bulk of resulting entries must not be presented as ordinary acquisitions without corroboration. Source permission and allowed fields are checked before an import.
 
 ## System shape
 
@@ -22,6 +22,8 @@ Official RIK bulk files or verified local cache
                     |
         Next.js company database UI
 ```
+
+The seller-prospect analysis reads stored financials and registry facts without triggering ingestion. A separate, opt-in Digital Decay connector reads a verified company's public website and writes evidence as a provenance-linked estimated fact; it remains disabled by default.
 
 The web app uses Next.js and TypeScript. The API and import process use FastAPI, SQLAlchemy, and Alembic. SQLite is the local default; deployment may configure another SQLAlchemy-supported database.
 
@@ -46,6 +48,22 @@ Stores the official registered seat (`asukoht`) separately from the consolidated
 ### `company_financials`
 
 Stores one financial observation per company, filing, period, and statement scope. It retains reported values, source lines, currency/unit, source file, snapshot, parser version, confidence, usage policy, ingestion run, and review state. `period_days` is the inclusive day count between `period_start` and `period_end`; `period_length_class` is `short`, `standard_12_month` (365 or 366 days), `long`, or `invalid`. Missing dates leave both fields null. These values are returned by the financial API and shown in the company detail table. Financial amounts are never annualized. Estonian monetary values are recorded in EUR. Reported EBITDA takes precedence. If EBITDA is absent but operating profit and depreciation/impairment are both present, the importer derives it using `operating_profit - depreciation_and_impairment`: the official statement preserves expenses as negative values, so subtracting that signed expense adds it back. Derived rows use `value_type="derived"`. Other absent measures remain null.
+
+### Seller-prospect signals (planned integration)
+
+The audited integration candidate is `origin/codex/seller-funnel`, which contains the Digital Decay branch and current `main`; the standalone `digital-decay-signal` branch is behind `main`. Seller-prospect calculations are read-only and explainable. Financial screens require comparable standalone EUR statements and preserve `unknown` when periods or measures are missing. They must not infer owner intent, buyer fit, or mandate probability.
+
+The planned Cash Harvesting flag uses three or four consecutive comparable years and requires EBITDA margin above 15%, revenue CAGR between -2% and +3%, and dividends/net income above 70%. Payout-ratio changes over prior years support the description of a dividend spike. Capex below depreciation is supporting evidence only when both values are source-backed; it is not a substitute for the three core conditions. Keep the signal separate from Digital Decay and from the seller's intent field.
+
+Local database audit on 2026-09-27: `api/mergero_dev.db` contains 3,159 companies and 20,805 financial rows. About 2,517 companies have three consecutive comparable standalone EUR years with revenue, EBITDA, and net income. Dividends and capex are null in all current rows; depreciation/impairment is populated for some rows. Until source mapping provides dividends, the payout ratio is not evaluable and a positive Cash Harvesting flag must not be emitted.
+
+### Sector grouping (planned)
+
+The current local `companies.sector` values are blank, so using that field alone would place every company in `Others`. Derive filter groups from the existing source-backed EMTAK codes, using the same two-digit division level as the seller-funnel peer groups. Require at least 10 companies per displayed group and aggregate smaller or unmapped groups into a display-only `Others` bucket without changing original industry codes or taxonomy metadata. The local snapshot has 57 groups meeting the threshold (3,067 companies), 90 companies across 23 smaller groups, and 2 companies without a usable code; calculate live counts rather than hard-coding these values.
+
+### Digital Decay website signal (planned integration)
+
+The website check is a separate opt-in enrichment, disabled by default, not a bulk importer. Enforce per-host rate limits, page budgets, and approved field/retention rules. Validate caller-supplied domains before network access; prevent private, reserved, loopback, link-local, and metadata-service access both before requests and across redirects; verify that the public page belongs to the company before storing a verified domain or signal. Missing or inconclusive website evidence remains `insufficient_evidence`.
 
 ### Provenance and operations
 

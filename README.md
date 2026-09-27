@@ -89,6 +89,18 @@ Unmatched indicator report IDs are rejected and included in the ingestion run's 
 - `GET /companies/{id}/financials` returns the financial time series.
 - `GET /ingestion-runs/{id}` exposes accepted, unchanged, rejected, orphan, and warning records.
 
+## Seller-prospect and sector work (pending)
+
+The 2026-09-27 local audit found `origin/codex/seller-funnel` to be the candidate integration branch: it includes the Digital Decay branch and current `main`. The standalone `digital-decay-signal` branch is behind `main`. These features are not yet part of this checkout's `main` API.
+
+The seller review should combine source-backed financial evidence with an optional Digital Decay website signal. The website check must remain opt-in and disabled by default. Before enabling it, validate caller-supplied domains before fetching, prevent private/reserved network access through redirects, and only call a domain verified when the company match succeeds. Website activity and financial patterns are review cues; they do not establish an owner's intent to sell.
+
+The planned cash-harvesting flag uses comparable standalone EUR annual reports across three or four consecutive years: EBITDA margin above 15%, revenue CAGR between -2% and +3%, and dividends/net income above 70%. Compare payout ratios over time before describing a dividend spike. Capex below depreciation may be supporting evidence only when both values are available. Missing inputs must produce insufficient evidence, not a zero or a positive signal.
+
+Audit snapshot of the local `api/mergero_dev.db` on 2026-09-27: 3,159 companies and 20,805 financial rows; about 2,517 companies have three consecutive comparable years with revenue, EBITDA, and net income. No financial row has dividends or capex populated, so the payout-ratio trigger cannot currently fire. Depreciation/impairment data exists but does not supply capex.
+
+The `companies.sector` field is blank for all 3,159 local companies. Build sector options from the source-backed two-digit EMTAK division codes instead. In this snapshot, 57 divisions meet the 10-company minimum and cover 3,067 companies; 90 companies are in smaller divisions and 2 have no usable code. Group those 92 into a display-only `Others` option, preserving each company's original industry code. Recompute counts from the active database rather than hard-coding this snapshot.
+
 ## Checks
 
 Run from the repository root:
