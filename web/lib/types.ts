@@ -132,6 +132,8 @@ export type SellerProspect = {
   consolidated_revenue_eur: number | null;
   flags: ("group_parent" | "holding_activity")[];
   registry_url: string | null;
+  digital_decay_verdict: "coasting" | "decaying" | "watch" | "active" | "insufficient_evidence" | null;
+  digital_decay_observed_at: string | null;
   review_reasons: string[];
   open_questions: string[];
   filing_ids: string[];
@@ -158,6 +160,8 @@ export type SellerFunnel = {
   core_size: number;
   three_year_profitable: number;
   advisor_review: number;
+  advisor_review_decay_checked: number;
+  advisor_review_decay_flagged: number;
   stages: FunnelStage[];
   peer_groups: PeerGroup[];
   items: SellerProspect[];

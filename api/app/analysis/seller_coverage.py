@@ -116,6 +116,15 @@ def coverage(session: Session, *, min_revenue_eur: int, max_revenue_eur: int) ->
         },
         "band": {"min_revenue_eur": min_revenue_eur, "max_revenue_eur": max_revenue_eur},
         "funnel_stages": {stage.key: stage.count for stage in funnel.stages},
+        "advisor_review_decay_checked": funnel.advisor_review_decay_checked,
+        "advisor_review_decay_flagged": funnel.advisor_review_decay_flagged,
+        "advisor_review_decay_verdicts": dict(
+            Counter(
+                item.digital_decay_verdict
+                for item in items
+                if item.next_action == "advisor_review" and item.digital_decay_verdict is not None
+            ).most_common()
+        ),
         "why_in_band_companies_lack_complete_evidence": dict(evidence_gaps.most_common(10)),
         "flags": dict(Counter(flag for item in items for flag in item.flags)),
         "peer_groups_all_sizes": dict(group_sizes.most_common()),
@@ -131,6 +140,14 @@ def coverage(session: Session, *, min_revenue_eur: int, max_revenue_eur: int) ->
 def to_markdown(report: dict[str, Any]) -> str:
     lines = [f"# Seller funnel coverage ({report['companies']} imported companies)", ""]
     lines += ["## Funnel stages", ""] + [f"- {k}: {v}" for k, v in report["funnel_stages"].items()]
+    lines += [
+        "",
+        f"Digital-decay checks run so far, advisor-review queue only: "
+        f"{report['advisor_review_decay_checked']} checked, "
+        f"{report['advisor_review_decay_flagged']} coasting/decaying/watch "
+        f"({dict(report['advisor_review_decay_verdicts'])}). Running a check is a separate, opt-in "
+        "step (POST .../signals/digital-decay); this only reads what already exists.",
+    ]
     lines += ["", "## Registry status", ""] + [f"- {k}: {v}" for k, v in report["registry_status"].items()]
     lines += [
         "",

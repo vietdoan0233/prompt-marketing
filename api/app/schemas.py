@@ -369,6 +369,12 @@ class SellerProspectOut(BaseModel):
     flags: list[Literal["group_parent", "holding_activity"]] = []
     # Link to the official e-Business Register company page, built from the source-backed registry code.
     registry_url: str | None = None
+    # The opt-in web-digital-decay verdict, read from the company's latest CompanyFact if one was run.
+    # None means no check has been run yet, not that the company is inactive or a poor fit.
+    digital_decay_verdict: (
+        Literal["coasting", "decaying", "watch", "active", "insufficient_evidence"] | None
+    ) = None
+    digital_decay_observed_at: datetime | None = None
     # Deterministic brief: what the filings show (each line cites a fiscal year) and what they cannot show.
     review_reasons: list[str] = []
     open_questions: list[str] = []
@@ -396,6 +402,10 @@ class SellerFunnelOut(BaseModel):
     core_size: int
     three_year_profitable: int
     advisor_review: int
+    # Of the advisor-review queue: how many already carry a digital-decay verdict, and how many of those
+    # are coasting or decaying (a persisted signal read at query time; running new checks is a separate step).
+    advisor_review_decay_checked: int = 0
+    advisor_review_decay_flagged: int = 0
     stages: list[FunnelStageOut] = []
     peer_groups: list[PeerGroupOut] = []
     items: list[SellerProspectOut]

@@ -115,6 +115,7 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
                 <th className="num">3-year profit</th>
                 <th className="num">Median margin</th>
                 <th className="num">Peer index</th>
+                <th>Website signal</th>
                 <th>Evidence</th>
               </tr>
             </thead>
@@ -152,6 +153,16 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
                       </div>
                     </td>
                     <td className="small">
+                      {item.digital_decay_verdict ? (
+                        <>
+                          <Badge value={item.digital_decay_verdict} />
+                          <div className="small muted">checked {item.digital_decay_observed_at?.slice(0, 10)}</div>
+                        </>
+                      ) : (
+                        <span className="muted">not checked</span>
+                      )}
+                    </td>
+                    <td className="small">
                       <Badge value={item.evidence_status} />
                       <div>{item.filing_ids.join(", ") || "No comparable report"}</div>
                       {item.source_urls[0] && (
@@ -161,7 +172,7 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
                     </td>
                   </tr>
                   <tr className="brief-row">
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <details>
                         <summary>Why review · what we don&apos;t know</summary>
                         <div className="brief">

@@ -13,7 +13,8 @@ from app.domain.seller_signals import (
     robust_reference,
     robust_z,
 )
-from app.models import Company, CompanyFact, CompanyFinancial, CompanyIdentifier, utcnow
+from app.models import Company, CompanyFact, CompanyFinancial, CompanyIdentifier, Source, utcnow
+from app.services.digital_decay import SIGNAL_FIELD as DECAY_SIGNAL_FIELD
 from app.services.seller_funnel import seller_funnel
 
 LATEST = date.today().year - 1
@@ -59,6 +60,7 @@ def _add_company(
     equity_ratio: float = 0.5,
     years: tuple[int, ...] = YEARS,
     consolidated_revenue: int | None = None,
+    decay_verdict: str | None = None,
 ) -> Company:
     code = _registry_code(seed)
     company = Company(legal_name=name, normalized_name=name.casefold(), country="EE", industry_codes=[emtak])
@@ -111,6 +113,40 @@ def _add_company(
         session.add(financial(year, value, "standalone"))
     if consolidated_revenue is not None:
         session.add(financial(years[-1], consolidated_revenue, "consolidated"))
+    if decay_verdict is not None:
+        if session.get(Source, "web-digital-decay") is None:
+            # Not in the cut-down test source registry (tests/fixtures/sources_test.yaml); this is the
+            # only test that exercises a persisted digital-decay fact, so register it minimally here.
+            session.add(
+                Source(
+                    id="web-digital-decay",
+                    name="Company website activity check (Digital Decay)",
+                    provider="Company-published websites",
+                    region="baltics",
+                    countries=["EE"],
+                    tier="C",
+                    source_type="website",
+                    source_mode="public-approved",
+                    permission_status="approved",
+                    connector_type="website_decay",
+                    base_confidence="estimated",
+                )
+            )
+            session.flush()
+        session.add(
+            CompanyFact(
+                company_id=company.id,
+                field_name=DECAY_SIGNAL_FIELD,
+                value_json={"verdict": decay_verdict, "stale_count": 2, "determinable_count": 3},
+                value_hash=f"decay-{seed}",
+                source_id="web-digital-decay",
+                observed_at=now,
+                valid_from=now,
+                base_confidence="estimated",
+                confidence="estimated",
+                usage_policy="internal-only",
+            )
+        )
     session.flush()
     return company
 
@@ -164,8 +200,11 @@ def test_funnel_stages_flags_and_ranking(session: Session) -> None:
         "complete_evidence": 11,
         "profitable": 11,
         "advisor_review": 10,
+        "decay_flagged": 0,  # no company here has ever had a digital-decay check run
     }
     assert funnel.advisor_review == 10
+    assert funnel.advisor_review_decay_checked == 0
+    assert funnel.advisor_review_decay_flagged == 0
 
     items = {item.legal_name: item for item in funnel.items}
     assert items["Holding OÜ"].next_action == "research"
@@ -191,6 +230,49 @@ def test_funnel_stages_flags_and_ranking(session: Session) -> None:
     assert top.owner_intent == "unknown" and top.buyer_fit == "not_assessed"
 
 
+def test_digital_decay_verdict_is_the_last_filter(session: Session) -> None:
+    for seed in range(9):  # nine comparable operating peers; seed 8 has the strongest margin
+        _add_company(
+            session,
+            seed,
+            f"Decay Peer {seed} OÜ",
+            emtak="47110",
+            margin=0.04 + 0.02 * seed,
+            equity_ratio=0.3 + 0.04 * seed,
+            decay_verdict={0: "coasting", 1: "active"}.get(seed),
+        )
+    session.commit()
+
+    funnel = seller_funnel(session, sector="47", limit=100, **BAND)
+    items = {item.legal_name: item for item in funnel.items}
+    weakest_margin, strongest_margin, untouched = (
+        items["Decay Peer 0 OÜ"],
+        items["Decay Peer 8 OÜ"],
+        items["Decay Peer 2 OÜ"],
+    )
+
+    # Weakest financial profile, but flagged coasting: still ranks first in the advisor-review queue.
+    ranked = [item for item in funnel.items if item.next_action == "advisor_review"]
+    assert ranked[0].legal_name == "Decay Peer 0 OÜ"
+    assert weakest_margin.digital_decay_verdict == "coasting"
+    assert weakest_margin.digital_decay_observed_at is not None
+    assert any(r.startswith("Website signal: coasting") for r in weakest_margin.review_reasons)
+    assert not any("No website check run yet" in q for q in weakest_margin.open_questions)
+
+    # A merely "active" verdict is not a positive signal: it does not jump the financial-index ranking,
+    # and a still-unchecked company keeps its normal position too.
+    assert items["Decay Peer 1 OÜ"].digital_decay_verdict == "active"
+    assert strongest_margin.digital_decay_verdict is None
+    assert ranked[1].legal_name == "Decay Peer 8 OÜ"  # highest financial-profile-index among the rest
+    assert untouched.digital_decay_verdict is None
+    assert any("No website check run yet" in q for q in untouched.open_questions)
+
+    decay_stage = next(s for s in funnel.stages if s.key == "decay_flagged")
+    assert decay_stage.count == 1  # only the coasting one; "active" and unchecked don't count
+    assert funnel.advisor_review_decay_checked == 2  # coasting + active
+    assert funnel.advisor_review_decay_flagged == 1
+
+
 def test_sector_filter_keeps_peer_reference(session: Session) -> None:
     _seed_funnel(session)
     everything = {i.legal_name: i for i in seller_funnel(session, sector=None, limit=100, **BAND).items}
@@ -206,7 +288,8 @@ def test_seller_prospects_endpoint(client, session: Session) -> None:
 
     _seed_funnel(session)
     body = client.get("/seller-prospects", params={"limit": 5}).json()
-    assert len(body["items"]) == 5 and body["stages"][-1]["count"] == 10
+    stage_counts = {s["key"]: s["count"] for s in body["stages"]}
+    assert len(body["items"]) == 5 and stage_counts["advisor_review"] == 10
     assert body["items"][0]["next_action"] == "advisor_review"
     assert (
         client.get("/seller-prospects", params={"min_revenue_eur": 9, "max_revenue_eur": 1}).status_code

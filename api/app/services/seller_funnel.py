@@ -2,6 +2,8 @@
 
 import re
 from collections import defaultdict
+from datetime import datetime
+from typing import Literal, cast
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -17,9 +19,18 @@ from app.domain.seller_signals import (
     robust_z,
 )
 from app.models import Company, CompanyFact, CompanyFinancial, CompanyIdentifier
+from app.services.digital_decay import SIGNAL_FIELD as DECAY_SIGNAL_FIELD
 
 REGISTER_COMPANY_URL = "https://ariregister.rik.ee/eng/company/{code}"
 MIN_PEERS = 8
+# Lower sorts first, ahead of the peer index, inside the advisor-review queue only. A missing check
+# (None) is deliberately equal to "active"/"insufficient_evidence": absence of a check is not evidence.
+DecayVerdict = Literal["coasting", "decaying", "watch", "active", "insufficient_evidence"]
+VALID_DECAY_VERDICTS: frozenset[str] = frozenset(
+    ("coasting", "decaying", "watch", "active", "insufficient_evidence")
+)
+DECAY_PRIORITY: dict[str, int] = {"coasting": 0, "decaying": 1, "watch": 2}
+DECAY_DEFAULT_PRIORITY = 3
 
 
 def is_registered_status(status: str | None) -> bool:
@@ -120,6 +131,13 @@ def _brief(item: schemas.SellerProspectOut, min_revenue_eur: int, max_revenue_eu
             else ""
         )
         reasons.append(f"Also filed consolidated accounts for FY{year}{group}")
+    if item.digital_decay_verdict is not None:
+        checked = (
+            f" (checked {item.digital_decay_observed_at:%Y-%m-%d})"
+            if item.digital_decay_observed_at is not None
+            else ""
+        )
+        reasons.append(f"Website signal: {item.digital_decay_verdict}{checked}")
 
     questions = [
         "Is the owner open to a conversation? Unknown until an advisor asks.",
@@ -144,6 +162,11 @@ def _brief(item: schemas.SellerProspectOut, min_revenue_eur: int, max_revenue_eu
     ):
         questions.append(
             f"No peer index: fewer than {MIN_PEERS} comparable companies in EMTAK {item.peer_group or '—'}."
+        )
+    if item.next_action == "advisor_review" and item.digital_decay_verdict is None:
+        questions.append(
+            "No website check run yet (opt-in POST .../signals/digital-decay): a coasting or decaying "
+            "verdict would be a stronger reason to call now than financials alone."
         )
     item.review_reasons = reasons
     item.open_questions = questions
@@ -181,6 +204,13 @@ def _stages(items: list[schemas.SellerProspectOut], min_revenue_eur: int, max_re
             "Advisor review queue",
             "Excludes holding or head-office activity codes",
             lambda i: i.next_action == "advisor_review",
+        ),
+        (
+            "decay_flagged",
+            "Also shows a website timing signal",
+            "Digital-decay verdict is coasting or decaying (informational: most of the queue has no "
+            "check run yet)",
+            lambda i: i.digital_decay_verdict in DECAY_PRIORITY,
         ),
     ]
     remaining = list(items)
@@ -271,6 +301,24 @@ def seller_funnel(
     ):
         registry_ids[identifier.company_id] = identifier.value
 
+    # Read-only: the latest persisted digital-decay verdict, if a check has ever been run for this company.
+    # This never triggers a new website check; it just reads what app.decay / the API already wrote.
+    decay: dict[str, tuple[DecayVerdict, datetime]] = {}
+    for fact in session.scalars(
+        select(CompanyFact)
+        .join(Company)
+        .where(
+            Company.country == "EE",
+            Company.merged_into_id.is_(None),
+            CompanyFact.field_name == DECAY_SIGNAL_FIELD,
+            CompanyFact.valid_to.is_(None),
+        )
+    ):
+        value = fact.value_json
+        verdict = value.get("verdict") if isinstance(value, dict) else None
+        if isinstance(verdict, str) and verdict in VALID_DECAY_VERDICTS:
+            decay[fact.company_id] = (cast(DecayVerdict, verdict), fact.observed_at)
+
     all_items: list[schemas.SellerProspectOut] = []
     for company in companies:
         rows = financials.get(company.id, [])
@@ -289,6 +337,7 @@ def seller_funnel(
         issues = list(signal.issues)
         if status is None:
             issues.append("Current registry status unavailable")
+        decay_verdict, decay_observed_at = decay.get(company.id, (None, None))
         all_items.append(
             schemas.SellerProspectOut(
                 company_id=company.id,
@@ -315,6 +364,8 @@ def seller_funnel(
                 consolidated_revenue_eur=group_revenue,
                 flags=flags,
                 registry_url=_registry_url(registry_ids.get(company.id)),
+                digital_decay_verdict=decay_verdict,
+                digital_decay_observed_at=decay_observed_at,
                 filing_ids=signal.filing_ids,
                 source_urls=signal.source_urls,
                 issues=issues,
@@ -374,14 +425,23 @@ def seller_funnel(
         ]
         peer_groups = [group for group in peer_groups if needle in group.group]
 
+    def decay_priority(verdict: str | None) -> int:
+        return (
+            DECAY_PRIORITY.get(verdict, DECAY_DEFAULT_PRIORITY)
+            if verdict is not None
+            else DECAY_DEFAULT_PRIORITY
+        )
+
     next_action_order = {"advisor_review": 0, "research": 1, "outside_size_band": 2, "exclude": 3}
     all_items.sort(
         key=lambda item: (
             next_action_order[item.next_action],
+            decay_priority(item.digital_decay_verdict),
             -(item.financial_profile_index if item.financial_profile_index is not None else -99),
             item.legal_name.casefold(),
         )
     )
+    review_queue = [item for item in all_items if item.next_action == "advisor_review"]
     return schemas.SellerFunnelOut(
         total_companies=len(all_items),
         core_size=sum(item.focus_band == "core" for item in all_items),
@@ -391,7 +451,11 @@ def seller_funnel(
             and item.evidence_status == "complete"
             for item in all_items
         ),
-        advisor_review=sum(item.next_action == "advisor_review" for item in all_items),
+        advisor_review=len(review_queue),
+        advisor_review_decay_checked=sum(item.digital_decay_verdict is not None for item in review_queue),
+        advisor_review_decay_flagged=sum(
+            item.digital_decay_verdict in DECAY_PRIORITY for item in review_queue
+        ),
         stages=_stages(all_items, min_revenue_eur, max_revenue_eur),
         peer_groups=peer_groups,
         items=all_items[:limit],
@@ -400,7 +464,10 @@ def seller_funnel(
             "standalone EUR fiscal years for complete financial evidence. The peer index uses "
             f"median/MAD Z-scores within two-digit EMTAK groups with at least {MIN_PEERS} peers: "
             "70% operating margin and 30% equity/assets. Holding and head-office activity codes are "
-            "flagged, not ranked. It describes financial profile only; owner intent, buyer fit and "
-            "mandate likelihood are not assessed."
+            "flagged, not ranked. Within the advisor-review queue, a company already showing a "
+            "coasting or decaying digital-decay verdict (opt-in, read here, never triggered here) is "
+            "listed ahead of the peer-index ranking; a missing check is never treated as a negative "
+            "signal. It describes financial profile only; owner intent, buyer fit and mandate "
+            "likelihood are not assessed."
         ),
     )
