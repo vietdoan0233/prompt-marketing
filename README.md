@@ -68,7 +68,7 @@ Open the UI at `http://localhost:3000` and the API documentation at `http://loca
 
 ## Data and provenance
 
-The importer uses the official basic-data, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs, plus two optional JSON ZIPs for general company data (current share capital) and shareholders (osanikud). Company facts retain source and snapshot provenance. Legal status such as `Registered`, `In Liquidation`, `Bankrupt`, or `Deleted` is stored as the first-class `registry_status` fact and included in the company summary and detail view.
+The importer uses the official basic-data, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs, plus two optional JSON ZIPs for general company data (current share capital) and shareholders (osanikud). Company facts retain source and snapshot provenance. The official CSV currently stores registry status as codes (`R` registered, `L` in liquidation, `N` bankrupt, `K` deleted); the original value is kept in the first-class `registry_status` fact and included in the company summary and detail view. The seller funnel interprets these codes alongside the older text labels (`Registered`, `In Liquidation`, `Bankrupt`, `Deleted`).
 
 `registered_addresses` represents the official registered seat (`asukoht`), not an inferred operating location. Address parts are nullable when the source is incomplete or ambiguous. A changed mapped address closes the previous version and adds a current one; unchanged addresses do not add a version.
 
@@ -88,6 +88,71 @@ Unmatched indicator report IDs are rejected and included in the ingestion run's 
 - `GET /companies/{id}/shareholders` returns the current shareholder set.
 - `GET /companies/{id}/financials` returns the financial time series.
 - `GET /ingestion-runs/{id}` exposes accepted, unchanged, rejected, orphan, and warning records.
+- `POST /companies/{id}/signals/digital-decay` runs the gated website check for one company.
+- `GET /seller-prospects` powers the read-only seller prospect funnel in `/seller-prospects`. It accepts `min_revenue_eur`, `max_revenue_eur`, `sector`, and `limit`. The default €5m–€50m annual-revenue band is a provisional Nordic size proxy until Mergero confirms which size metric it uses.
+
+The funnel applies an explainable sequence to the imported companies: annual revenue band, three consecutive comparable standalone EUR fiscal years, operating-profit persistence, and a peer-relative financial-profile index. It uses only reported revenue, operating profit, assets, and equity. The index combines robust Z-scores for median operating margin (70%) and equity/assets (30%) inside two-digit EMTAK groups with at least eight comparable peers. Smaller groups show no index. Report IDs, official source links, and data gaps remain visible. A shortlist is for advisor review, not automatic outreach. Buyer fit and owner intent are not assessed by these files. The dataset does not directly provide dividends or capex; the funnel does not use them or treat derived EBITDA as a reported value.
+
+The response also reports the funnel stage by stage (imported → active → size band → three comparable years → three profitable years → advisor review), the EMTAK groups that carry a peer index, and two flags. `group_parent` means the company also filed consolidated accounts for its latest year, so the standalone figures may understate the sellable group; the reported group revenue is shown when available. `holding_activity` marks EMTAK 64.2x or 70.10 activity codes; these are sent to research rather than ranked, because a holding's margins are not comparable with operating peers. Each company has a deterministic brief: what the filings show, each line tied to a fiscal year, and what they cannot show. It also links to the official e-Business Register company page built from the registry code.
+
+To see what the imported data actually covers, run the read-only coverage report from `api/`:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.analysis.seller_coverage            # Markdown
+.\.venv\Scripts\python.exe -m app.analysis.seller_coverage --json     # JSON
+```
+
+It lists field coverage by fiscal year and statement scope, fiscal-period lengths, the latest comparable revenue distribution, why in-band companies lack complete evidence, peer-group sizes, and flag counts.
+
+## Digital decay signal (opt-in)
+
+The `web-digital-decay` source flags operational stagnation from a company's own website:
+- footer copyright ≥2 years old;
+- news, press, or blog publishing cadence: no post for ≥18 months, or fewer than 3 distinct posts in the
+  last 18 months. Posts come from the post/news sitemap (one date per post: translations such as `/en/blog/x/`
+  and `/ru/blog/x/` count once, at their earliest lastmod; a lastmod shared by ≥4 posts is a bulk re-save and
+  is ignored) and an on-page publication date beats the sitemap lastmod. Without a post sitemap, each distinct
+  date on the news listing page counts as one post;
+- zero open roles on the careers page.
+
+The result is read against reported revenue and the register headcount trend (filed FTE, latest 12-month
+fiscal year vs three years earlier; within ±10% is `flat`). Register FTE is official data shown as context,
+not a website check.
+
+It is disabled by default and requires `LIVE_CONNECTORS_ENABLED=true`. The check does the following:
+- It only enriches companies already imported from the register.
+- It picks the website in this order: the website the company declared to the register, then the company
+  email domain declared to the register, then a domain guessed from the legal name. A guessed domain is used
+  only after the site shows the registry code, or the legal name and registered address. A mail domain that
+  several register entries share (group domain) is used only when the site itself names the company.
+- Only the email *domain* is read from the register; mailbox names, phone and fax numbers are never stored.
+- It respects robots.txt and the source rate limit.
+- It stores extracted evidence only (no raw HTML) for 14 days.
+- It does not use LinkedIn.
+
+One-time step: import the register-declared domains from the official general-data file
+(`ettevotja_rekvisiidid__yldandmed.json.zip`, about 230 MB, cached in `api/data/ee_ariregister_general/`).
+It runs as an `ee-ariregister` ingestion run with normal provenance and is idempotent; `--from-cache`
+re-reads the verified cached copy without downloading. The live download needs `LIVE_CONNECTORS_ENABLED=true`.
+
+```powershell
+cd api
+.\.venv\Scripts\python.exe -m app.decay --sync-register-domains [--from-cache]
+.\.venv\Scripts\python.exe -m app.decay --approve-and-enable            # operator step, audited
+.\.venv\Scripts\python.exe -m app.decay --registry-code 12345678 [--domain example.ee]
+.\.venv\Scripts\python.exe -m app.decay --name "Example OÜ" --address "Pärnu mnt 10, Tallinn"
+.\.venv\Scripts\python.exe -m app.decay --revenue-min 4000000 --revenue-max 6000000 --limit 15 [--json]
+```
+
+Verdicts:
+- `coasting`: revenue ≥ €5M, at least 2 checks stale, and zero roles.
+- `decaying`: at least 2 checks stale.
+- `watch`: revenue ≥ €5M, zero roles and flat or shrinking register headcount; the website is otherwise
+  maintained.
+- `active`
+- `insufficient_evidence`: fewer than 2 determinable checks, or the domain is unverified.
+
+Unknown checks never count as stale. Thresholds are configurable with `DECAY_COPYRIGHT_STALE_YEARS`, `DECAY_NEWS_STALE_MONTHS`, `DECAY_NEWS_MIN_POSTS` (default 3), `DECAY_HEADCOUNT_FLAT_PCT` (default 10) and `DECAY_MIN_REVENUE_EUR`. The company detail page shows the latest result with evidence links and a **Run check** button.
 
 ## Seller-prospect and sector work (pending)
 

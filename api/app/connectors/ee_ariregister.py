@@ -124,6 +124,14 @@ class EeAriregisterFiles:
         required_years = sorted(set(years) | QUALIFICATION_YEARS)
         return self._resolve_live(required_years) if self.live else self._resolve_local(required_years)
 
+    def _verified_local(self, name: str, m: dict) -> DatasetFile:
+        path = self.cache_dir / name
+        if path.name != name or not m["url"].startswith(f"{PORTAL}/sites/default/files/"):
+            raise ConnectorError(f"{name}: cache entry is not an official portal file")
+        if not path.is_file() or path.stat().st_size != m["size"] or _sha256(path) != m["sha256"]:
+            raise ConnectorError(f"{name}: cached file is missing or does not match its recorded hash")
+        return DatasetFile(path=str(path), **m)
+
     def _resolve_local(self, years: list[int]) -> list[DatasetFile]:
         manifest = self._manifest()
         if not manifest:
@@ -132,14 +140,31 @@ class EeAriregisterFiles:
         for name, m in manifest.items():
             if m["kind"] == "indicators" and m.get("year") not in years:
                 continue
-            path = self.cache_dir / name
-            if path.name != name or not m["url"].startswith(f"{PORTAL}/sites/default/files/"):
-                raise ConnectorError(f"{name}: cache entry is not an official portal file")
-            if not path.is_file() or path.stat().st_size != m["size"] or _sha256(path) != m["sha256"]:
-                raise ConnectorError(f"{name}: cached file is missing or does not match its recorded hash")
-            files.append(DatasetFile(path=str(path), **m))
+            files.append(self._verified_local(name, m))
         self._check_complete(files, years)
         return files
+
+    def fetch_single(self, kind: str, url: str) -> DatasetFile:
+        """Download (or re-use when unchanged) one named official file, outside the main dataset set."""
+        if not self.live:
+            raise ConnectorError("live download is disabled")
+        if not url.startswith(f"{PORTAL}/sites/default/files/"):
+            raise ConnectorError(f"{url} is not an official portal file")
+        client = PoliteClient(self.rate)
+        try:
+            manifest = self._manifest()
+            file = self._fetch(client, manifest, kind, url, None)
+            self._save_manifest(manifest)
+        finally:
+            client.close()
+        return file
+
+    def resolve_single(self, name: str) -> DatasetFile:
+        """The verified local copy of one file (size + SHA-256 checked against the manifest)."""
+        m = self._manifest().get(name)
+        if m is None:
+            raise ConnectorError(f"{name}: not in the manifest in {self.cache_dir}; run a live sync first")
+        return self._verified_local(name, m)
 
     def _resolve_live(self, years: list[int]) -> list[DatasetFile]:
         client = PoliteClient(self.rate)

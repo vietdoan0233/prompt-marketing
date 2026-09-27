@@ -338,6 +338,80 @@ class CompanyPage(BaseModel):
     filters: dict[str, Any]
 
 
+class SellerProspectOut(BaseModel):
+    company_id: str
+    legal_name: str
+    registry_id: str | None
+    registry_status: str | None
+    sector: str | None
+    peer_group: str | None
+    focus_band: str
+    quality_band: str
+    evidence_status: str
+    next_action: str
+    latest_year: int | None
+    latest_revenue_eur: float | None
+    latest_operating_margin: float | None
+    three_year_median_margin: float | None
+    three_year_revenue_cagr: float | None
+    stable_revenue: bool | None
+    positive_profit_years: int | None
+    latest_equity_ratio: float | None
+    peer_count: int | None = None
+    margin_peer_z: float | None = None
+    equity_peer_z: float | None = None
+    financial_profile_index: float | None = None
+    buyer_fit: Literal["not_assessed"] = "not_assessed"
+    owner_intent: Literal["unknown"] = "unknown"
+    latest_employees_fte: float | None = None
+    consolidated_revenue_eur: float | None = None
+    # group_parent: also files consolidated accounts; holding_activity: EMTAK 64.2x/70.10 activity code
+    flags: list[Literal["group_parent", "holding_activity"]] = []
+    # Link to the official e-Business Register company page, built from the source-backed registry code.
+    registry_url: str | None = None
+    # The opt-in web-digital-decay verdict, read from the company's latest CompanyFact if one was run.
+    # None means no check has been run yet, not that the company is inactive or a poor fit.
+    digital_decay_verdict: (
+        Literal["coasting", "decaying", "watch", "active", "insufficient_evidence"] | None
+    ) = None
+    digital_decay_observed_at: datetime | None = None
+    # Deterministic brief: what the filings show (each line cites a fiscal year) and what they cannot show.
+    review_reasons: list[str] = []
+    open_questions: list[str] = []
+    filing_ids: list[str]
+    source_urls: list[str]
+    issues: list[str]
+
+
+class FunnelStageOut(BaseModel):
+    key: str
+    label: str
+    count: int
+    rule: str
+
+
+class PeerGroupOut(BaseModel):
+    group: str
+    peer_count: int
+    median_margin: float
+    median_equity_ratio: float
+
+
+class SellerFunnelOut(BaseModel):
+    total_companies: int
+    core_size: int
+    three_year_profitable: int
+    advisor_review: int
+    # Of the advisor-review queue: how many already carry a digital-decay verdict, and how many of those
+    # are coasting or decaying (a persisted signal read at query time; running new checks is a separate step).
+    advisor_review_decay_checked: int = 0
+    advisor_review_decay_flagged: int = 0
+    stages: list[FunnelStageOut] = []
+    peer_groups: list[PeerGroupOut] = []
+    items: list[SellerProspectOut]
+    methodology: str
+
+
 class DuplicateOut(ORM):
     id: str
     company_a_id: str
@@ -373,6 +447,34 @@ class TimelineEntry(BaseModel):
     detail: dict[str, Any] = {}
 
 
+class DigitalDecayOut(BaseModel):
+    """Latest Digital Decay website activity signal (an estimated, source-backed fact) with provenance."""
+
+    signal: dict[str, Any]
+    fact_id: str
+    source_id: str
+    source_name: str | None = None
+    source_url: str | None
+    ingestion_run_id: str | None
+    snapshot_id: str | None
+    observed_at: datetime
+    confidence: str
+    review_status: str
+    domain_identifier: str | None
+
+
+class DigitalDecayRunCreate(BaseModel):
+    domain: str | None = Field(default=None, max_length=253)
+
+
+class DigitalDecayRunOut(BaseModel):
+    run_id: str
+    status: str
+    signal: dict[str, Any] | None
+    run: IngestionRunDetail
+    digital_decay: DigitalDecayOut | None
+
+
 class CompanyDetail(BaseModel):
     company: CompanySummary
     description: str | None
@@ -390,6 +492,7 @@ class CompanyDetail(BaseModel):
     audit_events: list[AuditEventOut]
     timeline: list[TimelineEntry]
     warnings: list[str]
+    digital_decay: DigitalDecayOut | None = None
 
 
 class CorrectionCreate(BaseModel):

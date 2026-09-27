@@ -36,6 +36,15 @@ class Settings(BaseSettings):
     http_timeout_seconds: float = 15.0
     # Optional contact appended to the source-request User-Agent (e.g. a team mailbox). Empty by default.
     http_contact: str = ""
+    # Digital Decay (opt-in website activity signal). Thresholds are inclusive ("stale" at >= value).
+    decay_copyright_stale_years: int = 2
+    decay_news_stale_months: int = 18
+    decay_min_revenue_eur: int = 5_000_000
+    # News cadence: fewer distinct posts than this in the news stale window counts as stale.
+    decay_news_min_posts: int = 3
+    # Register FTE change (latest year vs 3 years earlier) within +/- this percentage counts as flat.
+    decay_headcount_flat_pct: int = 10
+    decay_batch_limit_max: int = 200
     cors_origins: str = "http://localhost:3000"
     default_actor: str = "reviewer@mergero.local"
 

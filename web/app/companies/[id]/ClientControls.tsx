@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { apiSend } from "@/lib/client";
-import type { Fact } from "@/lib/types";
+import type { DigitalDecayRunResult, Fact } from "@/lib/types";
 
 const CORRECTABLE = [
   "employees",
@@ -156,6 +156,43 @@ export function EraseContactButton({ contactId }: { contactId: string }) {
         Erase (GDPR)
       </button>
       {error && <span className="error-inline">{error}</span>}
+    </span>
+  );
+}
+
+export function RunDecayCheck({ companyId, hasResult }: { companyId: string; hasResult: boolean }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
+  return (
+    <span className="action">
+      <button
+        className="btn btn-primary"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setError(null);
+          setOk(null);
+          try {
+            const r = await apiSend<DigitalDecayRunResult>("POST", `/companies/${companyId}/signals/digital-decay`);
+            setOk(r.signal ? `Check finished: ${r.signal.verdict.replace("_", " ")}.` : `Run ${r.status}.`);
+            router.refresh();
+          } catch (e) {
+            setError(e instanceof Error ? e.message : String(e));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? "Checking website…" : hasResult ? "Re-run check" : "Run check"}
+      </button>
+      {error && (
+        <span className="error-inline" role="alert">
+          {error}
+        </span>
+      )}
+      {ok && <span className="small muted">{ok}</span>}
     </span>
   );
 }

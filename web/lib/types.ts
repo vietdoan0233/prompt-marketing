@@ -103,6 +103,71 @@ export type CompanyPage = {
   filters: Record<string, unknown>;
 };
 
+export type SellerProspect = {
+  company_id: string;
+  legal_name: string;
+  registry_id: string | null;
+  registry_status: string | null;
+  sector: string | null;
+  peer_group: string | null;
+  focus_band: string;
+  quality_band: string;
+  evidence_status: string;
+  next_action: string;
+  latest_year: number | null;
+  latest_revenue_eur: number | null;
+  latest_operating_margin: number | null;
+  three_year_median_margin: number | null;
+  three_year_revenue_cagr: number | null;
+  stable_revenue: boolean | null;
+  positive_profit_years: number | null;
+  latest_equity_ratio: number | null;
+  peer_count: number | null;
+  margin_peer_z: number | null;
+  equity_peer_z: number | null;
+  financial_profile_index: number | null;
+  buyer_fit: "not_assessed";
+  owner_intent: "unknown";
+  latest_employees_fte: number | null;
+  consolidated_revenue_eur: number | null;
+  flags: ("group_parent" | "holding_activity")[];
+  registry_url: string | null;
+  digital_decay_verdict: "coasting" | "decaying" | "watch" | "active" | "insufficient_evidence" | null;
+  digital_decay_observed_at: string | null;
+  review_reasons: string[];
+  open_questions: string[];
+  filing_ids: string[];
+  source_urls: string[];
+  issues: string[];
+};
+
+export type FunnelStage = {
+  key: string;
+  label: string;
+  count: number;
+  rule: string;
+};
+
+export type PeerGroup = {
+  group: string;
+  peer_count: number;
+  median_margin: number;
+  median_equity_ratio: number;
+};
+
+export type SellerFunnel = {
+  total_companies: number;
+  core_size: number;
+  three_year_profitable: number;
+  advisor_review: number;
+  advisor_review_decay_checked: number;
+  advisor_review_decay_flagged: number;
+  stages: FunnelStage[];
+  peer_groups: PeerGroup[];
+  items: SellerProspect[];
+  methodology: string;
+};
+
 export type Fact = {
   id: string;
   field_name: string;
@@ -208,6 +273,7 @@ export type CompanyDetail = {
   audit_events: AuditEvent[];
   timeline: TimelineEntry[];
   warnings: string[];
+  digital_decay?: DigitalDecayView | null;
 };
 
 export type Financial = {
@@ -326,3 +392,62 @@ export type QualityReport = {
   }[];
   top_warnings: { message: string; count: number }[];
 };
+
+export type DecayCheckState = "stale" | "fresh" | "unknown";
+
+export type DigitalDecaySignal = {
+  version: string;
+  domain: string | null;
+  domain_verification:
+    | "registry_code"
+    | "name_and_address"
+    | "user_supplied"
+    | "registry_www"
+    | "registry_email"
+    | "unverified";
+  checks: {
+    copyright: { state: DecayCheckState; year: number | null; age_years: number | null; evidence_url: string | null };
+    news: {
+      state: DecayCheckState;
+      latest_date: string | null;
+      age_months: number | null;
+      evidence_url: string | null;
+      method: "page_dates" | "sitemap_lastmod" | "time_tag" | "jsonld" | "meta" | null;
+      posts_18m?: number | null;
+      post_dates?: string[];
+      cadence_source?: "sitemap" | "news_page" | null;
+      reason?: "no_recent_post" | "low_cadence" | null;
+    };
+    hiring: {
+      state: "zero_roles" | "hiring" | "unknown";
+      open_roles: number | null;
+      careers_url: string | null;
+      ats: string | null;
+    };
+    last_modified: { header: string | null; url: string | null };
+    headcount?: {
+      state: "growing" | "flat" | "shrinking" | "unknown";
+      change_pct: number | null;
+      from_year: number | null;
+      to_year: number | null;
+      series: [number, number][];
+    } | null;
+  };
+  stale_count: number;
+  determinable_count: number;
+  revenue: { amount: number; currency: string; fiscal_year: number; value_type: string } | null;
+  verdict: "coasting" | "decaying" | "watch" | "active" | "insufficient_evidence";
+  warnings: string[];
+};
+
+export type DigitalDecayView = {
+  signal: DigitalDecaySignal;
+  observed_at: string;
+  source_id: string;
+  source_url: string | null;
+  ingestion_run_id: string | null;
+  confidence: string;
+  review_status: string;
+};
+
+export type DigitalDecayRunResult = { run_id: string; status: string; signal: DigitalDecaySignal | null };

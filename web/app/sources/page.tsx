@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 const TIERS: { tier: Source["tier"]; title: string; blurb: string }[] = [
   { tier: "A", title: "A — Official registries & public APIs", blurb: "Preferred. Live where an open API exists; credential-gated registries fail closed until credentials are configured." },
-  { tier: "C", title: "C — Company-website enrichment", blurb: "Crawls registry-published company domains with rate limits. Enriches existing companies; never creates them." },
+  { tier: "C", title: "C — Company-website enrichment", blurb: "Opt-in only (disabled by default). The web-digital-decay check fetches a few pages of a company's own verified website (robots.txt respected, rate-limited) and stores extracted evidence only — never raw HTML. Enriches existing companies; never creates them." },
   { tier: "L", title: "L — Licensed / commercial", blurb: "Pending until a licence or API contract is signed and recorded as the approval reference." },
   { tier: "I", title: "Internal", blurb: "Mergero-supplied uploads and reviewer corrections." },
 ];

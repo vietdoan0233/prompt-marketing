@@ -3,7 +3,7 @@
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from app.config import active_countries
@@ -34,6 +34,11 @@ COMPANY_FIELDS = [
     "open_positions",
     "founder_signal",
     "family_business_signal",
+    # C-tier Digital Decay website activity evidence (estimated)
+    "footer_copyright_year",
+    "latest_news_date",
+    # Company email domain as declared to the register (domain part only; never a mailbox local-part)
+    "email_domain",
 ]
 CONTACT_FIELDS = [
     "contact_name",
@@ -65,6 +70,11 @@ FACT_FIELDS = [
     "open_positions",
     "founder_signal",
     "family_business_signal",
+    "footer_copyright_year",
+    "latest_news_date",
+    "digital_decay_signal",
+    "email_domain",
+    "registry_domains",
 ]
 # Structured (non-string) row keys a connector may attach.
 STRUCTURED_KEYS = {
@@ -75,7 +85,26 @@ STRUCTURED_KEYS = {
     "warnings",
     "provenance",
     "fact_metadata",
+    # Digital Decay: the structured signal (dict or JSON string), per-field evidence URLs, and whether the
+    # website's domain was verified against the register (only then may an enrichment row store `website`).
+    "digital_decay_signal",
+    "field_urls",
+    "website_verified",
+    # Register-declared contact domains {"www": [...], "email": [...]} (domains only), whether the row's
+    # website may be used as an identity key, and the website connector's crawl evidence trail.
+    "registry_domains",
+    "domain_is_identity",
+    "crawl_evidence",
 }
+# Website-derived signal fields: their observations never refresh a company's registry verification time.
+WEBSITE_SIGNAL_FIELDS = {
+    "website",
+    "open_positions",
+    "footer_copyright_year",
+    "latest_news_date",
+    "digital_decay_signal",
+}
+DECAY_VERDICTS = {"coasting", "decaying", "watch", "active", "insufficient_evidence"}
 CONTACT_BASES = {"public-business", "mergero-supplied", "partner-referral", "unknown"}
 
 
@@ -161,7 +190,10 @@ def build_record(
     rec = ParsedRecord(row_number=row_number, source_key=canonical.get("source_key"), raw={})
     rec.enrichment_only = bool(row.get("enrichment_only"))
     rec.warnings.extend(str(w) for w in row.get("warnings") or [])
-    rec.field_urls = {k: str(v) for k, v in (row.get("evidence") or {}).items()}
+    evidence_urls = row.get("evidence") or row.get("field_urls") or {}
+    rec.field_urls = (
+        {str(k): str(v) for k, v in evidence_urls.items() if v} if isinstance(evidence_urls, dict) else {}
+    )
     rec.fact_confidence = {f: "estimated" for f in row.get("estimated_fields") or []}
     metadata = row.get("fact_metadata") or {}
     if isinstance(metadata, dict):
@@ -244,7 +276,8 @@ def build_record(
         rec.warnings.append(reg.warning)
     if reg.canonical:
         rec.registry_key, rec.derived_vat_key = reg.canonical, reg.derived_vat
-        put("registry_id", reg.canonical.split(":", 1)[1], canonical.get("registry_id"))
+        if not rec.enrichment_only:  # an enrichment row echoes the registry code only to match its company
+            put("registry_id", reg.canonical.split(":", 1)[1], canonical.get("registry_id"))
 
     vat, vat_warning = n.normalize_vat(country, canonical.get("vat_id"))
     if vat_warning:
@@ -261,12 +294,26 @@ def build_record(
         if not domain:
             rec.warnings.append(f"unparseable website '{canonical['website']}'")
         else:
-            if not rec.enrichment_only:  # a site cannot vouch for its own URL; it is an identity key only
+            # A site cannot vouch for its own URL, so enrichment rows use it as an identity key only,
+            # unless the domain was verified against the register (registry code, or name + address).
+            if not rec.enrichment_only or row.get("website_verified") is True:
                 put("website", f"https://{domain}", canonical["website"])
             if n.is_generic_domain(domain):
                 rec.warnings.append(f"domain {domain} is a shared host and is not used as an identity key")
-            else:
+            elif row.get("domain_is_identity") is not False:
+                # Group companies share register-declared domains, so those rows opt out of domain identity.
                 rec.domain = domain
+
+    if canonical.get("email_domain"):
+        email_domain = n.normalize_domain(canonical["email_domain"])  # strips any local-part
+        rec.raw.pop("email_domain", None)
+        if not email_domain:
+            rec.warnings.append("unparseable email domain dropped")
+        elif n.is_generic_domain(email_domain):
+            rec.warnings.append(f"email domain {email_domain} is a shared mailbox host and was dropped")
+        else:
+            put("email_domain", email_domain, email_domain)
+            rec.raw["email_domain"] = email_domain
 
     if canonical.get("employees"):
         rng = n.parse_employee_range(canonical["employees"])
@@ -284,6 +331,30 @@ def build_record(
                 put("open_positions", count, canonical["open_positions"])
         except ValueError:
             rec.warnings.append(f"unparseable open_positions '{canonical['open_positions']}'")
+    if canonical.get("footer_copyright_year"):
+        raw_year = canonical["footer_copyright_year"]
+        try:
+            year = int(raw_year)
+        except ValueError:
+            year = None
+        if year is not None and 1995 <= year <= datetime.now(UTC).year:
+            put("footer_copyright_year", year, raw_year)
+        else:
+            rec.warnings.append(f"unparseable footer_copyright_year '{raw_year}'")
+    if canonical.get("latest_news_date"):
+        raw_date = canonical["latest_news_date"]
+        try:
+            news_date: date | None = date.fromisoformat(raw_date)
+        except ValueError:
+            news_date = None
+        if news_date is not None and news_date <= datetime.now(UTC).date():
+            put("latest_news_date", news_date.isoformat(), raw_date)
+        else:
+            rec.warnings.append(f"unparseable or future latest_news_date '{raw_date}'")
+    _put_decay_signal(rec, row.get("digital_decay_signal"), allowed_fields)
+    _put_registry_domains(rec, row.get("registry_domains"), allowed_fields)
+    if isinstance(row.get("crawl_evidence"), dict):
+        rec.raw["crawl_evidence"] = row["crawl_evidence"]  # kept in the snapshot; covered by its hash
     for flag in ("founder_signal", "family_business_signal"):
         if canonical.get(flag):
             put(flag, canonical[flag].lower() in {"true", "1", "yes"}, canonical[flag])
@@ -343,6 +414,59 @@ def build_record(
             rec.warnings.append("contact details without a contact name were dropped")
 
     return rec
+
+
+def _put_decay_signal(rec: ParsedRecord, sig: Any, allowed_fields: list[str]) -> None:
+    """Store the structured Digital Decay signal as one fact (the value itself is the evidence)."""
+    if sig is None or sig == "":
+        return
+    if "digital_decay_signal" not in allowed_fields:
+        rec.warnings.append("field 'digital_decay_signal' is not allowed for this source and was dropped")
+        return
+    if isinstance(sig, str):
+        try:
+            sig = json.loads(sig)
+        except ValueError:
+            rec.warnings.append("invalid digital_decay_signal dropped")
+            return
+    if (
+        not isinstance(sig, dict)
+        or sig.get("verdict") not in DECAY_VERDICTS
+        or not isinstance(sig.get("checks"), dict)
+        or not isinstance(sig.get("version"), str)
+    ):
+        rec.warnings.append("invalid digital_decay_signal dropped")
+        return
+    rec.facts["digital_decay_signal"] = sig
+    rec.raw["digital_decay_signal"] = sig  # the snapshot content hash covers the signal
+
+
+def _put_registry_domains(rec: ParsedRecord, value: Any, allowed_fields: list[str]) -> None:
+    """Store the register-declared contact domains {"www": [...], "email": [...]} as one fact."""
+    if value is None or value == "":
+        return
+    if "registry_domains" not in allowed_fields:
+        rec.warnings.append("field 'registry_domains' is not allowed for this source and was dropped")
+        return
+    if not isinstance(value, dict) or set(value) - {"www", "email"}:
+        rec.warnings.append("invalid registry_domains dropped")
+        return
+    clean: dict[str, list[str]] = {}
+    for kind in ("www", "email"):
+        items = value.get(kind) or []
+        if not isinstance(items, list) or not all(isinstance(i, str) for i in items):
+            rec.warnings.append("invalid registry_domains dropped")
+            return
+        out: list[str] = []
+        for item in items:
+            domain = n.normalize_domain(item)
+            if domain and not n.is_generic_domain(domain) and domain not in out:
+                out.append(domain)
+        clean[kind] = out
+    if not (clean["www"] or clean["email"]):
+        return
+    rec.facts["registry_domains"] = clean
+    rec.raw["registry_domains"] = clean
 
 
 def _parse_contact(c: dict[str, Any], rec: ParsedRecord) -> ParsedContact:

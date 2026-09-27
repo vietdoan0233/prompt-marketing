@@ -43,6 +43,29 @@ const TONE: Record<string, string> = {
   dismissed: "muted",
   likely: "bad",
   possible: "warn",
+  // seller prospect funnel
+  advisor_review: "best",
+  research: "warn",
+  outside_size_band: "muted",
+  exclude: "bad",
+  complete: "good",
+  needs_data: "warn",
+  core: "good",
+  adjacent: "muted",
+  weak: "bad",
+  group_parent: "info",
+  holding_activity: "warn",
+  // digital decay
+  coasting: "bad",
+  decaying: "warn",
+  watch: "warn",
+  active: "good",
+  insufficient_evidence: "muted",
+  zero_roles: "warn",
+  hiring: "good",
+  growing: "good",
+  flat: "warn",
+  shrinking: "bad",
 };
 
 const LABEL: Record<string, string> = {
@@ -51,6 +74,14 @@ const LABEL: Record<string, string> = {
   unknown_headcount: "headcount unknown",
   qualified: "≥20 qualified",
   needs_correction: "needs correction",
+  advisor_review: "advisor review",
+  outside_size_band: "outside size band",
+  needs_data: "needs data",
+  group_parent: "group parent",
+  holding_activity: "holding / head office",
+  insufficient_evidence: "insufficient evidence",
+  zero_roles: "0 open roles",
+  watch: "watch",
 };
 
 export function Badge({ value, title, label }: { value: string; title?: string; label?: string }) {
