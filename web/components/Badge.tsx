@@ -55,6 +55,17 @@ const TONE: Record<string, string> = {
   weak: "bad",
   group_parent: "info",
   holding_activity: "warn",
+  // digital decay
+  coasting: "bad",
+  decaying: "warn",
+  watch: "warn",
+  active: "good",
+  insufficient_evidence: "muted",
+  zero_roles: "warn",
+  hiring: "good",
+  growing: "good",
+  flat: "warn",
+  shrinking: "bad",
 };
 
 const LABEL: Record<string, string> = {
@@ -68,6 +79,9 @@ const LABEL: Record<string, string> = {
   needs_data: "needs data",
   group_parent: "group parent",
   holding_activity: "holding / head office",
+  insufficient_evidence: "insufficient evidence",
+  zero_roles: "0 open roles",
+  watch: "watch",
 };
 
 export function Badge({ value, title, label }: { value: string; title?: string; label?: string }) {

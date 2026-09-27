@@ -12,7 +12,7 @@ from app.models import Source
 APPROVED = "approved"
 PERMISSION_STATUSES = {"approved", "pending", "revoked", "unapproved"}
 SOURCE_MODES = {"public-approved", "licensed", "mergero-supplied"}
-INGESTIBLE_CONNECTORS = {"csv", "ee_ariregister"}
+INGESTIBLE_CONNECTORS = {"csv", "ee_ariregister", "website_decay"}
 
 
 class PermissionDenied(Exception):

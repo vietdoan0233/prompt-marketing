@@ -201,6 +201,10 @@ def start_discovery_run(
 ) -> IngestionRun:
     min_emp = min_employees if min_employees is not None else get_settings().min_employees_default
     source = _registered_or_deny(session, source_id, actor)
+    if source.connector_type == "ee_ariregister" and (query or {}).get("dataset") == "yldandmed":
+        from app.services.ee_register_domains import sync_register_domains
+
+        return sync_register_domains(session, actor=actor, retry_of_id=retry_of_id)
     if source.connector_type == "ee_ariregister":
         from app.services.ee_import import import_estonia
 
@@ -210,6 +214,16 @@ def start_discovery_run(
             query=query,
             actor=actor,
             min_employees=min_emp,
+            retry_of_id=retry_of_id,
+        )
+    if source.connector_type == "website_decay":
+        from app.services.digital_decay import companies_from_query, run_decay
+
+        return run_decay(
+            session,
+            companies_from_query(session, query),
+            actor=actor,
+            domains=query.get("domains") or {},
             retry_of_id=retry_of_id,
         )
     run = _new_run(
