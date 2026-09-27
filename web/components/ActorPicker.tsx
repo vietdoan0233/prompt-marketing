@@ -9,7 +9,7 @@ export function ActorPicker() {
   useEffect(() => setLocal(getActor()), []);
   return (
     <label className="actor" title="Recorded on every audit event (prototype: no SSO)">
-      Acting as
+      acting as
       <input
         value={actor}
         onChange={(e) => {

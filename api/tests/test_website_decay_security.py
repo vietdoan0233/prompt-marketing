@@ -153,7 +153,9 @@ def _connector(monkeypatch: pytest.MonkeyPatch, identity_present: bool) -> Websi
         return REAL_GETADDRINFO(host, *args, **kwargs)
 
     monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
-    client = PoliteClient(rate_limit_per_minute=None, transport=httpx.MockTransport(handler))
+    client = PoliteClient(
+        rate_limit_per_minute=None, transport=httpx.MockTransport(handler)
+    )
     return WebsiteDecayConnector(client=client)
 
 

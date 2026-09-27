@@ -1,7 +1,5 @@
 // Server-side fetch helper for React Server Components. Browser code uses /api/* (see next.config.mjs).
 
-import { notFound } from "next/navigation";
-
 const API_URL = process.env.API_URL || "http://localhost:8000";
 
 export class ApiError extends Error {
@@ -13,32 +11,14 @@ export class ApiError extends Error {
   }
 }
 
-type Params = Record<string, string | number | undefined | null>;
-
-export async function apiGet<T>(path: string, params?: Params): Promise<T> {
+export async function apiGet<T>(path: string, params?: Record<string, string | number | undefined | null>): Promise<T> {
   const url = new URL(path, API_URL);
   for (const [k, v] of Object.entries(params ?? {})) {
     if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v));
   }
-  let res: Response;
-  try {
-    res = await fetch(url, { cache: "no-store" });
-  } catch {
-    // Network failure: the API process is down or unreachable. Distinct from an HTTP error response.
-    throw new ApiError(503, `The company database API is not reachable (${url.pathname}).`);
-  }
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new ApiError(res.status, `${res.status} ${await res.text()}`);
   return res.json() as Promise<T>;
-}
-
-/** Like apiGet, but a 404 renders the route's not-found state instead of the error boundary. */
-export async function apiGetOrNotFound<T>(path: string, params?: Params): Promise<T> {
-  try {
-    return await apiGet<T>(path, params);
-  } catch (e) {
-    if (e instanceof ApiError && e.status === 404) notFound();
-    throw e;
-  }
 }
 
 export function fmtDate(iso: string | null | undefined, withTime = false): string {

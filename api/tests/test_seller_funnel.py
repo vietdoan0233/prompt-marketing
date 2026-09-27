@@ -198,13 +198,14 @@ def test_funnel_stages_flags_and_ranking(session: Session) -> None:
     stages = {stage.key: stage.count for stage in funnel.stages}
     assert stages == {
         "imported": 14,
-        "in_size_band": 13,
-        "complete_evidence": 12,
-        "profitable": 12,
-        "advisor_review": 11,
+        "registered": 13,
+        "in_size_band": 12,
+        "complete_evidence": 11,
+        "profitable": 11,
+        "advisor_review": 10,
         "decay_flagged": 0,  # no company here has ever had a digital-decay check run
     }
-    assert funnel.advisor_review == 11
+    assert funnel.advisor_review == 10
     assert funnel.advisor_review_decay_checked == 0
     assert funnel.advisor_review_decay_flagged == 0
 
@@ -212,9 +213,7 @@ def test_funnel_stages_flags_and_ranking(session: Session) -> None:
     assert items["Holding OÜ"].next_action == "research"
     assert items["Holding OÜ"].flags == ["holding_activity"]
     assert items["Holding OÜ"].financial_profile_index is None
-    # Registry status (here: in liquidation) is no longer checked by this funnel; Closing OÜ qualifies on
-    # financial criteria alone, same as any other company with this profile.
-    assert items["Closing OÜ"].next_action == "advisor_review"
+    assert items["Closing OÜ"].next_action == "exclude"
     assert items["Large AS"].next_action == "outside_size_band"
     assert items["Gap OÜ"].evidence_status == "needs_data"
 
@@ -224,9 +223,8 @@ def test_funnel_stages_flags_and_ranking(session: Session) -> None:
 
     ranked = [item for item in funnel.items if item.next_action == "advisor_review"]
     assert ranked[0].legal_name == "Peer 8 OÜ"  # highest margin peer ranks first
-    # Closing OÜ (in liquidation) is now a peer too: registry status no longer gates peer eligibility.
-    assert all(item.peer_count == 11 for item in ranked)
-    assert funnel.peer_groups[0].group == "62" and funnel.peer_groups[0].peer_count == 11
+    assert all(item.peer_count == 10 for item in ranked)
+    assert funnel.peer_groups[0].group == "62" and funnel.peer_groups[0].peer_count == 10
 
     top = ranked[0]
     assert top.registry_url == f"https://ariregister.rik.ee/eng/company/{_registry_code(8)}"
@@ -301,34 +299,24 @@ def test_sector_options_and_others_bucket(session: Session) -> None:
 
 
 def test_cash_harvesting_candidate_flows_through_the_funnel(session: Session) -> None:
-    """End-to-end: a company with flat revenue (0% CAGR, inside range) and no competing EBITDA data
-    trips the "others" absolute threshold, since with only two companies in play there are nowhere near
-    enough peers for a percentile ranking. A growing company never qualifies regardless of margin."""
     _add_company(
         session,
         30,
         "Steady Cashco OÜ",
-        emtak="99999",  # not a real division: guarantees the "others" bucket regardless of fixture size
-        revenue=(10_000_000, 10_000_000, 10_000_000),
-        ebitda_margin=0.25,  # above the 15% absolute threshold
+        revenue=(10_000_000, 10_000_000, 10_000_000),  # flat: 0% CAGR, inside [-2%, +3%]
+        ebitda_margin=0.25,  # above the 15% threshold
     )
     _add_company(
-        session,
-        31,
-        "Growth Co OÜ",
-        emtak="99999",
-        revenue=(10_000_000, 12_000_000, 14_000_000),
-        ebitda_margin=0.25,
+        session, 31, "Growth Co OÜ", revenue=(10_000_000, 12_000_000, 14_000_000), ebitda_margin=0.25
     )
     session.commit()
 
-    funnel = seller_funnel(session, sector="others", limit=100, **BAND)
+    funnel = seller_funnel(session, sector=None, limit=100, **BAND)
     items = {item.legal_name: item for item in funnel.items}
 
     steady = items["Steady Cashco OÜ"]
     assert steady.cash_harvesting_candidate is True
     assert steady.cash_harvesting_evidence_status == "evaluated"
-    assert steady.cash_harvesting_margin_basis == "absolute"
     assert steady.latest_ebitda_margin == 0.25
     assert "cash_harvesting_candidate" in steady.flags
     assert any("Cash Harvesting candidate" in reason for reason in steady.review_reasons)
@@ -340,40 +328,6 @@ def test_cash_harvesting_candidate_flows_through_the_funnel(session: Session) ->
     assert "cash_harvesting_candidate" not in growth.flags
 
 
-def test_cash_harvesting_percentile_ranking_flows_through_the_funnel(session: Session) -> None:
-    """Full pipeline (DB rows -> seller_funnel()) for the "all sectors" percentile rule: with no sector
-    filter and every company sharing one division, the comparison pool is exactly these companies, and
-    only those at or above the database's own 75th-percentile margin become candidates."""
-    from app.domain.seller_signals import (
-        CASH_HARVESTING_EBITDA_PERCENTILE,
-        CASH_HARVESTING_MIN_PEERS,
-        percentile,
-    )
-
-    margins = [0.05 * (i + 1) for i in range(CASH_HARVESTING_MIN_PEERS)]  # 0.05, 0.10, ..., 0.50
-    for i, margin in enumerate(margins):
-        _add_company(
-            session,
-            60 + i,
-            f"Margin {i} OÜ",
-            revenue=(10_000_000, 10_000_000, 10_000_000),  # flat: 0% CAGR, inside range
-            ebitda_margin=margin,
-        )
-    session.commit()
-    threshold = percentile(sorted(margins), CASH_HARVESTING_EBITDA_PERCENTILE)
-
-    funnel = seller_funnel(session, sector=None, limit=100, **BAND)
-    items = {item.legal_name: item for item in funnel.items}
-
-    for i, margin in enumerate(margins):
-        item = items[f"Margin {i} OÜ"]
-        assert item.cash_harvesting_margin_basis == "all_sectors"
-        assert item.cash_harvesting_margin_percentile == CASH_HARVESTING_EBITDA_PERCENTILE
-        assert item.cash_harvesting_peer_count == len(margins)
-        assert item.cash_harvesting_margin_threshold == threshold
-        assert item.cash_harvesting_candidate is (margin >= threshold), f"margin {margin} vs {threshold}"
-
-
 def test_seller_prospects_endpoint(client, session: Session) -> None:
     empty = client.get("/seller-prospects").json()
     assert empty["total_companies"] == 0 and empty["items"] == []
@@ -381,7 +335,7 @@ def test_seller_prospects_endpoint(client, session: Session) -> None:
     _seed_funnel(session)
     body = client.get("/seller-prospects", params={"limit": 5, "view": "all"}).json()
     stage_counts = {s["key"]: s["count"] for s in body["stages"]}
-    assert len(body["items"]) == 5 and stage_counts["advisor_review"] == 11
+    assert len(body["items"]) == 5 and stage_counts["advisor_review"] == 10
     assert body["items"][0]["next_action"] == "advisor_review"
     assert (
         client.get("/seller-prospects", params={"min_revenue_eur": 9, "max_revenue_eur": 1}).status_code
@@ -395,7 +349,7 @@ def test_coverage_report_summarises_fields_and_peer_groups(session: Session) -> 
     _seed_funnel(session)
     report = coverage(session, **BAND)
     assert report["companies"] == 14
-    assert report["funnel_stages"]["advisor_review"] == 11
+    assert report["funnel_stages"]["advisor_review"] == 10
     assert report["peer_groups_all_sizes"] == {"62": 10}
     assert report["eligible_companies_with_index"] == 10
     assert report["flags"] == {"group_parent": 1, "holding_activity": 1}

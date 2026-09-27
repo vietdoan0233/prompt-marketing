@@ -16,21 +16,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <header className="topbar">
-          <Link href="/companies" className="brand" aria-label="Mergero company database home">
-            <span className="brand-word">MERGERO</span>
-            <span className="brand-sub">Company database</span>
+          <Link href="/companies" className="brand">
+            Mergero <span>company database</span>
           </Link>
           <Nav />
           <ActorPicker />
         </header>
         <main className="main">{children}</main>
         <footer className="footer">
-          <div className="footer-inner">
-            <strong>Internal use only</strong>
-            <span>
-              EE register data · Scope ends at ingestion, review and data-quality reporting · No outreach actions
-            </span>
-          </div>
+          Internal use only · Scope ends at ingestion, review and data-quality reporting · No outreach actions
         </footer>
       </body>
     </html>

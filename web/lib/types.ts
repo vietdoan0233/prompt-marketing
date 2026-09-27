@@ -150,27 +150,6 @@ export type SellerProspect = {
   cash_harvesting_evidence_status: "insufficient_evidence" | "evaluated";
   latest_ebitda_margin: number | null;
   cash_harvesting_revenue_cagr: number | null;
-  // How the EBITDA-margin condition was judged under the current sector filter: "division" (ranked
-  // against comparable companies in this company's own EMTAK division, full database), "all_sectors"
-  // (one shared universe of comparable companies across every sector, full database, when no sector
-  // filter is applied), "absolute" (fixed >15% threshold, used for the "others" sector bucket, which has
-  // no reliable common peer group), or "insufficient_evidence" (no usable sector information, or too few
-  // comparable peers in the applicable group).
-  cash_harvesting_margin_basis: "division" | "all_sectors" | "absolute" | "insufficient_evidence";
-  // The percentile cutoff applied (e.g. 0.75), only when the basis is "division" or "all_sectors".
-  cash_harvesting_margin_percentile: number | null;
-  // The actual EBITDA-margin value required to pass: the comparison group's percentile-cutoff margin, or
-  // the fixed 0.15 for "absolute". Null when the basis is "insufficient_evidence".
-  cash_harvesting_margin_threshold: number | null;
-  // Size of the comparison group actually used, when the basis is "division" or "all_sectors". Populated
-  // even when it falls short of the required minimum, so "insufficient_evidence" is never a black box.
-  cash_harvesting_peer_count: number | null;
-  // The cash signal's own evidence. It can cover a different latest year than the general financial signal
-  // (latest_year / filing_ids / source_urls / issues above), so render these beside the cash values.
-  cash_harvesting_latest_year: number | null;
-  cash_harvesting_filing_ids: string[]; // "YYYY:filingId"
-  cash_harvesting_source_urls: string[];
-  cash_harvesting_issues: string[];
 };
 
 export type FunnelStage = {
@@ -207,7 +186,7 @@ export type SellerFunnel = {
   hide_active_decay: boolean;
   // Companies in the selected view after all filters, before the 100-row limit.
   listed_companies: number;
-  // Cash Harvesting candidates by financial criteria only, within the sector filter.
+  // Cash Harvesting candidates not closing down, within the sector filter.
   cash_harvesting_candidates: number;
   // Of the listed companies: any decay verdict / coasting, decaying or watch.
   listed_decay_checked: number;
@@ -216,19 +195,6 @@ export type SellerFunnel = {
   peer_groups: PeerGroup[];
   sector_options: SectorOption[];
   items: SellerProspect[];
-  // Paging over the sector-filtered, sorted list: items is the window [offset, offset + limit).
-  total_items: number;
-  offset: number;
-  limit: number;
-  methodology: string;
-};
-
-// GET /seller-prospects/{company_id}: one company's brief for a filter context, independent of rank.
-export type SellerProspectBrief = {
-  item: SellerProspect;
-  rank: number | null; // 1-based position in the filtered, sorted list; null when the sector filter excludes it
-  total_items: number;
-  in_sector: boolean;
   methodology: string;
 };
 

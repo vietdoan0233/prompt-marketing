@@ -86,23 +86,10 @@ const LABEL: Record<string, string> = {
   watch: "watch",
 };
 
-/** Status pill. Tone comes from the value (TONE map) unless `tone` overrides it: good, best/accent, warn, bad, info, muted. */
-export function Badge({
-  value,
-  title,
-  label,
-  tone: toneOverride,
-  large,
-}: {
-  value: string;
-  title?: string;
-  label?: string;
-  tone?: string;
-  large?: boolean;
-}) {
-  const tone = toneOverride ?? TONE[value] ?? "muted";
+export function Badge({ value, title, label }: { value: string; title?: string; label?: string }) {
+  const tone = TONE[value] ?? "muted";
   return (
-    <span className={`badge badge-${tone}${large ? " badge-lg" : ""}`} title={title ?? value}>
+    <span className={`badge badge-${tone}`} title={title ?? value}>
       {label ?? LABEL[value] ?? value}
     </span>
   );
