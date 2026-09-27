@@ -4,7 +4,7 @@ For each selected target it finds the company's own website in this order: a use
 website the company declared to the official register; the company email domain declared to the register
 (group mail domains only when the site itself names the company); a domain guessed from the legal name,
 verified on the site (registry code, or name plus address; never the name alone). It then politely
-crawls a handful of pages (robots.txt respected, per-host rate limit, page budget) and records three decay
+crawls a handful of pages (per-host rate limit, page budget) and records three decay
 checks as evidence. Scoring is pure (app.domain.digital_decay) and runs in parse(), from the payload only,
 so re-parsing a stored snapshot is deterministic.
 
@@ -113,9 +113,7 @@ class _Crawl:
         except ConnectorError as exc:
             message = str(exc)
             page = {"url": url, "status": None, "error": message}
-            if message.startswith("robots.txt disallows"):
-                self.warn(message)
-            elif not quiet:
+            if not quiet:
                 self.warn(f"fetch failed: {url}")
         else:
             if resp.status >= 400:
@@ -148,7 +146,7 @@ class WebsiteDecayConnector:
         max_pages: int = 8,
         client: PoliteClient | None = None,
     ) -> None:
-        self.client = client or PoliteClient(rate_limit_per_minute or 20, respect_robots=True)
+        self.client = client or PoliteClient(rate_limit_per_minute or 20)
         self.today = today or datetime.now(UTC).date()
         self.thresholds = thresholds or dd.Thresholds()
         self.max_pages = max_pages
@@ -305,7 +303,7 @@ class WebsiteDecayConnector:
             page = crawl.get(f"https://{cand}/", probe=True, quiet=True)
             if page is None:
                 break  # budget spent
-            if page.get("status") is None and not page["error"].startswith("robots.txt"):
+            if page.get("status") is None:
                 page = crawl.get(f"https://www.{cand}/", probe=True, quiet=True)  # connection error only
                 if page is None:
                     break

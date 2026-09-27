@@ -3,7 +3,6 @@
 - Stable User-Agent; optional contact via HTTP_CONTACT (never personal by default).
 - Per-host minimum interval (derived from the source's rate_limit_per_minute) + retry with backoff on 429/5xx.
 - Response size cap so a single page cannot exhaust memory.
-- Optional robots.txt compliance (website connectors).
 """
 
 import ipaddress
@@ -11,7 +10,6 @@ import socket
 import ssl
 import threading
 import time
-import urllib.robotparser
 from dataclasses import dataclass, field
 from urllib.parse import urlsplit
 
@@ -32,16 +30,8 @@ KEPT_HEADERS = {"last-modified", "content-type", "etag", "date"}
 
 
 def _is_blocked_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
-    """True for loopback, private, link-local (this covers the 169.254.169.254 cloud metadata address),
-    reserved, multicast, and unspecified addresses -- i.e. anything that is not a routable public target."""
-    return (
-        ip.is_private
-        or ip.is_loopback
-        or ip.is_link_local
-        or ip.is_reserved
-        or ip.is_multicast
-        or ip.is_unspecified
-    )
+    """Allow only globally routable addresses; this also blocks shared/non-global ranges such as CGNAT."""
+    return not ip.is_global
 
 
 def _safe_ip_for_host(host: str) -> str:
@@ -126,7 +116,6 @@ class PoliteClient:
     def __init__(
         self,
         rate_limit_per_minute: int | None = 60,
-        respect_robots: bool = False,
         *,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
@@ -134,8 +123,6 @@ class PoliteClient:
         through `_SSRFSafeTransport`, so a test can inject an `httpx.MockTransport` and still exercise the
         real address-validation and redirect-revalidation behavior end to end."""
         settings = get_settings()
-        self.respect_robots = respect_robots
-        self._robots: dict[str, urllib.robotparser.RobotFileParser | None] = {}
         self.min_interval = 60.0 / rate_limit_per_minute if rate_limit_per_minute else 0.0
         self._last: dict[str, float] = {}
         self._lock = threading.Lock()
@@ -159,30 +146,8 @@ class PoliteClient:
         if wait > 0:
             time.sleep(wait)
 
-    def allowed(self, url: str) -> bool:
-        if not self.respect_robots:
-            return True
-        parts = urlsplit(url)
-        origin = f"{parts.scheme}://{parts.netloc}"
-        if origin not in self._robots:
-            rp: urllib.robotparser.RobotFileParser | None = urllib.robotparser.RobotFileParser()
-            try:
-                self._throttle(parts.netloc)
-                resp = self._client.get(f"{origin}/robots.txt")
-                if resp.status_code >= 400:
-                    rp = None  # no robots.txt: crawling allowed
-                else:
-                    rp.parse(resp.text.splitlines())  # type: ignore[union-attr]
-            except httpx.HTTPError:
-                rp = None
-            self._robots[origin] = rp
-        rp = self._robots[origin]
-        return True if rp is None else rp.can_fetch(user_agent(), url)
-
     def request(self, method: str, url: str, *, retries: int = 3, **kwargs) -> Response:
         """`retries` is the total number of attempts (default 3); probes of guessed hosts pass 1."""
-        if not self.allowed(url):
-            raise ConnectorError(f"robots.txt disallows {url}")
         host = urlsplit(url).netloc
         attempts = max(1, retries)
         last = attempts - 1

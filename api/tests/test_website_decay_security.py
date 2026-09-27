@@ -64,6 +64,18 @@ def test_hostname_resolving_to_a_private_address_is_blocked(monkeypatch: pytest.
         client.close()
 
 
+def test_shared_carrier_nat_address_is_blocked_without_opening_a_network_connection() -> None:
+    client = PoliteClient(
+        rate_limit_per_minute=None,
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, text="unexpected request")),
+    )
+    try:
+        with pytest.raises(ConnectorError, match="blocked network address"):
+            client.request("GET", "http://100.64.0.1/")
+    finally:
+        client.close()
+
+
 def test_redirect_target_is_revalidated_and_connection_is_pinned_to_the_validated_ip(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -142,7 +154,7 @@ def _connector(monkeypatch: pytest.MonkeyPatch, identity_present: bool) -> Websi
 
     monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
     client = PoliteClient(
-        rate_limit_per_minute=None, respect_robots=False, transport=httpx.MockTransport(handler)
+        rate_limit_per_minute=None, transport=httpx.MockTransport(handler)
     )
     return WebsiteDecayConnector(client=client)
 

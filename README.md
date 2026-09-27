@@ -130,7 +130,7 @@ It is disabled by default and requires `LIVE_CONNECTORS_ENABLED=true`. The check
   only after the site shows the registry code, or the legal name and registered address. A mail domain that
   several register entries share (group domain) is used only when the site itself names the company.
 - Only the email *domain* is read from the register; mailbox names, phone and fax numbers are never stored.
-- It respects robots.txt and the source rate limit.
+- It uses the source rate limit.
 - It stores extracted evidence only (no raw HTML) for 14 days.
 - It does not use LinkedIn.
 

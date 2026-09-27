@@ -56,7 +56,7 @@ sources:
     source_mode: public-approved
     terms_url: null
     permission_status: approved
-    approval_reference: Opt-in Digital Decay signal; evidence-only, robots.txt respected (see ARCHITECTURE.md)
+    approval_reference: Opt-in Digital Decay signal; evidence-only (see ARCHITECTURE.md)
     connector_type: website_decay
     connector_config: {live: true}
     enabled: false
@@ -70,7 +70,7 @@ sources:
     trust_rank: 40
     notes: >-
       Opt-in and disabled by default. Enrichment only: it can never create a company. Reads a
-      company's own website (home, sitemap, news and careers pages; max 8 pages; robots.txt respected)
+      company's own website (home, sitemap, news and careers pages; max 8 pages)
       only after the domain is verified by registry code or legal name + registered address. Stores
       extracted evidence (years, dates, job-link counts, URLs), never raw HTML or contact data. No
       LinkedIn or social networks.
