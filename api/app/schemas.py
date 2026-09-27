@@ -365,8 +365,16 @@ class SellerProspectOut(BaseModel):
     owner_intent: Literal["unknown"] = "unknown"
     latest_employees_fte: float | None = None
     consolidated_revenue_eur: float | None = None
-    # group_parent: also files consolidated accounts; holding_activity: EMTAK 64.2x/70.10 activity code
-    flags: list[Literal["group_parent", "holding_activity"]] = []
+    # group_parent: also files consolidated accounts; holding_activity: EMTAK 64.2x/70.10 activity code;
+    # cash_harvesting_candidate: see cash_harvesting_candidate/cash_harvesting_evidence_status below
+    flags: list[Literal["group_parent", "holding_activity", "cash_harvesting_candidate"]] = []
+    # Cash Harvesting candidate: a separate, explainable financial review signal. Never derived from
+    # dividends or capex. Triggers only from populated, comparable revenue CAGR and EBITDA margin; a
+    # missing or incomparable input keeps evidence_status "insufficient_evidence" and never trips the flag.
+    cash_harvesting_candidate: bool = False
+    cash_harvesting_evidence_status: Literal["insufficient_evidence", "evaluated"] = "insufficient_evidence"
+    latest_ebitda_margin: float | None = None
+    cash_harvesting_revenue_cagr: float | None = None
     # Link to the official e-Business Register company page, built from the source-backed registry code.
     registry_url: str | None = None
     # The opt-in web-digital-decay verdict, read from the company's latest CompanyFact if one was run.
@@ -397,6 +405,15 @@ class PeerGroupOut(BaseModel):
     median_equity_ratio: float
 
 
+class SectorOptionOut(BaseModel):
+    """One sector-filter option: a source-backed two-digit EMTAK division with at least
+    `MIN_COMPANIES_PER_SECTOR` companies (see app.domain.sectors), or the display-only "others" bucket."""
+
+    code: str
+    label: str
+    count: int
+
+
 class SellerFunnelOut(BaseModel):
     total_companies: int
     core_size: int
@@ -408,6 +425,7 @@ class SellerFunnelOut(BaseModel):
     advisor_review_decay_flagged: int = 0
     stages: list[FunnelStageOut] = []
     peer_groups: list[PeerGroupOut] = []
+    sector_options: list[SectorOptionOut] = []
     items: list[SellerProspectOut]
     methodology: str
 

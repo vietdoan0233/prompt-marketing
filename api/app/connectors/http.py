@@ -64,7 +64,7 @@ def _safe_ip_for_host(host: str) -> str:
             infos = socket.getaddrinfo(host, None, proto=socket.IPPROTO_TCP)
         except OSError as exc:
             raise ConnectorError(f"DNS resolution failed for {host}: {exc}") from exc
-        addresses = list(dict.fromkeys(info[4][0] for info in infos))
+        addresses = list(dict.fromkeys(str(info[4][0]) for info in infos))
     safe = [addr for addr in addresses if not _is_blocked_ip(ipaddress.ip_address(addr))]
     if not safe:
         raise ConnectorError(f"refusing to connect to {host}: resolves only to a blocked network address")

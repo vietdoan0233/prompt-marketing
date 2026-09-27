@@ -68,7 +68,8 @@ export function RunForms({ sources }: { sources: Source[] }) {
         </div>
         <p className="small muted" style={{ margin: 0 }}>
           Official basic data, annual reports, EMTAK activity and indicator files are imported with provenance.
-          Financial values are reported values; unavailable EBITDA, dividends, capex, currency and unit remain —.
+          Financial values are reported values; unavailable EBITDA, currency and unit remain —. Dividends and
+          capex are stored when reported but are not shown, since no current row has either populated.
           {eeSource && !eeSource.ingestible && ` Permission gate: ${eeSource.gate_reasons.join("; ")}`}
         </p>
       </form>

@@ -9,8 +9,16 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import schemas
+from app.domain.sectors import MIN_COMPANIES_PER_SECTOR, industry_division, sector_options
+from app.domain.sectors import OTHERS_CODE as OTHERS_SECTOR_CODE
 from app.domain.seller_signals import (
+    CASH_HARVESTING_CAGR_MAX,
+    CASH_HARVESTING_CAGR_MIN,
+    CASH_HARVESTING_EBITDA_MARGIN_MIN,
+    CASH_HARVESTING_EXPLANATION,
+    CASH_HARVESTING_LABEL,
     AnnualFinancial,
+    cash_harvesting_candidate,
     consolidated_revenue,
     files_consolidated,
     financial_signal,
@@ -54,14 +62,6 @@ def is_inactive_status(status: str | None) -> bool:
         "kustutatud",
         "deleted",
     }
-
-
-def _peer_group(codes: list[str]) -> str | None:
-    for code in codes or []:
-        digits = re.search(r"\d{2}", code)
-        if digits:
-            return digits.group()
-    return None
 
 
 def _registry_url(registry_id: str | None) -> str | None:
@@ -138,6 +138,12 @@ def _brief(item: schemas.SellerProspectOut, min_revenue_eur: int, max_revenue_eu
             else ""
         )
         reasons.append(f"Website signal: {item.digital_decay_verdict}{checked}")
+    if item.cash_harvesting_candidate:
+        reasons.append(
+            f"{CASH_HARVESTING_LABEL}: revenue CAGR "
+            f"{item.cash_harvesting_revenue_cagr:+.1%} and EBITDA margin "
+            f"{item.latest_ebitda_margin:.1%} in FY{year}. {CASH_HARVESTING_EXPLANATION}"
+        )
 
     questions = [
         "Is the owner open to a conversation? Unknown until an advisor asks.",
@@ -270,6 +276,7 @@ def seller_funnel(
                 source_file=row.source_file,
                 review_status=row.review_status,
                 employees_fte=row.employees_fte,
+                ebitda=row.ebitda,
             )
         )
 
@@ -323,8 +330,9 @@ def seller_funnel(
     for company in companies:
         rows = financials.get(company.id, [])
         signal = financial_signal(rows, min_revenue_eur=min_revenue_eur, max_revenue_eur=max_revenue_eur)
+        harvesting = cash_harvesting_candidate(rows)
         status = statuses.get(company.id)
-        peer_group = _peer_group(company.industry_codes)
+        peer_group = industry_division(company.industry_codes)
         holding = is_holding_activity(company.industry_codes)
         flags: list = []
         group_revenue = None
@@ -334,6 +342,8 @@ def seller_funnel(
             group_revenue = float(reported) if reported is not None else None
         if holding:
             flags.append("holding_activity")
+        if harvesting.triggered:
+            flags.append("cash_harvesting_candidate")
         issues = list(signal.issues)
         if status is None:
             issues.append("Current registry status unavailable")
@@ -369,6 +379,10 @@ def seller_funnel(
                 filing_ids=signal.filing_ids,
                 source_urls=signal.source_urls,
                 issues=issues,
+                cash_harvesting_candidate=harvesting.triggered,
+                cash_harvesting_evidence_status=harvesting.evidence_status,
+                latest_ebitda_margin=harvesting.latest_ebitda_margin,
+                cash_harvesting_revenue_cagr=harvesting.three_year_revenue_cagr,
             )
         )
 
@@ -416,14 +430,22 @@ def seller_funnel(
     for item in all_items:
         _brief(item, min_revenue_eur, max_revenue_eur)
 
+    # Computed over every imported company before the sector filter narrows `all_items`, so the option
+    # list and its counts describe the whole database, not just the currently selected sector.
+    sector_opts = [
+        schemas.SectorOptionOut(code=opt.code, label=opt.label, count=opt.count)
+        for opt in sector_options([c.industry_codes for c in companies])
+    ]
+
     if sector:
-        needle = sector.casefold()
-        all_items = [
-            item
-            for item in all_items
-            if needle in (item.sector or "").casefold() or needle in (item.peer_group or "")
-        ]
-        peer_groups = [group for group in peer_groups if needle in group.group]
+        key = sector.strip().casefold()
+        if key == OTHERS_SECTOR_CODE:
+            named_divisions = {opt.code for opt in sector_opts if opt.code != OTHERS_SECTOR_CODE}
+            all_items = [item for item in all_items if (item.peer_group or None) not in named_divisions]
+            peer_groups = []
+        else:
+            all_items = [item for item in all_items if item.peer_group == key]
+            peer_groups = [group for group in peer_groups if group.group == key]
 
     def decay_priority(verdict: str | None) -> int:
         return (
@@ -458,6 +480,7 @@ def seller_funnel(
         ),
         stages=_stages(all_items, min_revenue_eur, max_revenue_eur),
         peer_groups=peer_groups,
+        sector_options=sector_opts,
         items=all_items[:limit],
         methodology=(
             "Annual revenue is a provisional size proxy. The funnel requires three consecutive "
@@ -468,6 +491,15 @@ def seller_funnel(
             "coasting or decaying digital-decay verdict (opt-in, read here, never triggered here) is "
             "listed ahead of the peer-index ranking; a missing check is never treated as a negative "
             "signal. It describes financial profile only; owner intent, buyer fit and mandate "
-            "likelihood are not assessed."
+            f"likelihood are not assessed. The sector filter groups companies by their source-backed "
+            f"two-digit EMTAK division, requiring at least {MIN_COMPANIES_PER_SECTOR} companies per "
+            "listed division; smaller divisions and companies without a usable code fall into the "
+            f'display-only "{OTHERS_SECTOR_CODE}" option, computed fresh on every request. '
+            f"{CASH_HARVESTING_LABEL} is a separate signal from stable revenue (CAGR between "
+            f"{CASH_HARVESTING_CAGR_MIN:+.0%} and {CASH_HARVESTING_CAGR_MAX:+.0%} over three years) and "
+            f"a high EBITDA margin (above {CASH_HARVESTING_EBITDA_MARGIN_MIN:.0%} in the latest year); "
+            "it never uses dividends or capex, which are null for every current row in this database, "
+            "and a missing or incomparable input is reported as insufficient evidence rather than "
+            f"guessed. {CASH_HARVESTING_EXPLANATION}"
         ),
     )

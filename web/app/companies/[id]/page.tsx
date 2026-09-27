@@ -334,8 +334,6 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                   <th className="num">Operating profit</th>
                   <th className="num">D&amp;A (reported sign)</th>
                   <th className="num">EBITDA</th>
-                  <th className="num">Dividends</th>
-                  <th className="num">Capex</th>
                   <th>Provenance</th>
                 </tr>
               </thead>
@@ -373,8 +371,6 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                           )}
                       </div>
                     </td>
-                    <td className="num">{fmtMoney(f.dividends, f.currency ?? "EUR")}</td>
-                    <td className="num">{fmtMoney(f.capex, f.currency ?? "EUR")}</td>
                     <td className="small financial-source">
                       <a href={f.source_url} target="_blank" rel="noreferrer">
                         {f.source_file ?? f.source_id}

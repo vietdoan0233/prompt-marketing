@@ -5,7 +5,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import ValidationError
-from sqlalchemy import String, asc, cast, desc, func, or_, select, text
+from sqlalchemy import asc, desc, func, or_, select, text
 from sqlalchemy.orm import Session
 
 from app import schemas
@@ -15,6 +15,9 @@ from app.connectors.csv_connector import decode_csv_bytes
 from app.db import get_session
 from app.domain.normalize import NORMALIZATION_VERSION
 from app.domain.records import PARSER_VERSION
+from app.domain.sectors import OTHERS_CODE as OTHERS_SECTOR_CODE
+from app.domain.sectors import industry_division
+from app.domain.sectors import sector_options as compute_sector_options
 from app.models import (
     AuditEvent,
     Company,
@@ -307,12 +310,27 @@ SORTS = {
 }
 
 
+@router.get("/sectors", response_model=list[schemas.SectorOptionOut])
+def list_sectors(session: SessionDep) -> list[schemas.SectorOptionOut]:
+    """Sector-filter options: source-backed two-digit EMTAK divisions with at least
+    `MIN_COMPANIES_PER_SECTOR` companies, plus a display-only "others" bucket. Counts are computed fresh
+    from the current database on every call; `companies.sector` is not used because the importer never
+    populates it."""
+    codes = list(session.scalars(select(Company.industry_codes).where(Company.merged_into_id.is_(None))))
+    return [
+        schemas.SectorOptionOut(code=opt.code, label=opt.label, count=opt.count)
+        for opt in compute_sector_options(codes)
+    ]
+
+
 @router.get("/companies", response_model=schemas.CompanyPage)
 def list_companies(
     session: SessionDep,
     country: str | None = Query(None, description="Comma-separated ISO codes, e.g. FI,SE"),
     region: str | None = None,
-    sector: str | None = Query(None, description="Case-insensitive substring of sector or industry code"),
+    sector: str | None = Query(
+        None, description="A code from GET /sectors: a two-digit EMTAK division, or 'others'"
+    ),
     min_employees: int = Query(
         20, ge=0, description="Lower headcount bound must be >= this. 0 = include all"
     ),
@@ -332,11 +350,6 @@ def list_companies(
         stmt = stmt.where(Company.country.in_([c.strip().upper() for c in country.split(",") if c.strip()]))
     if region:
         stmt = stmt.where(Company.region == region)
-    if sector:
-        like = f"%{sector.lower()}%"
-        stmt = stmt.where(
-            or_(func.lower(Company.sector).like(like), cast(Company.industry_codes, String).like(like))
-        )
     if min_employees > 0:
         stmt = stmt.where(Company.estimated_employee_min >= min_employees)
     if max_employees is not None:
@@ -361,6 +374,20 @@ def list_companies(
     rows = list(session.scalars(stmt.order_by(direction(column).nulls_last(), Company.legal_name)))
     if freshness_filter:
         rows = [c for c in rows if freshness(c.last_verified_at) == freshness_filter]
+    if sector:
+        key = sector.strip().casefold()
+        if key == OTHERS_SECTOR_CODE:
+            # "Big enough to be its own option" is a database-wide property (see GET /sectors), not a
+            # property of this filtered subset, so it is computed the same way over every company.
+            all_codes = list(
+                session.scalars(select(Company.industry_codes).where(Company.merged_into_id.is_(None)))
+            )
+            named_divisions = {
+                opt.code for opt in compute_sector_options(all_codes) if opt.code != OTHERS_SECTOR_CODE
+            }
+            rows = [c for c in rows if industry_division(c.industry_codes) not in named_divisions]
+        else:
+            rows = [c for c in rows if industry_division(c.industry_codes) == key]
     total = len(rows)
     page_rows = rows[(page - 1) * page_size : page * page_size]
     items = summaries(session, page_rows)

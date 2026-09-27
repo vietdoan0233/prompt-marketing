@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from statistics import median
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,7 @@ class AnnualFinancial:
     source_file: str | None
     review_status: str
     employees_fte: Decimal | None = None
+    ebitda: Decimal | None = None
 
 
 # EMTAK/NACE activity codes whose accounts describe an ownership vehicle rather than an operating business:
@@ -199,3 +201,98 @@ def robust_z(value: float, reference: tuple[float, float]) -> float | None:
     if spread == 0:
         return None
     return max(-3.0, min(3.0, (value - centre) / spread))
+
+
+# ------------------------------------------------------------------ Cash Harvesting candidate
+
+CASH_HARVESTING_LABEL = "Cash Harvesting candidate"
+CASH_HARVESTING_EXPLANATION = (
+    "Stable, high-margin, low-growth financials over three consecutive comparable fiscal years. This "
+    "does not establish that the owner is extracting cash, and it is not a claim about seller intent or "
+    "preparation to sell: owner_intent stays unknown and buyer_fit stays not assessed."
+)
+CASH_HARVESTING_EBITDA_MARGIN_MIN = 0.15  # exclusive: EBITDA margin must be strictly above 15%
+CASH_HARVESTING_CAGR_MIN = -0.02
+CASH_HARVESTING_CAGR_MAX = 0.03
+
+
+@dataclass
+class CashHarvestingSignal:
+    """A separate, explainable financial review signal. It never uses dividends or capex: those fields
+    are null for every current row in this database, and even when populated they are excluded from this
+    calculation by design (no payout ratio, no dividend-history comparison)."""
+
+    triggered: bool = False
+    evidence_status: Literal["insufficient_evidence", "evaluated"] = "insufficient_evidence"
+    latest_year: int | None = None
+    latest_ebitda_margin: float | None = None
+    three_year_revenue_cagr: float | None = None
+    filing_ids: list[str] = field(default_factory=list)
+    source_urls: list[str] = field(default_factory=list)
+    issues: list[str] = field(default_factory=list)
+
+
+def _comparable_revenue_row(row: AnnualFinancial) -> bool:
+    if row.statement_scope != "standalone" or row.currency != "EUR" or row.unit != "EUR":
+        return False
+    if row.period_start is None or row.period_end is None:
+        return False
+    days = (row.period_end - row.period_start).days + 1
+    return 330 <= days <= 400 and row.revenue is not None and row.revenue > 0
+
+
+def cash_harvesting_candidate(rows: list[AnnualFinancial]) -> CashHarvestingSignal:
+    """Trigger only when both populated, comparable conditions hold: revenue CAGR in [-2%, +3%] across
+    three consecutive comparable fiscal years, and EBITDA margin above 15% in the most recent of them.
+    EBITDA comes only from the already-computed `ebitda` column (reported, or derived by the importer from
+    operating profit and depreciation/impairment) -- operating-profit margin is never substituted for it.
+    Any missing or incomparable input leaves the signal at "insufficient_evidence" with the reason
+    recorded in `issues`; it never trigger from a missing value treated as zero."""
+    signal = CashHarvestingSignal()
+    current = [row for row in rows if row.review_status != "superseded"]
+    if not current:
+        signal.issues.append("No current annual financial rows")
+        return signal
+
+    by_year: dict[int, list[AnnualFinancial]] = defaultdict(list)
+    for row in current:
+        if _comparable_revenue_row(row):
+            by_year[row.fiscal_year].append(row)
+    unique = {year: reports[0] for year, reports in by_year.items() if len(reports) == 1}
+    for year, reports in by_year.items():
+        if len(reports) > 1:
+            signal.issues.append(f"{year} has multiple current comparable reports")
+    if not unique:
+        signal.issues.append("No comparable standalone EUR revenue reported")
+        return signal
+
+    latest_year = max(unique)
+    latest = unique[latest_year]
+    signal.latest_year = latest_year
+    if latest.ebitda is None:
+        signal.issues.append(f"EBITDA is not available for FY{latest_year}, the latest comparable year")
+    else:
+        assert latest.revenue is not None  # guaranteed by _comparable_revenue_row
+        signal.latest_ebitda_margin = float(latest.ebitda / latest.revenue)
+
+    years = [latest_year - 2, latest_year - 1, latest_year]
+    if not all(year in unique for year in years):
+        signal.issues.append("Three consecutive comparable fiscal years unavailable for revenue CAGR")
+        return signal
+
+    recent = [unique[year] for year in years]
+    signal.filing_ids = [f"{row.fiscal_year}:{row.filing_id}" for row in recent]
+    signal.source_urls = sorted({row.source_url for row in recent if row.source_url})
+    first_revenue, last_revenue = recent[0].revenue, recent[-1].revenue
+    assert first_revenue is not None and last_revenue is not None
+    signal.three_year_revenue_cagr = float(last_revenue / first_revenue) ** 0.5 - 1
+
+    if signal.latest_ebitda_margin is None:
+        return signal  # insufficient_evidence: EBITDA missing, already recorded above
+
+    signal.evidence_status = "evaluated"
+    signal.triggered = (
+        CASH_HARVESTING_CAGR_MIN <= signal.three_year_revenue_cagr <= CASH_HARVESTING_CAGR_MAX
+        and signal.latest_ebitda_margin > CASH_HARVESTING_EBITDA_MARGIN_MIN
+    )
+    return signal
