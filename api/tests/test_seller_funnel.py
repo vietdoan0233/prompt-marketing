@@ -333,7 +333,7 @@ def test_seller_prospects_endpoint(client, session: Session) -> None:
     assert empty["total_companies"] == 0 and empty["items"] == []
 
     _seed_funnel(session)
-    body = client.get("/seller-prospects", params={"limit": 5}).json()
+    body = client.get("/seller-prospects", params={"limit": 5, "view": "all"}).json()
     stage_counts = {s["key"]: s["count"] for s in body["stages"]}
     assert len(body["items"]) == 5 and stage_counts["advisor_review"] == 10
     assert body["items"][0]["next_action"] == "advisor_review"

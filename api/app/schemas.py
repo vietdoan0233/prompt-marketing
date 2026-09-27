@@ -309,6 +309,9 @@ class CompanySummary(ORM):
     sector: str | None
     industry_codes: list[str]
     industry_code_details: list[IndustryCodeOut] = []
+    # Display-only two-digit EMTAK division label derived from `industry_codes`; `sector` itself stays the
+    # untouched source field.
+    sector_label: str | None = None
     estimated_employee_min: int | None
     estimated_employee_max: int | None
     ownership_type: str
@@ -345,6 +348,7 @@ class SellerProspectOut(BaseModel):
     registry_status: str | None
     sector: str | None
     peer_group: str | None
+    peer_group_label: str | None = None
     focus_band: str
     quality_band: str
     evidence_status: str
@@ -400,6 +404,7 @@ class FunnelStageOut(BaseModel):
 
 class PeerGroupOut(BaseModel):
     group: str
+    label: str
     peer_count: int
     median_margin: float
     median_equity_ratio: float
@@ -423,6 +428,18 @@ class SellerFunnelOut(BaseModel):
     # are coasting or decaying (a persisted signal read at query time; running new checks is a separate step).
     advisor_review_decay_checked: int = 0
     advisor_review_decay_flagged: int = 0
+    # Which list `items` holds: "cash_harvesting" (default: Cash Harvesting candidates not in liquidation,
+    # bankrupt or deleted) or "all" (every imported company in the sector, the pre-signal list).
+    view: Literal["cash_harvesting", "all"] = "all"
+    hide_active_decay: bool = False
+    # Companies in the selected view after every filter, before `limit` truncates `items`.
+    listed_companies: int = 0
+    # Cash Harvesting candidates not in liquidation, bankrupt or deleted, within the sector filter.
+    cash_harvesting_candidates: int = 0
+    # Of the listed companies: how many carry any digital-decay verdict / a coasting, decaying or watch
+    # verdict.
+    listed_decay_checked: int = 0
+    listed_decay_flagged: int = 0
     stages: list[FunnelStageOut] = []
     peer_groups: list[PeerGroupOut] = []
     sector_options: list[SectorOptionOut] = []

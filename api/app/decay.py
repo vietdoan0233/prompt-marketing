@@ -4,6 +4,7 @@
     python -m app.decay --registry-code 12345678 [--domain foo.ee]
     python -m app.decay --company-id <uuid>
     python -m app.decay --revenue-min 4000000 --revenue-max 6000000 [--limit 15] [--min-employees 20]
+    python -m app.decay --cash-harvesting [--limit 100] [--recheck-after-days 30]
     python -m app.decay --enable-source (alias --approve-and-enable) | --disable-source | --status
     python -m app.decay --sync-register-domains [--from-cache]   (one-time: register-declared domains)
 
@@ -14,6 +15,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import UTC, timedelta
 from typing import Any
 
 from sqlalchemy import select
@@ -22,13 +24,16 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.connectors.base import ConnectorError
 from app.db import SessionLocal
-from app.models import Company, CompanyIdentifier, IngestionRun, Source
+from app.models import Company, CompanyIdentifier, IngestionRun, Source, utcnow
 from app.services import digital_decay as dd
 from app.services.permissions import PermissionDenied, ingestion_gate
+from app.services.seller_funnel import is_registered_status, seller_funnel
 from app.services.source_registry import sync_sources
 
 ACTOR = "system:decay"
 DASH = "—"
+# The seller-prospect route's default size band; it only affects next-action ordering, not candidacy.
+CASH_HARVESTING_REVENUE_BAND = (5_000_000, 50_000_000)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -39,6 +44,11 @@ def _parser() -> argparse.ArgumentParser:
     target.add_argument("--registry-code", help="8-digit Estonian registry code")
     target.add_argument("--company-id", help="company id in the database")
     target.add_argument("--revenue-min", type=int, help="batch: latest reported revenue lower bound (EUR)")
+    target.add_argument(
+        "--cash-harvesting",
+        action="store_true",
+        help="batch: Cash Harvesting candidates from the seller-prospect funnel (still registered)",
+    )
     target.add_argument(
         "--enable-source",
         "--approve-and-enable",
@@ -62,6 +72,12 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--domain", help="website domain override (still verified by the connector)")
     p.add_argument("--revenue-max", type=int, default=2**62, help="batch: revenue upper bound (EUR)")
     p.add_argument("--limit", type=int, default=15, help="batch: maximum number of companies")
+    p.add_argument(
+        "--recheck-after-days",
+        type=int,
+        default=30,
+        help="with --cash-harvesting: skip companies checked within this many days (0 = recheck all)",
+    )
     p.add_argument("--min-employees", type=int, default=settings.min_employees_default)
     p.add_argument("--json", action="store_true", help="print JSON instead of a table")
     p.add_argument("--actor", default=ACTOR)
@@ -198,6 +214,39 @@ def _run(session: Session, companies: list[Company], args: argparse.Namespace) -
     _report(session, run, companies, args.json)
 
 
+def _cash_harvesting_batch(session: Session, limit: int, recheck_after_days: int) -> list[Company]:
+    """Registered Cash Harvesting candidates in seller-funnel order, skipping recently checked ones."""
+    funnel = seller_funnel(
+        session,
+        min_revenue_eur=CASH_HARVESTING_REVENUE_BAND[0],
+        max_revenue_eur=CASH_HARVESTING_REVENUE_BAND[1],
+        sector=None,
+        limit=10**9,
+        view="cash_harvesting",
+    )
+    cutoff = utcnow() - timedelta(days=recheck_after_days) if recheck_after_days > 0 else None
+    picked: list[Company] = []
+    cap = max(0, min(limit, get_settings().decay_batch_limit_max))
+    for item in funnel.items:
+        if len(picked) >= cap:
+            break
+        if not is_registered_status(item.registry_status):
+            continue
+        if cutoff is not None:
+            fact = dd.latest_signal(session, item.company_id)
+            if fact is not None:
+                # SQLite hands back naive UTC; utcnow() is aware.
+                observed = (
+                    fact.observed_at if fact.observed_at.tzinfo else fact.observed_at.replace(tzinfo=UTC)
+                )
+                if observed >= cutoff:
+                    continue
+        company = session.get(Company, item.company_id)
+        if company is not None:
+            picked.append(company)
+    return picked
+
+
 def _unregistered(session: Session, args: argparse.Namespace) -> None:
     postal = re.search(r"\b\d{5}\b", args.address or "")
     target = {
@@ -324,6 +373,13 @@ def main() -> None:
                         )
                     sys.exit(2)
                 _run(session, matches, args)
+                return
+            if args.cash_harvesting:
+                companies = _cash_harvesting_batch(session, args.limit, args.recheck_after_days)
+                if not companies:
+                    print("no unchecked, registered Cash Harvesting candidates", file=sys.stderr)
+                    return
+                _run(session, companies, args)
                 return
             # batch by revenue band
             companies = dd.select_batch(

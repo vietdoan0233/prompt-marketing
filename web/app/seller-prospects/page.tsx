@@ -28,10 +28,14 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
   const maxMillions = Number(sp.max_millions ?? 50);
   const min = Number.isFinite(minMillions) && minMillions > 0 ? minMillions : 5;
   const max = Number.isFinite(maxMillions) && maxMillions >= min ? maxMillions : Math.max(min, 50);
+  const view = sp.view === "all" ? "all" : "cash_harvesting";
+  const hideActive = sp.hide_active_decay === "true";
   const data = await apiGet<SellerFunnel>("/seller-prospects", {
     min_revenue_eur: Math.round(min * 1_000_000),
     max_revenue_eur: Math.round(max * 1_000_000),
     sector: sp.sector,
+    view,
+    hide_active_decay: hideActive ? "true" : undefined,
     limit: 100,
   });
   const top = data.stages[0]?.count || 1;
@@ -44,10 +48,23 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
           <p className="subtitle">
             Which companies deserve an advisor&apos;s research first, and why. A financial profile is not evidence that an owner wants to sell.
           </p>
+          {view === "cash_harvesting" && (
+            <p className="subtitle">
+              Showing Cash Harvesting candidates (stable revenue, EBITDA margin above 15%), ordered by website timing signal:
+              coasting, decaying and watch first, unchecked next, active last. Unchecked companies are never hidden.
+            </p>
+          )}
         </div>
       </div>
 
       <form className="panel filters" method="get">
+        <label>
+          Show
+          <select name="view" defaultValue={view}>
+            <option value="cash_harvesting">Cash Harvesting candidates</option>
+            <option value="all">All companies</option>
+          </select>
+        </label>
         <label>
           Minimum revenue (€m)
           <input name="min_millions" type="number" min="0.1" step="0.1" defaultValue={sp.min_millions ?? "5"} />
@@ -57,7 +74,7 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
           <input name="max_millions" type="number" min="0.1" step="0.1" defaultValue={sp.max_millions ?? "50"} />
         </label>
         <label>
-          Sector (EMTAK division)
+          Sector
           <select name="sector" defaultValue={sp.sector ?? ""}>
             <option value="">All sectors</option>
             {data.sector_options.map((opt) => (
@@ -66,6 +83,11 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
               </option>
             ))}
           </select>
+        </label>
+        <label>
+          <span>
+            <input type="checkbox" name="hide_active_decay" value="true" defaultChecked={hideActive} /> Hide companies whose website check is active
+          </span>
         </label>
         <button className="btn btn-primary">Apply</button>
         <Link className="btn btn-ghost" href="/seller-prospects">Reset</Link>
@@ -109,7 +131,10 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
       <section className="panel">
         <h2>Prioritised companies</h2>
         <p className="muted">
-          Showing up to 100 companies. The peer index ranks a financial profile inside its EMTAK group; it does not score sale readiness.
+          Showing {Math.min(data.items.length, 100)} of {data.listed_companies.toLocaleString("en")}{" "}
+          {view === "cash_harvesting" ? "Cash Harvesting candidates" : "companies"}.{" "}
+          Website checks: {data.listed_decay_checked} checked, {data.listed_decay_flagged} flagged coasting, decaying or watch.{" "}
+          The peer index ranks a financial profile inside its EMTAK group; it does not score sale readiness.
           Open a row to see what the filings show and what they cannot.
         </p>
         <div className="table-wrap">
@@ -121,6 +146,7 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
                 <th className="num">Revenue</th>
                 <th className="num">3-year profit</th>
                 <th className="num">Median margin</th>
+                <th className="num">Cash Harvesting</th>
                 <th className="num">Peer index</th>
                 <th>Website signal</th>
                 <th>Evidence</th>
@@ -152,10 +178,16 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
                     </td>
                     <td className="num">{item.positive_profit_years === null ? "—" : `${item.positive_profit_years}/3`}</td>
                     <td className="num">{percent(item.three_year_median_margin)}</td>
-                    <td className="num" title={item.peer_count ? `${item.peer_count} peers in EMTAK ${item.peer_group}` : "Insufficient comparable peers"}>
+                    <td className="num">
+                      {percent(item.latest_ebitda_margin)}
+                      <div className="small muted">
+                        EBITDA margin · CAGR {item.cash_harvesting_revenue_cagr === null ? "—" : `${item.cash_harvesting_revenue_cagr >= 0 ? "+" : ""}${(item.cash_harvesting_revenue_cagr * 100).toFixed(1)}%`}
+                      </div>
+                    </td>
+                    <td className="num" title={item.peer_count ? `${item.peer_count} peers in ${item.peer_group_label ?? item.peer_group}` : "Insufficient comparable peers"}>
                       {index(item.financial_profile_index)}
                       <div className="small muted">
-                        {item.peer_group ? `EMTAK ${item.peer_group}` : "No peer group"}
+                        {item.peer_group_label ?? (item.peer_group ? `EMTAK ${item.peer_group}` : "No peer group")}
                         {item.peer_count ? ` · ${item.peer_count} peers` : ""}
                       </div>
                     </td>
@@ -179,7 +211,7 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
                     </td>
                   </tr>
                   <tr className="brief-row">
-                    <td colSpan={8}>
+                    <td colSpan={9}>
                       <details>
                         <summary>Why review · what we don&apos;t know</summary>
                         <div className="brief">
@@ -204,18 +236,24 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
             </tbody>
           </table>
         </div>
-        {data.items.length === 0 && <p className="muted">No companies match, or the official Estonia files have not been loaded yet.</p>}
+        {data.items.length === 0 && (
+          <p className="muted">
+            {view === "cash_harvesting"
+              ? "No Cash Harvesting candidates match these filters."
+              : "No companies match, or the official Estonia files have not been loaded yet."}
+          </p>
+        )}
       </section>
 
       {data.peer_groups.length > 0 && (
         <section className="panel">
           <h2>Where a peer index exists</h2>
-          <p className="muted">EMTAK groups with at least eight comparable, active companies in the size band. Smaller groups get no index.</p>
+          <p className="muted">Sectors (EMTAK divisions) with at least eight comparable, active companies in the size band. Smaller groups get no index.</p>
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>EMTAK group</th>
+                  <th>Sector</th>
                   <th className="num">Peers</th>
                   <th className="num">Median 3-year margin</th>
                   <th className="num">Median equity / assets</th>
@@ -224,7 +262,13 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
               <tbody>
                 {data.peer_groups.map((group) => (
                   <tr key={group.group}>
-                    <td><Link href={`/seller-prospects?sector=${group.group}&min_millions=${min}&max_millions=${max}`}>{group.group}</Link></td>
+                    <td>
+                      <Link
+                        href={`/seller-prospects?sector=${group.group}&min_millions=${min}&max_millions=${max}&view=${view}${hideActive ? "&hide_active_decay=true" : ""}`}
+                      >
+                        {group.label || group.group}
+                      </Link>
+                    </td>
                     <td className="num">{group.peer_count}</td>
                     <td className="num">{percent(group.median_margin)}</td>
                     <td className="num">{percent(group.median_equity_ratio)}</td>

@@ -1,7 +1,7 @@
 """HTTP API. Thin layer: validation + mapping domain errors to status codes."""
 
 import json
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import ValidationError
@@ -288,6 +288,13 @@ def list_seller_prospects(
     max_revenue_eur: int = Query(50_000_000, ge=1),
     sector: str | None = None,
     limit: int = Query(100, ge=1, le=500),
+    view: Literal["cash_harvesting", "all"] = Query(
+        "cash_harvesting",
+        description=(
+            "cash_harvesting (default): Cash Harvesting candidates not closing down; all: every company"
+        ),
+    ),
+    hide_active_decay: bool = Query(False, description="Hide companies whose website check came back active"),
 ) -> schemas.SellerFunnelOut:
     if min_revenue_eur > max_revenue_eur:
         raise HTTPException(422, "min_revenue_eur must be <= max_revenue_eur")
@@ -297,6 +304,8 @@ def list_seller_prospects(
         max_revenue_eur=max_revenue_eur,
         sector=sector,
         limit=limit,
+        view=view,
+        hide_active_decay=hide_active_decay,
     )
 
 

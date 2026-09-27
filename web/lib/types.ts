@@ -74,6 +74,8 @@ export type CompanySummary = {
   sector: string | null;
   industry_codes: string[];
   industry_code_details: { code: string; code_system: string | null; code_version: string | null }[];
+  // Display-only two-digit EMTAK division label, e.g. "62 · Computer programming & consultancy".
+  sector_label: string | null;
   estimated_employee_min: number | null;
   estimated_employee_max: number | null;
   ownership_type: string;
@@ -110,6 +112,8 @@ export type SellerProspect = {
   registry_status: string | null;
   sector: string | null;
   peer_group: string | null;
+  // Human-readable peer group, e.g. "42 · Civil engineering"; null when no peer group.
+  peer_group_label: string | null;
   focus_band: string;
   quality_band: string;
   evidence_status: string;
@@ -157,6 +161,7 @@ export type FunnelStage = {
 
 export type PeerGroup = {
   group: string;
+  label: string;
   peer_count: number;
   median_margin: number;
   median_equity_ratio: number;
@@ -177,6 +182,15 @@ export type SellerFunnel = {
   advisor_review: number;
   advisor_review_decay_checked: number;
   advisor_review_decay_flagged: number;
+  view: "cash_harvesting" | "all";
+  hide_active_decay: boolean;
+  // Companies in the selected view after all filters, before the 100-row limit.
+  listed_companies: number;
+  // Cash Harvesting candidates not closing down, within the sector filter.
+  cash_harvesting_candidates: number;
+  // Of the listed companies: any decay verdict / coasting, decaying or watch.
+  listed_decay_checked: number;
+  listed_decay_flagged: number;
   stages: FunnelStage[];
   peer_groups: PeerGroup[];
   sector_options: SectorOption[];

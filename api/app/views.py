@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app import schemas
 from app.config import get_settings
 from app.domain.confidence import MANUALLY_CORRECTED
+from app.domain.sectors import division_label, industry_division
 from app.models import (
     AuditEvent,
     Company,
@@ -108,6 +109,7 @@ def summaries(session: Session, companies: list[Company]) -> list[schemas.Compan
                 "unknown",
             )
         summary = schemas.CompanySummary.model_validate(c)
+        summary.sector_label = division_label(industry_division(c.industry_codes))
         code_details = {
             (str(f.value_json), f.code_system, f.code_version)
             for f in facts

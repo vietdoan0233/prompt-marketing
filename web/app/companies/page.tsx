@@ -78,7 +78,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
           </select>
         </label>
         <label>
-          Sector (EMTAK division)
+          Sector
           <select name="sector" defaultValue={sp.sector ?? ""}>
             <option value="">All sectors</option>
             {sectorOptions.map((opt) => (
@@ -183,7 +183,7 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
                   </td>
                   <td>{c.country}</td>
                   <td className="small">
-                    {c.sector ?? <span className="muted">—</span>}
+                    {c.sector ?? c.sector_label ?? <span className="muted">—</span>}
                     {c.industry_code_details.length > 0 ? (
                       c.industry_code_details.map((item) => (
                         <div className="muted mono" key={`${item.code_system}:${item.code_version}:${item.code}`}>

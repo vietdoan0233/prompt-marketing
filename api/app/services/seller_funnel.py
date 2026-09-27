@@ -9,7 +9,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import schemas
-from app.domain.sectors import MIN_COMPANIES_PER_SECTOR, industry_division, sector_options
+from app.domain.sectors import (
+    MIN_COMPANIES_PER_SECTOR,
+    division_label,
+    industry_division,
+    sector_options,
+)
 from app.domain.sectors import OTHERS_CODE as OTHERS_SECTOR_CODE
 from app.domain.seller_signals import (
     CASH_HARVESTING_CAGR_MAX,
@@ -39,6 +44,18 @@ VALID_DECAY_VERDICTS: frozenset[str] = frozenset(
 )
 DECAY_PRIORITY: dict[str, int] = {"coasting": 0, "decaying": 1, "watch": 2}
 DECAY_DEFAULT_PRIORITY = 3
+DECAY_ACTIVE_PRIORITY = 4  # an "active" verdict sorts after unchecked companies
+SellerView = Literal["cash_harvesting", "all"]
+
+
+def decay_tier(verdict: str | None) -> int:
+    """coasting 0, decaying 1, watch 2, unchecked or insufficient_evidence 3, active 4. Absence of a check is
+    never ranked below a positive "active" result, and never dropped."""
+    if verdict == "active":
+        return DECAY_ACTIVE_PRIORITY
+    return (
+        DECAY_PRIORITY.get(verdict, DECAY_DEFAULT_PRIORITY) if verdict is not None else DECAY_DEFAULT_PRIORITY
+    )
 
 
 def is_registered_status(status: str | None) -> bool:
@@ -115,7 +132,8 @@ def _brief(item: schemas.SellerProspectOut, min_revenue_eur: int, max_revenue_eu
     ):
         reasons.append(
             f"Peer index {item.financial_profile_index:+.2f} among {item.peer_count} companies in "
-            f"EMTAK {item.peer_group} (margin {item.margin_peer_z:+.1f}, equity ratio "
+            f"{item.peer_group_label or f'EMTAK {item.peer_group}'} "
+            f"(margin {item.margin_peer_z:+.1f}, equity ratio "
             f"{item.equity_peer_z:+.1f} robust SD from the group median)"
         )
     if item.latest_equity_ratio is not None and year is not None:
@@ -167,7 +185,8 @@ def _brief(item: schemas.SellerProspectOut, min_revenue_eur: int, max_revenue_eu
         and "holding_activity" not in item.flags
     ):
         questions.append(
-            f"No peer index: fewer than {MIN_PEERS} comparable companies in EMTAK {item.peer_group or '—'}."
+            f"No peer index: fewer than {MIN_PEERS} comparable companies in "
+            f"{item.peer_group_label or f'EMTAK {item.peer_group or "—"}'}."
         )
     if item.next_action == "advisor_review" and item.digital_decay_verdict is None:
         questions.append(
@@ -178,7 +197,15 @@ def _brief(item: schemas.SellerProspectOut, min_revenue_eur: int, max_revenue_eu
     item.open_questions = questions
 
 
-def _stages(items: list[schemas.SellerProspectOut], min_revenue_eur: int, max_revenue_eur: int):
+def _stages(
+    items: list[schemas.SellerProspectOut],
+    min_revenue_eur: int,
+    max_revenue_eur: int,
+    view: SellerView,
+    hide_active_decay: bool,
+):
+    if view == "cash_harvesting":
+        return _run_stages(items, _cash_harvesting_rules(hide_active_decay))
     rules = [
         ("imported", "Imported companies", "Estonian companies in the database (≥20 FTE import scope)", None),
         (
@@ -219,6 +246,48 @@ def _stages(items: list[schemas.SellerProspectOut], min_revenue_eur: int, max_re
             lambda i: i.digital_decay_verdict in DECAY_PRIORITY,
         ),
     ]
+    return _run_stages(items, rules)
+
+
+def _cash_harvesting_rules(hide_active_decay: bool) -> list:
+    rules: list = [
+        ("imported", "Imported companies", "Estonian companies in the database (≥20 FTE import scope)", None),
+        (
+            "not_inactive",
+            "Not closing down",
+            "Official status is not in liquidation, bankrupt or deleted",
+            lambda i: not is_inactive_status(i.registry_status),
+        ),
+        (
+            "cash_harvesting",
+            CASH_HARVESTING_LABEL,
+            f"Revenue CAGR {CASH_HARVESTING_CAGR_MIN:+.0%} to {CASH_HARVESTING_CAGR_MAX:+.0%} over three "
+            f"comparable years and EBITDA margin above {CASH_HARVESTING_EBITDA_MARGIN_MIN:.0%} in the latest",
+            lambda i: i.cash_harvesting_candidate,
+        ),
+    ]
+    if hide_active_decay:
+        rules.append(
+            (
+                "website_not_active",
+                "Website not confirmed active",
+                "Hides companies whose website check came back active; unchecked companies stay",
+                lambda i: i.digital_decay_verdict != "active",
+            )
+        )
+    rules.append(
+        (
+            "decay_flagged",
+            "Also shows a website timing signal",
+            "Digital-decay verdict is coasting, decaying or watch (unchecked companies are kept in the list "
+            "above, not counted here)",
+            lambda i: i.digital_decay_verdict in DECAY_PRIORITY,
+        )
+    )
+    return rules
+
+
+def _run_stages(items: list[schemas.SellerProspectOut], rules: list) -> list[schemas.FunnelStageOut]:
     remaining = list(items)
     stages: list[schemas.FunnelStageOut] = []
     for key, label, rule, keep in rules:
@@ -235,6 +304,8 @@ def seller_funnel(
     max_revenue_eur: int,
     sector: str | None,
     limit: int,
+    view: SellerView = "all",
+    hide_active_decay: bool = False,
 ) -> schemas.SellerFunnelOut:
     companies = list(
         session.scalars(select(Company).where(Company.country == "EE", Company.merged_into_id.is_(None)))
@@ -245,6 +316,8 @@ def seller_funnel(
             core_size=0,
             three_year_profitable=0,
             advisor_review=0,
+            view=view,
+            hide_active_decay=hide_active_decay,
             items=[],
             methodology="No imported Estonian companies yet. Load the official register files first.",
         )
@@ -356,6 +429,7 @@ def seller_funnel(
                 registry_status=status,
                 sector=company.sector,
                 peer_group=peer_group,
+                peer_group_label=division_label(peer_group),
                 focus_band=signal.focus_band,
                 quality_band=signal.quality_band,
                 evidence_status=signal.evidence_status,
@@ -412,6 +486,7 @@ def seller_funnel(
         peer_groups.append(
             schemas.PeerGroupOut(
                 group=code,
+                label=division_label(code) or f"EMTAK {code}",
                 peer_count=len(group),
                 median_margin=margin_ref[0],
                 median_equity_ratio=equity_ref[0],
@@ -447,50 +522,79 @@ def seller_funnel(
             all_items = [item for item in all_items if item.peer_group == key]
             peer_groups = [group for group in peer_groups if group.group == key]
 
-    def decay_priority(verdict: str | None) -> int:
-        return (
-            DECAY_PRIORITY.get(verdict, DECAY_DEFAULT_PRIORITY)
-            if verdict is not None
-            else DECAY_DEFAULT_PRIORITY
-        )
+    sector_items = all_items
+    cash_harvesting = [
+        item
+        for item in sector_items
+        if item.cash_harvesting_candidate and not is_inactive_status(item.registry_status)
+    ]
+    listed = cash_harvesting if view == "cash_harvesting" else list(sector_items)
+    if hide_active_decay:
+        listed = [item for item in listed if item.digital_decay_verdict != "active"]
 
     next_action_order = {"advisor_review": 0, "research": 1, "outside_size_band": 2, "exclude": 3}
-    all_items.sort(
-        key=lambda item: (
-            next_action_order[item.next_action],
-            decay_priority(item.digital_decay_verdict),
-            -(item.financial_profile_index if item.financial_profile_index is not None else -99),
-            item.legal_name.casefold(),
+    if view == "cash_harvesting":
+        # The Cash Harvesting list is already a financial shortlist; Digital Decay is the timing signal on
+        # top, and next action still orders companies inside each decay tier.
+        listed.sort(
+            key=lambda item: (
+                decay_tier(item.digital_decay_verdict),
+                next_action_order[item.next_action],
+                -(item.financial_profile_index if item.financial_profile_index is not None else -99),
+                item.legal_name.casefold(),
+            )
         )
+    else:
+        listed.sort(
+            key=lambda item: (
+                next_action_order[item.next_action],
+                decay_tier(item.digital_decay_verdict),
+                -(item.financial_profile_index if item.financial_profile_index is not None else -99),
+                item.legal_name.casefold(),
+            )
+        )
+    review_queue = [item for item in sector_items if item.next_action == "advisor_review"]
+    view_note = (
+        "This list shows Cash Harvesting candidates that are not closing down, ordered by website timing "
+        "signal (coasting, decaying, watch, then unchecked, then active) and then by next action and peer "
+        "index. Switch the view to all companies to see the full funnel. "
+        if view == "cash_harvesting"
+        else ""
     )
-    review_queue = [item for item in all_items if item.next_action == "advisor_review"]
     return schemas.SellerFunnelOut(
-        total_companies=len(all_items),
-        core_size=sum(item.focus_band == "core" for item in all_items),
+        total_companies=len(sector_items),
+        core_size=sum(item.focus_band == "core" for item in sector_items),
         three_year_profitable=sum(
             item.focus_band == "core"
             and item.positive_profit_years == 3
             and item.evidence_status == "complete"
-            for item in all_items
+            for item in sector_items
         ),
         advisor_review=len(review_queue),
         advisor_review_decay_checked=sum(item.digital_decay_verdict is not None for item in review_queue),
         advisor_review_decay_flagged=sum(
             item.digital_decay_verdict in DECAY_PRIORITY for item in review_queue
         ),
-        stages=_stages(all_items, min_revenue_eur, max_revenue_eur),
+        view=view,
+        hide_active_decay=hide_active_decay,
+        listed_companies=len(listed),
+        cash_harvesting_candidates=len(cash_harvesting),
+        listed_decay_checked=sum(item.digital_decay_verdict is not None for item in listed),
+        listed_decay_flagged=sum(item.digital_decay_verdict in DECAY_PRIORITY for item in listed),
+        stages=_stages(sector_items, min_revenue_eur, max_revenue_eur, view, hide_active_decay),
         peer_groups=peer_groups,
         sector_options=sector_opts,
-        items=all_items[:limit],
+        items=listed[:limit],
         methodology=(
-            "Annual revenue is a provisional size proxy. The funnel requires three consecutive "
+            f"{view_note}Annual revenue is a provisional size proxy. The funnel requires three consecutive "
             "standalone EUR fiscal years for complete financial evidence. The peer index uses "
             f"median/MAD Z-scores within two-digit EMTAK groups with at least {MIN_PEERS} peers: "
             "70% operating margin and 30% equity/assets. Holding and head-office activity codes are "
             "flagged, not ranked. Within the advisor-review queue, a company already showing a "
-            "coasting or decaying digital-decay verdict (opt-in, read here, never triggered here) is "
-            "listed ahead of the peer-index ranking; a missing check is never treated as a negative "
-            "signal. It describes financial profile only; owner intent, buyer fit and mandate "
+            "coasting, decaying or watch digital-decay verdict (opt-in, read here, never triggered here) "
+            "is listed ahead of the peer-index ranking; an active verdict sorts after unchecked "
+            "companies, and a missing check is never treated as a negative signal. It describes "
+            "financial profile only; owner intent, buyer fit and mandate "
             f"likelihood are not assessed. The sector filter groups companies by their source-backed "
             f"two-digit EMTAK division, requiring at least {MIN_COMPANIES_PER_SECTOR} companies per "
             "listed division; smaller divisions and companies without a usable code fall into the "

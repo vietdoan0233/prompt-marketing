@@ -249,7 +249,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
           </p>
           <h1>{c.legal_name}</h1>
           <p className="subtitle">
-            {c.country} · {c.city ?? "city unknown"} · {c.sector ?? "sector unknown"} ·{" "}
+            {c.country} · {c.city ?? "city unknown"} · {c.sector ?? c.sector_label ?? "sector unknown"} ·{" "}
             {fmtEmployees(c.estimated_employee_min, c.estimated_employee_max)} employees{" "}
             · Registry status: <strong>{c.registry_status ?? "unknown"}</strong>{" "}
             <Badge value={c.qualification_status} /> <Badge value={c.headcount_status} />{" "}
