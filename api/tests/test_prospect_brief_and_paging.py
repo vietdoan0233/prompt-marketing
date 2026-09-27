@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from app.domain.seller_signals import cash_harvesting_candidate, financial_signal
+from app.domain.seller_signals import cash_harvesting_metrics, financial_signal
 from app.models import CompanyFinancial
 from app.services.seller_funnel import seller_funnel
 from tests.test_seller_funnel import BAND, LATEST, _add_company, _annual, _seed_funnel
@@ -74,7 +74,7 @@ def test_cash_signal_carries_its_own_year_and_filings_when_operating_profit_is_m
         _annual(LATEST, "10300000", "0", operating_profit=None, ebitda=Decimal("2300000")),
     ]
     general = financial_signal(rows, min_revenue_eur=5_000_000, max_revenue_eur=50_000_000)
-    cash = cash_harvesting_candidate(rows)
+    cash = cash_harvesting_metrics(rows)
 
     assert general.latest_year == LATEST - 1
     assert cash.latest_year == LATEST
@@ -84,8 +84,8 @@ def test_cash_signal_carries_its_own_year_and_filings_when_operating_profit_is_m
 
 
 def test_cash_margin_alone_keeps_its_filing_and_reason() -> None:
-    cash = cash_harvesting_candidate([_annual(LATEST, "10300000", "900000", ebitda=Decimal("2300000"))])
-    assert cash.evidence_status == "insufficient_evidence" and cash.triggered is False
+    cash = cash_harvesting_metrics([_annual(LATEST, "10300000", "900000", ebitda=Decimal("2300000"))])
+    assert cash.evidence_status == "insufficient_evidence"
     assert cash.latest_ebitda_margin is not None and cash.three_year_revenue_cagr is None
     assert cash.filing_ids == [f"{LATEST}:R{LATEST}"]
     assert cash.issues == ["Three consecutive comparable fiscal years unavailable for revenue CAGR"]

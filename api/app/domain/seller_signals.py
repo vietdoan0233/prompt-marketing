@@ -211,22 +211,51 @@ CASH_HARVESTING_EXPLANATION = (
     "does not establish that the owner is extracting cash, and it is not a claim about seller intent or "
     "preparation to sell: owner_intent stays unknown and buyer_fit stays not assessed."
 )
-CASH_HARVESTING_EBITDA_MARGIN_MIN = 0.15  # exclusive: EBITDA margin must be strictly above 15%
+# Absolute fallback threshold, used only for the "others" sector bucket (companies without a reliable
+# common sector peer group): EBITDA margin must be strictly above 15%.
+CASH_HARVESTING_EBITDA_MARGIN_MIN = 0.15
 CASH_HARVESTING_CAGR_MIN = -0.02
 CASH_HARVESTING_CAGR_MAX = 0.03
+# Named settings for the sector- and database-wide EBITDA-margin ranking (see app.services.seller_funnel):
+# a company's margin must be positive and at or above this percentile of its comparison group's margins,
+# and that group must have at least this many members with a usable, comparable margin -- otherwise the
+# margin condition is insufficient evidence rather than a guessed rank.
+CASH_HARVESTING_EBITDA_PERCENTILE = 0.75
+CASH_HARVESTING_MIN_PEERS = 10
+
+
+def percentile(sorted_values: list[float], fraction: float) -> float:
+    """The `fraction`-th percentile (0..1) of already-sorted values, by linear interpolation between the
+    two closest ranks (the common default method, e.g. numpy's "linear" interpolation)."""
+    if not sorted_values:
+        raise ValueError("sorted_values must be non-empty")
+    if len(sorted_values) == 1:
+        return sorted_values[0]
+    rank = (len(sorted_values) - 1) * fraction
+    lower_i = int(rank)
+    upper_i = min(len(sorted_values) - 1, lower_i + 1)
+    if lower_i == upper_i:
+        return sorted_values[lower_i]
+    weight = rank - lower_i
+    return sorted_values[lower_i] * (1 - weight) + sorted_values[upper_i] * weight
 
 
 @dataclass
 class CashHarvestingSignal:
     """A separate, explainable financial review signal. It never uses dividends or capex: those fields
     are null for every current row in this database, and even when populated they are excluded from this
-    calculation by design (no payout ratio, no dividend-history comparison)."""
+    calculation by design (no payout ratio, no dividend-history comparison).
 
-    triggered: bool = False
+    This dataclass carries only the per-company financial metrics (revenue CAGR and EBITDA margin); it
+    cannot decide whether the margin condition is met on its own, since that now depends on the current
+    sector-filter context and the whole comparison group's margins. See
+    app.services.seller_funnel._resolve_cash_harvesting for the final, combined decision."""
+
     evidence_status: Literal["insufficient_evidence", "evaluated"] = "insufficient_evidence"
     latest_year: int | None = None
     latest_ebitda_margin: float | None = None
     three_year_revenue_cagr: float | None = None
+    revenue_cagr_in_range: bool = False
     filing_ids: list[str] = field(default_factory=list)
     source_urls: list[str] = field(default_factory=list)
     issues: list[str] = field(default_factory=list)
@@ -241,13 +270,15 @@ def _comparable_revenue_row(row: AnnualFinancial) -> bool:
     return 330 <= days <= 400 and row.revenue is not None and row.revenue > 0
 
 
-def cash_harvesting_candidate(rows: list[AnnualFinancial]) -> CashHarvestingSignal:
-    """Trigger only when both populated, comparable conditions hold: revenue CAGR in [-2%, +3%] across
-    three consecutive comparable fiscal years, and EBITDA margin above 15% in the most recent of them.
+def cash_harvesting_metrics(rows: list[AnnualFinancial]) -> CashHarvestingSignal:
+    """The per-company inputs to the Cash Harvesting candidate signal: revenue CAGR across three
+    consecutive comparable standalone EUR fiscal years, and the EBITDA margin in the most recent of them.
     EBITDA comes only from the already-computed `ebitda` column (reported, or derived by the importer from
     operating profit and depreciation/impairment) -- operating-profit margin is never substituted for it.
     Any missing or incomparable input leaves the signal at "insufficient_evidence" with the reason
-    recorded in `issues`; it never trigger from a missing value treated as zero."""
+    recorded in `issues`. This function does not decide whether the company qualifies: the CAGR band
+    check is exposed as `revenue_cagr_in_range`, but the EBITDA-margin condition depends on the current
+    sector-filter comparison group, decided in app.services.seller_funnel instead."""
     signal = CashHarvestingSignal()
     current = [row for row in rows if row.review_status != "superseded"]
     if not current:
@@ -289,13 +320,12 @@ def cash_harvesting_candidate(rows: list[AnnualFinancial]) -> CashHarvestingSign
     first_revenue, last_revenue = recent[0].revenue, recent[-1].revenue
     assert first_revenue is not None and last_revenue is not None
     signal.three_year_revenue_cagr = float(last_revenue / first_revenue) ** 0.5 - 1
+    signal.revenue_cagr_in_range = (
+        CASH_HARVESTING_CAGR_MIN <= signal.three_year_revenue_cagr <= CASH_HARVESTING_CAGR_MAX
+    )
 
     if signal.latest_ebitda_margin is None:
         return signal  # insufficient_evidence: EBITDA missing, already recorded above
 
     signal.evidence_status = "evaluated"
-    signal.triggered = (
-        CASH_HARVESTING_CAGR_MIN <= signal.three_year_revenue_cagr <= CASH_HARVESTING_CAGR_MAX
-        and signal.latest_ebitda_margin > CASH_HARVESTING_EBITDA_MARGIN_MIN
-    )
     return signal

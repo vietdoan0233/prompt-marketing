@@ -1,6 +1,8 @@
 // Shared parsing and formatting for the seller-prospect funnel and its evidence briefs.
 // Margins, ratios and CAGR arrive from the API as fractions (0.153 = 15.3%).
 
+import type { SellerProspect } from "@/lib/types";
+
 export type SP = Record<string, string | undefined>;
 
 export type ProspectFilters = {
@@ -123,6 +125,40 @@ export function index(value: number | null, digits = 2): string {
 
 export function registryCode(registryId: string | null): string | null {
   return registryId ? registryId.replace("EE:", "") : null;
+}
+
+/** Short label for the Cash Harvesting EBITDA-margin comparison basis, e.g. "≥P75 of 126 in sector". */
+export function cashHarvestingBasisLabel(item: SellerProspect): string {
+  const pct = item.cash_harvesting_margin_percentile;
+  const threshold = item.cash_harvesting_margin_threshold;
+  const peers = item.cash_harvesting_peer_count;
+  switch (item.cash_harvesting_margin_basis) {
+    case "division":
+      return pct !== null && peers !== null ? `≥P${Math.round(pct * 100)} of ${peers} in sector` : "sector: insufficient peers";
+    case "all_sectors":
+      return pct !== null && peers !== null ? `≥P${Math.round(pct * 100)} of ${peers}, all sectors` : "insufficient peers";
+    case "absolute":
+      return threshold !== null ? `>${Math.round(threshold * 100)}% (others, absolute)` : "absolute threshold";
+    default:
+      return "insufficient evidence";
+  }
+}
+
+/** One sentence explaining the comparison basis, for a title attribute or the evidence brief. */
+export function cashHarvestingBasisSentence(item: SellerProspect): string {
+  const pct = item.cash_harvesting_margin_percentile;
+  const threshold = item.cash_harvesting_margin_threshold;
+  const peers = item.cash_harvesting_peer_count;
+  switch (item.cash_harvesting_margin_basis) {
+    case "division":
+      return `Ranked against ${peers} comparable companies in this company's own EMTAK division: needs a positive margin at or above the ${Math.round((pct ?? 0) * 100)}th percentile (${percent(threshold)}).`;
+    case "all_sectors":
+      return `Ranked against one shared universe of ${peers} comparable companies across every sector (no sector filter applied): needs a positive margin at or above the ${Math.round((pct ?? 0) * 100)}th percentile (${percent(threshold)}).`;
+    case "absolute":
+      return `The "others" sector bucket has no reliable common peer group, so a fixed absolute threshold applies instead: margin above ${percent(threshold)}.`;
+    default:
+      return "Insufficient evidence: no usable sector information for this company, or too few comparable peers in the applicable group.";
+  }
 }
 
 /** "2024:3217207" → { year: "2024", id: "3217207" }; an unexpected shape keeps the raw value as the id. */

@@ -379,6 +379,24 @@ class SellerProspectOut(BaseModel):
     cash_harvesting_evidence_status: Literal["insufficient_evidence", "evaluated"] = "insufficient_evidence"
     latest_ebitda_margin: float | None = None
     cash_harvesting_revenue_cagr: float | None = None
+    # How the EBITDA-margin condition was judged for this company under the current sector filter:
+    # "division" (ranked against comparable companies in its own EMTAK division, full database),
+    # "all_sectors" (ranked against one shared universe of comparable companies across all sectors, full
+    # database, when no sector filter is applied), "absolute" (the fixed >15% threshold, used for the
+    # "others" sector bucket, which has no reliable common peer group), or "insufficient_evidence" (no
+    # usable sector information for this company, or too few comparable peers in the applicable group).
+    cash_harvesting_margin_basis: Literal["division", "all_sectors", "absolute", "insufficient_evidence"] = (
+        "insufficient_evidence"
+    )
+    # The percentile cutoff applied (e.g. 0.75), only when the basis is "division" or "all_sectors".
+    cash_harvesting_margin_percentile: float | None = None
+    # The actual EBITDA-margin value required to pass: the comparison group's percentile-cutoff margin, or
+    # the fixed 0.15 for "absolute". None when the basis is "insufficient_evidence".
+    cash_harvesting_margin_threshold: float | None = None
+    # Size of the comparison group actually used (division size or all-sectors company count), when the
+    # basis is "division" or "all_sectors". Populated even when it falls short of the required minimum,
+    # so the reason for "insufficient_evidence" is visible rather than hidden.
+    cash_harvesting_peer_count: int | None = None
     # The cash signal's own evidence. It can cover a different latest year than the general financial
     # signal (`latest_year`/`filing_ids`/`source_urls`/`issues`), so it is carried separately.
     cash_harvesting_latest_year: int | None = None

@@ -301,24 +301,34 @@ def test_sector_options_and_others_bucket(session: Session) -> None:
 
 
 def test_cash_harvesting_candidate_flows_through_the_funnel(session: Session) -> None:
+    """End-to-end: a company with flat revenue (0% CAGR, inside range) and no competing EBITDA data
+    trips the "others" absolute threshold, since with only two companies in play there are nowhere near
+    enough peers for a percentile ranking. A growing company never qualifies regardless of margin."""
     _add_company(
         session,
         30,
         "Steady Cashco OÜ",
-        revenue=(10_000_000, 10_000_000, 10_000_000),  # flat: 0% CAGR, inside [-2%, +3%]
-        ebitda_margin=0.25,  # above the 15% threshold
+        emtak="99999",  # not a real division: guarantees the "others" bucket regardless of fixture size
+        revenue=(10_000_000, 10_000_000, 10_000_000),
+        ebitda_margin=0.25,  # above the 15% absolute threshold
     )
     _add_company(
-        session, 31, "Growth Co OÜ", revenue=(10_000_000, 12_000_000, 14_000_000), ebitda_margin=0.25
+        session,
+        31,
+        "Growth Co OÜ",
+        emtak="99999",
+        revenue=(10_000_000, 12_000_000, 14_000_000),
+        ebitda_margin=0.25,
     )
     session.commit()
 
-    funnel = seller_funnel(session, sector=None, limit=100, **BAND)
+    funnel = seller_funnel(session, sector="others", limit=100, **BAND)
     items = {item.legal_name: item for item in funnel.items}
 
     steady = items["Steady Cashco OÜ"]
     assert steady.cash_harvesting_candidate is True
     assert steady.cash_harvesting_evidence_status == "evaluated"
+    assert steady.cash_harvesting_margin_basis == "absolute"
     assert steady.latest_ebitda_margin == 0.25
     assert "cash_harvesting_candidate" in steady.flags
     assert any("Cash Harvesting candidate" in reason for reason in steady.review_reasons)
@@ -328,6 +338,40 @@ def test_cash_harvesting_candidate_flows_through_the_funnel(session: Session) ->
     assert growth.cash_harvesting_candidate is False
     assert growth.cash_harvesting_evidence_status == "evaluated"
     assert "cash_harvesting_candidate" not in growth.flags
+
+
+def test_cash_harvesting_percentile_ranking_flows_through_the_funnel(session: Session) -> None:
+    """Full pipeline (DB rows -> seller_funnel()) for the "all sectors" percentile rule: with no sector
+    filter and every company sharing one division, the comparison pool is exactly these companies, and
+    only those at or above the database's own 75th-percentile margin become candidates."""
+    from app.domain.seller_signals import (
+        CASH_HARVESTING_EBITDA_PERCENTILE,
+        CASH_HARVESTING_MIN_PEERS,
+        percentile,
+    )
+
+    margins = [0.05 * (i + 1) for i in range(CASH_HARVESTING_MIN_PEERS)]  # 0.05, 0.10, ..., 0.50
+    for i, margin in enumerate(margins):
+        _add_company(
+            session,
+            60 + i,
+            f"Margin {i} OÜ",
+            revenue=(10_000_000, 10_000_000, 10_000_000),  # flat: 0% CAGR, inside range
+            ebitda_margin=margin,
+        )
+    session.commit()
+    threshold = percentile(sorted(margins), CASH_HARVESTING_EBITDA_PERCENTILE)
+
+    funnel = seller_funnel(session, sector=None, limit=100, **BAND)
+    items = {item.legal_name: item for item in funnel.items}
+
+    for i, margin in enumerate(margins):
+        item = items[f"Margin {i} OÜ"]
+        assert item.cash_harvesting_margin_basis == "all_sectors"
+        assert item.cash_harvesting_margin_percentile == CASH_HARVESTING_EBITDA_PERCENTILE
+        assert item.cash_harvesting_peer_count == len(margins)
+        assert item.cash_harvesting_margin_threshold == threshold
+        assert item.cash_harvesting_candidate is (margin >= threshold), f"margin {margin} vs {threshold}"
 
 
 def test_seller_prospects_endpoint(client, session: Session) -> None:

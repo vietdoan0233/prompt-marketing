@@ -9,6 +9,8 @@ import type { CompanyPage, SellerFunnel } from "@/lib/types";
 import {
   PAGE_SIZE,
   bandLabel,
+  cashHarvestingBasisLabel,
+  cashHarvestingBasisSentence,
   filterParams,
   filterQuery,
   index,
@@ -200,8 +202,11 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
         </div>
         <p className={`form-hint ${styles.filterNote}`}>
           <strong>Show</strong> selects which list is returned: Cash Harvesting candidates (the default; a stable,
-          high-margin, low-growth financial signal, not evidence of seller intent, based on financial criteria
-          only), or every company instead. The revenue band classifies companies; it does not remove
+          high-margin, low-growth financial signal, not evidence of seller intent) or every company instead. A
+          candidate needs stable revenue and an EBITDA margin ranked against comparable companies: within the
+          selected sector when one is chosen, across one shared, database-wide universe when &quot;All sectors&quot;
+          is chosen, or a fixed 15% threshold for &quot;Others&quot;, which has no reliable common peer group. The
+          revenue band classifies companies; it does not remove
           them. A company whose latest comparable standalone EUR revenue lies inside {bandLabel(filters)} is{" "}
           <strong>in the size band</strong> (core); one outside it stays in the list as{" "}
           <strong>outside size band</strong> (adjacent); one without a comparable annual report (revenue and operating
@@ -348,9 +353,10 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
                         {item.positive_profit_years === null ? "—" : `${item.positive_profit_years} / 3`}
                       </td>
                       <td className="num">{percent(item.three_year_median_margin)}</td>
-                      <td className="num" title="Informational only: stable revenue and a high EBITDA margin, not a filter unless Show is set to Cash Harvesting candidates.">
+                      <td className="num" title={cashHarvestingBasisSentence(item)}>
                         <strong>{percent(item.latest_ebitda_margin)}</strong>
-                        <span className="cell-sub">EBITDA margin · CAGR {signedPercent(item.cash_harvesting_revenue_cagr)}</span>
+                        <span className="cell-sub">CAGR {signedPercent(item.cash_harvesting_revenue_cagr)}</span>
+                        <span className="cell-sub">{cashHarvestingBasisLabel(item)}</span>
                       </td>
                       <td
                         className="num"

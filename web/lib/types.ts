@@ -150,6 +150,21 @@ export type SellerProspect = {
   cash_harvesting_evidence_status: "insufficient_evidence" | "evaluated";
   latest_ebitda_margin: number | null;
   cash_harvesting_revenue_cagr: number | null;
+  // How the EBITDA-margin condition was judged under the current sector filter: "division" (ranked
+  // against comparable companies in this company's own EMTAK division, full database), "all_sectors"
+  // (one shared universe of comparable companies across every sector, full database, when no sector
+  // filter is applied), "absolute" (fixed >15% threshold, used for the "others" sector bucket, which has
+  // no reliable common peer group), or "insufficient_evidence" (no usable sector information, or too few
+  // comparable peers in the applicable group).
+  cash_harvesting_margin_basis: "division" | "all_sectors" | "absolute" | "insufficient_evidence";
+  // The percentile cutoff applied (e.g. 0.75), only when the basis is "division" or "all_sectors".
+  cash_harvesting_margin_percentile: number | null;
+  // The actual EBITDA-margin value required to pass: the comparison group's percentile-cutoff margin, or
+  // the fixed 0.15 for "absolute". Null when the basis is "insufficient_evidence".
+  cash_harvesting_margin_threshold: number | null;
+  // Size of the comparison group actually used, when the basis is "division" or "all_sectors". Populated
+  // even when it falls short of the required minimum, so "insufficient_evidence" is never a black box.
+  cash_harvesting_peer_count: number | null;
   // The cash signal's own evidence. It can cover a different latest year than the general financial signal
   // (latest_year / filing_ids / source_urls / issues above), so render these beside the cash values.
   cash_harvesting_latest_year: number | null;

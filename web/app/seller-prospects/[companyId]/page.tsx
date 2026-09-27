@@ -8,6 +8,8 @@ import type { SellerProspect, SellerProspectBrief } from "@/lib/types";
 
 import {
   bandLabel,
+  cashHarvestingBasisLabel,
+  cashHarvestingBasisSentence,
   fileName,
   filterParams,
   filterQuery,
@@ -27,10 +29,11 @@ import styles from "../prospects.module.css";
 
 export const dynamic = "force-dynamic";
 
-// Cash Harvesting candidate thresholds, restated from app.domain.seller_signals for display only.
+// Cash Harvesting candidate revenue-CAGR band, restated from app.domain.seller_signals for display only.
+// The EBITDA-margin threshold is no longer a fixed constant: it depends on the sector-filter comparison
+// group (see item.cash_harvesting_margin_threshold, computed per request by app.services.seller_funnel).
 const CAGR_MIN = -0.02;
 const CAGR_MAX = 0.03;
-const EBITDA_MARGIN_MIN = 0.15; // strictly above
 const CAGR_SCALE = 0.1; // gauge shows −10% … +10%
 const EBITDA_SCALE = 0.4; // gauge shows 0% … 40%
 
@@ -269,7 +272,12 @@ function CashHarvesting({ item }: { item: SellerProspect }) {
   const cagr = item.cash_harvesting_revenue_cagr;
   const margin = item.latest_ebitda_margin;
   const cagrInBand = cagr !== null && cagr >= CAGR_MIN && cagr <= CAGR_MAX;
-  const marginAbove = margin !== null && margin > EBITDA_MARGIN_MIN;
+  const marginThreshold = item.cash_harvesting_margin_threshold;
+  const marginBasis = item.cash_harvesting_margin_basis;
+  const marginKnown = margin !== null && marginThreshold !== null;
+  const marginAbove =
+    marginKnown &&
+    (marginBasis === "absolute" ? margin! > marginThreshold! : margin! > 0 && margin! >= marginThreshold!);
   const year = item.cash_harvesting_latest_year;
   const yearDiffers = year !== item.latest_year;
 
@@ -363,12 +371,20 @@ function CashHarvesting({ item }: { item: SellerProspect }) {
               Not available: it needs a populated EBITDA for the latest comparable year. Operating margin is never
               substituted for it.
             </UnknownGauge>
+          ) : !marginKnown ? (
+            <UnknownGauge>{cashHarvestingBasisSentence(item)}</UnknownGauge>
           ) : (
             <>
               <div className={styles.gaugeHead}>
                 <span className={`${styles.gaugeValue} ${marginAbove ? styles.pass : styles.fail}`}>{percent(margin)}</span>
                 <span className={styles.gaugeText}>
-                  {marginAbove ? "Above the strict 15% threshold" : "At or below the strict 15% threshold"}
+                  {marginBasis === "absolute"
+                    ? marginAbove
+                      ? `Above the strict ${percent(marginThreshold)} absolute threshold`
+                      : `At or below the strict ${percent(marginThreshold)} absolute threshold`
+                    : marginAbove
+                      ? `At or above the ${cashHarvestingBasisLabel(item)}`
+                      : `Below the ${cashHarvestingBasisLabel(item)}`}
                 </span>
               </div>
               <div className={styles.track}>
@@ -379,18 +395,22 @@ function CashHarvesting({ item }: { item: SellerProspect }) {
                 />
                 <span
                   className={styles.threshold}
-                  style={{ left: `${(EBITDA_MARGIN_MIN / EBITDA_SCALE) * 100}%` }}
+                  style={{ left: `${Math.max(0, Math.min(100, (marginThreshold! / EBITDA_SCALE) * 100))}%` }}
                   aria-hidden="true"
                 />
               </div>
               <div className={styles.scale} aria-hidden="true">
                 <span style={{ left: 0 }}>0%</span>
-                <span className={styles.mark} style={{ left: "37.5%" }}>
-                  15%
+                <span
+                  className={styles.mark}
+                  style={{ left: `${Math.max(0, Math.min(100, (marginThreshold! / EBITDA_SCALE) * 100))}%` }}
+                >
+                  {percent(marginThreshold)}
                 </span>
                 <span style={{ left: "100%" }}>40%</span>
               </div>
-              {(margin < 0 || margin > EBITDA_SCALE) && (
+              <p className={styles.gaugeNote}>{cashHarvestingBasisSentence(item)}</p>
+              {(margin < 0 || margin > EBITDA_SCALE || marginThreshold! > EBITDA_SCALE) && (
                 <p className={styles.gaugeNote}>The value lies beyond the displayed scale.</p>
               )}
             </>

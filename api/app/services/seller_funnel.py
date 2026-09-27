@@ -20,14 +20,17 @@ from app.domain.seller_signals import (
     CASH_HARVESTING_CAGR_MAX,
     CASH_HARVESTING_CAGR_MIN,
     CASH_HARVESTING_EBITDA_MARGIN_MIN,
+    CASH_HARVESTING_EBITDA_PERCENTILE,
     CASH_HARVESTING_EXPLANATION,
     CASH_HARVESTING_LABEL,
+    CASH_HARVESTING_MIN_PEERS,
     AnnualFinancial,
-    cash_harvesting_candidate,
+    cash_harvesting_metrics,
     consolidated_revenue,
     files_consolidated,
     financial_signal,
     is_holding_activity,
+    percentile,
     robust_reference,
     robust_z,
 )
@@ -46,6 +49,7 @@ DECAY_PRIORITY: dict[str, int] = {"coasting": 0, "decaying": 1, "watch": 2}
 DECAY_DEFAULT_PRIORITY = 3
 DECAY_ACTIVE_PRIORITY = 4  # an "active" verdict sorts after unchecked companies
 SellerView = Literal["cash_harvesting", "all"]
+CashHarvestingMode = Literal["division", "all_sectors", "others"]
 
 
 def decay_tier(verdict: str | None) -> int:
@@ -151,10 +155,22 @@ def _brief(item: schemas.SellerProspectOut, min_revenue_eur: int, max_revenue_eu
         )
         reasons.append(f"Website signal: {item.digital_decay_verdict}{checked}")
     if item.cash_harvesting_candidate:
+        assert item.latest_ebitda_margin is not None and item.cash_harvesting_margin_threshold is not None
+        if item.cash_harvesting_margin_basis == "absolute":
+            basis_text = f"above the {item.cash_harvesting_margin_threshold:.0%} absolute threshold"
+        else:
+            universe = (
+                "its EMTAK division" if item.cash_harvesting_margin_basis == "division" else "all sectors"
+            )
+            basis_text = (
+                f"at or above the {item.cash_harvesting_margin_percentile:.0%} percentile "
+                f"({item.cash_harvesting_margin_threshold:.1%}) of {item.cash_harvesting_peer_count} "
+                f"comparable companies in {universe}"
+            )
         reasons.append(
             f"{CASH_HARVESTING_LABEL}: revenue CAGR "
             f"{item.cash_harvesting_revenue_cagr:+.1%} and EBITDA margin "
-            f"{item.latest_ebitda_margin:.1%} in FY{year}. {CASH_HARVESTING_EXPLANATION}"
+            f"{item.latest_ebitda_margin:.1%} in FY{year}, {basis_text}. {CASH_HARVESTING_EXPLANATION}"
         )
 
     questions = [
@@ -197,9 +213,11 @@ def _stages(
     max_revenue_eur: int,
     view: SellerView,
     hide_active_decay: bool,
+    mode: CashHarvestingMode,
+    peer_count: int | None,
 ):
     if view == "cash_harvesting":
-        return _run_stages(items, _cash_harvesting_rules(hide_active_decay))
+        return _run_stages(items, _cash_harvesting_rules(hide_active_decay, mode, peer_count))
     rules = [
         ("imported", "Imported companies", "Estonian companies in the database (≥20 FTE import scope)", None),
         (
@@ -237,14 +255,33 @@ def _stages(
     return _run_stages(items, rules)
 
 
-def _cash_harvesting_rules(hide_active_decay: bool) -> list:
+def _cash_harvesting_margin_rule_text(mode: CashHarvestingMode, peer_count: int | None) -> str:
+    if mode == "others":
+        return (
+            f"EBITDA margin above {CASH_HARVESTING_EBITDA_MARGIN_MIN:.0%} in the latest year (absolute "
+            'threshold: the "others" sector bucket has no reliable common peer group)'
+        )
+    universe = "its EMTAK division" if mode == "division" else "all sectors"
+    if peer_count is not None and peer_count >= CASH_HARVESTING_MIN_PEERS:
+        return (
+            f"positive EBITDA margin at or above the {CASH_HARVESTING_EBITDA_PERCENTILE:.0%} percentile "
+            f"of {peer_count} comparable companies in {universe}, same latest comparable year basis"
+        )
+    return (
+        f"positive EBITDA margin at or above the {CASH_HARVESTING_EBITDA_PERCENTILE:.0%} percentile of "
+        f"comparable companies in {universe} (fewer than {CASH_HARVESTING_MIN_PEERS} available here: "
+        "insufficient evidence)"
+    )
+
+
+def _cash_harvesting_rules(hide_active_decay: bool, mode: CashHarvestingMode, peer_count: int | None) -> list:
     rules: list = [
         ("imported", "Imported companies", "Estonian companies in the database (≥20 FTE import scope)", None),
         (
             "cash_harvesting",
             CASH_HARVESTING_LABEL,
             f"Revenue CAGR {CASH_HARVESTING_CAGR_MIN:+.0%} to {CASH_HARVESTING_CAGR_MAX:+.0%} over three "
-            f"comparable years and EBITDA margin above {CASH_HARVESTING_EBITDA_MARGIN_MIN:.0%} in the latest",
+            f"comparable years and {_cash_harvesting_margin_rule_text(mode, peer_count)}",
             lambda i: i.cash_harvesting_candidate,
         ),
     ]
@@ -374,7 +411,7 @@ def _evaluate(
     for company in companies:
         rows = financials.get(company.id, [])
         signal = financial_signal(rows, min_revenue_eur=min_revenue_eur, max_revenue_eur=max_revenue_eur)
-        harvesting = cash_harvesting_candidate(rows)
+        harvesting = cash_harvesting_metrics(rows)
         status = statuses.get(company.id)
         peer_group = industry_division(company.industry_codes)
         holding = is_holding_activity(company.industry_codes)
@@ -386,8 +423,9 @@ def _evaluate(
             group_revenue = float(reported) if reported is not None else None
         if holding:
             flags.append("holding_activity")
-        if harvesting.triggered:
-            flags.append("cash_harvesting_candidate")
+        # Whether this company is a Cash Harvesting candidate cannot be decided yet: the EBITDA-margin
+        # condition depends on the sector-filter comparison group, resolved later by
+        # _resolve_cash_harvesting() once the current request's sector filter is known.
         issues = list(signal.issues)
         decay_verdict, decay_observed_at = decay.get(company.id, (None, None))
         all_items.append(
@@ -422,7 +460,6 @@ def _evaluate(
                 filing_ids=signal.filing_ids,
                 source_urls=signal.source_urls,
                 issues=issues,
-                cash_harvesting_candidate=harvesting.triggered,
                 cash_harvesting_evidence_status=harvesting.evidence_status,
                 latest_ebitda_margin=harvesting.latest_ebitda_margin,
                 cash_harvesting_revenue_cagr=harvesting.three_year_revenue_cagr,
@@ -476,8 +513,8 @@ def _evaluate(
                 item.financial_profile_index = round(0.7 * item.margin_peer_z + 0.3 * item.equity_peer_z, 2)
     peer_groups.sort(key=lambda group: (-group.peer_count, group.group))
 
-    for item in all_items:
-        _brief(item, min_revenue_eur, max_revenue_eur)
+    # Cash Harvesting's EBITDA-margin condition and the review brief are both resolved later, once the
+    # current request's sector-filter context is known (see _resolve_cash_harvesting and _brief callers).
 
     # Computed over every imported company before the sector filter narrows `all_items`, so the option
     # list and its counts describe the whole database, not just the currently selected sector.
@@ -504,6 +541,78 @@ def _filter_sector(
         [item for item in items if item.peer_group == key],
         [group for group in peer_groups if group.group == key],
     )
+
+
+def _cash_harvesting_context(
+    sector_items: list[schemas.SellerProspectOut], sector: str | None
+) -> tuple[CashHarvestingMode, list[float]]:
+    """The comparison mode implied by the current sector filter, and the reference pool of comparable
+    EBITDA margins to rank against. `sector_items` is already exactly the right population for that mode
+    (see _filter_sector): every database company in one division, or -- when no sector filter is applied
+    -- every database company, full stop; never a page, a search result, or an already-filtered candidate
+    list. A company without usable sector information never joins the pool, since it cannot itself be
+    reliably ranked either (see _resolve_cash_harvesting)."""
+    key = (sector or "").strip().casefold()
+    if key == OTHERS_SECTOR_CODE:
+        return "others", []
+    mode: CashHarvestingMode = "division" if key else "all_sectors"
+    pool = sorted(
+        item.latest_ebitda_margin
+        for item in sector_items
+        if item.latest_ebitda_margin is not None and item.peer_group is not None
+    )
+    return mode, pool
+
+
+def _resolve_cash_harvesting(
+    item: schemas.SellerProspectOut, *, mode: CashHarvestingMode, pool: list[float]
+) -> None:
+    """Decides the EBITDA-margin condition and the final Cash Harvesting candidate flag for one company,
+    given the current request's comparison mode and reference pool (see _cash_harvesting_context). Must
+    run after `item`'s raw metrics (latest_ebitda_margin, cash_harvesting_revenue_cagr,
+    cash_harvesting_evidence_status) are already set by _evaluate()."""
+    raw_evidence_status = item.cash_harvesting_evidence_status
+    basis: Literal["division", "all_sectors", "absolute", "insufficient_evidence"]
+    percentile_cutoff: float | None = None
+    threshold: float | None = None
+    peer_count: int | None = None
+
+    if mode == "others":
+        basis = "absolute"
+        threshold = CASH_HARVESTING_EBITDA_MARGIN_MIN
+    elif item.peer_group is None:
+        basis = "insufficient_evidence"
+    else:
+        peer_count = len(pool)
+        if peer_count >= CASH_HARVESTING_MIN_PEERS:
+            basis = mode
+            percentile_cutoff = CASH_HARVESTING_EBITDA_PERCENTILE
+            threshold = percentile(pool, CASH_HARVESTING_EBITDA_PERCENTILE)
+        else:
+            basis = "insufficient_evidence"
+
+    margin = item.latest_ebitda_margin
+    if margin is None or threshold is None:
+        margin_ok = False
+    elif basis == "absolute":
+        margin_ok = margin > threshold  # unchanged rule: strictly above the fixed 15%
+    else:
+        margin_ok = margin > 0 and margin >= threshold  # positive, at or above the percentile cutoff
+    cagr = item.cash_harvesting_revenue_cagr
+    cagr_ok = cagr is not None and CASH_HARVESTING_CAGR_MIN <= cagr <= CASH_HARVESTING_CAGR_MAX
+    evaluated = raw_evidence_status == "evaluated" and basis != "insufficient_evidence"
+
+    item.cash_harvesting_margin_basis = basis
+    item.cash_harvesting_margin_percentile = percentile_cutoff
+    item.cash_harvesting_margin_threshold = threshold
+    item.cash_harvesting_peer_count = peer_count
+    item.cash_harvesting_evidence_status = "evaluated" if evaluated else "insufficient_evidence"
+    item.cash_harvesting_candidate = bool(evaluated and cagr_ok and margin_ok)
+    has_flag = "cash_harvesting_candidate" in item.flags
+    if item.cash_harvesting_candidate and not has_flag:
+        item.flags = [*item.flags, "cash_harvesting_candidate"]
+    elif not item.cash_harvesting_candidate and has_flag:
+        item.flags = [f for f in item.flags if f != "cash_harvesting_candidate"]
 
 
 NEXT_ACTION_ORDER = {"advisor_review": 0, "research": 1, "outside_size_band": 2, "exclude": 3}
@@ -574,6 +683,10 @@ def seller_prospect_brief(
     if item is None:
         raise LookupError(company_id)
     filtered, _ = _filter_sector(evaluated, peer_groups, sector_opts, sector)
+    mode, pool = _cash_harvesting_context(filtered, sector)
+    for candidate in filtered:
+        _resolve_cash_harvesting(candidate, mode=mode, pool=pool)
+    _brief(item, min_revenue_eur, max_revenue_eur)
     _sort(filtered)
     rank = next((i + 1 for i, candidate in enumerate(filtered) if candidate.company_id == company_id), None)
     return schemas.SellerProspectBriefOut(
@@ -613,6 +726,10 @@ def seller_funnel(
             methodology=EMPTY_METHODOLOGY,
         )
     sector_items, peer_groups = _filter_sector(evaluated, peer_groups, sector_opts, sector)
+    mode, pool = _cash_harvesting_context(sector_items, sector)
+    for item in sector_items:
+        _resolve_cash_harvesting(item, mode=mode, pool=pool)
+        _brief(item, min_revenue_eur, max_revenue_eur)
     listed, cash_harvesting, view_note = _apply_view(
         sector_items, view=view, hide_active_decay=hide_active_decay
     )
@@ -637,7 +754,9 @@ def seller_funnel(
         cash_harvesting_candidates=len(cash_harvesting),
         listed_decay_checked=sum(item.digital_decay_verdict is not None for item in listed),
         listed_decay_flagged=sum(item.digital_decay_verdict in DECAY_PRIORITY for item in listed),
-        stages=_stages(sector_items, min_revenue_eur, max_revenue_eur, view, hide_active_decay),
+        stages=_stages(
+            sector_items, min_revenue_eur, max_revenue_eur, view, hide_active_decay, mode, len(pool)
+        ),
         peer_groups=peer_groups,
         sector_options=sector_opts,
         items=listed[offset : offset + limit],
@@ -664,9 +783,16 @@ def _methodology() -> str:
         "listed division; smaller divisions and companies without a usable code fall into the "
         f'display-only "{OTHERS_SECTOR_CODE}" option, computed fresh on every request. '
         f"{CASH_HARVESTING_LABEL} is a separate signal from stable revenue (CAGR between "
-        f"{CASH_HARVESTING_CAGR_MIN:+.0%} and {CASH_HARVESTING_CAGR_MAX:+.0%} over three years) and "
-        f"a high EBITDA margin (above {CASH_HARVESTING_EBITDA_MARGIN_MIN:.0%} in the latest year); "
-        "it never uses dividends or capex, which are null for every current row in this database, "
-        "and a missing or incomparable input is reported as insufficient evidence rather than "
-        f"guessed. {CASH_HARVESTING_EXPLANATION}"
+        f"{CASH_HARVESTING_CAGR_MIN:+.0%} and {CASH_HARVESTING_CAGR_MAX:+.0%} over three years) and a "
+        "high EBITDA margin, judged against comparable companies rather than one fixed number: with a "
+        "specific sector selected, against comparable companies in that same EMTAK division; with no "
+        "sector selected, against one shared universe of comparable companies across every sector; both "
+        f"ranked from the full database and requiring a positive margin at or above the "
+        f"{CASH_HARVESTING_EBITDA_PERCENTILE:.0%} percentile among at least {CASH_HARVESTING_MIN_PEERS} "
+        f'comparable peers. The "{OTHERS_SECTOR_CODE}" sector bucket has no reliable common peer group, '
+        f"so it instead uses a fixed absolute threshold (above {CASH_HARVESTING_EBITDA_MARGIN_MIN:.0%} "
+        "in the latest year). The signal never uses dividends or capex, which are null for every "
+        "current row in this database, and a missing EBITDA, sector, or peer count below the minimum is "
+        f"reported as insufficient evidence rather than guessed or ranked against unrelated peers. "
+        f"{CASH_HARVESTING_EXPLANATION}"
     )
