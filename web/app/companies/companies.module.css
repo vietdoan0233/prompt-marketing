@@ -1,0 +1,132 @@
+/* Company database list. Colours come only from globals.css tokens. */
+
+/* ---- filter bar: one row on wide screens, wraps gracefully below that */
+.filterForm .field {
+  flex: 1 1 120px;
+  min-width: 110px;
+}
+
+.filterForm .fieldWide {
+  flex: 2 1 170px;
+  min-width: 160px;
+}
+
+.filterForm .fieldNarrow {
+  flex: 1 1 96px;
+  min-width: 88px;
+}
+
+.filterForm label {
+  white-space: nowrap;
+}
+
+.filterForm .fieldMin {
+  flex: 1 1 150px;
+  min-width: 140px;
+}
+
+.filterForm .fieldMax {
+  flex: 1 1 124px;
+  min-width: 124px;
+}
+
+.filterForm select,
+.filterForm input {
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
+/* ---- results heading */
+.resultsHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 28px;
+  margin: 26px 0 14px;
+}
+
+.resultsCount {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.resultsNote {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---- table */
+.table {
+  min-width: 1240px;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.name {
+  display: inline-block;
+  color: var(--text);
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+a:hover .name {
+  text-decoration: underline;
+}
+
+.companyCol {
+  min-width: 240px;
+  max-width: 340px;
+}
+
+.sectorCol {
+  min-width: 150px;
+}
+
+.provCol {
+  min-width: 220px;
+  max-width: 300px;
+}
+
+.primary {
+  color: var(--text);
+}
+
+.signals {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.pct {
+  margin-left: 8px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.sortArrow {
+  margin-left: 4px;
+}
+
+/* ---- pagination */
+.pageBtn[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.code {
+  display: block;
+}
+
+.code + .code {
+  margin-top: 4px;
+}

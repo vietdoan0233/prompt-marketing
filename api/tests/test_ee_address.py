@@ -192,8 +192,8 @@ def test_snapshot_preserves_original_columns_and_address_reimport_is_idempotent(
 
 
 def test_company_ui_uses_registered_address_label() -> None:
-    page = (
-        Path(__file__).resolve().parents[2] / "web" / "app" / "companies" / "[id]" / "page.tsx"
-    ).read_text(encoding="utf-8")
-    assert "Registered address" in page
-    assert "headquarters" not in page.casefold()
+    # The company detail page is split into tab components; check every source file of that route.
+    route = Path(__file__).resolve().parents[2] / "web" / "app" / "companies" / "[id]"
+    ui = "\n".join(f.read_text(encoding="utf-8") for f in sorted(route.glob("*.tsx")))
+    assert "Registered address" in ui
+    assert "headquarters" not in ui.casefold()

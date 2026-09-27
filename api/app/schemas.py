@@ -379,6 +379,12 @@ class SellerProspectOut(BaseModel):
     cash_harvesting_evidence_status: Literal["insufficient_evidence", "evaluated"] = "insufficient_evidence"
     latest_ebitda_margin: float | None = None
     cash_harvesting_revenue_cagr: float | None = None
+    # The cash signal's own evidence. It can cover a different latest year than the general financial
+    # signal (`latest_year`/`filing_ids`/`source_urls`/`issues`), so it is carried separately.
+    cash_harvesting_latest_year: int | None = None
+    cash_harvesting_filing_ids: list[str] = []
+    cash_harvesting_source_urls: list[str] = []
+    cash_harvesting_issues: list[str] = []
     # Link to the official e-Business Register company page, built from the source-backed registry code.
     registry_url: str | None = None
     # The opt-in web-digital-decay verdict, read from the company's latest CompanyFact if one was run.
@@ -428,6 +434,12 @@ class SellerFunnelOut(BaseModel):
     # are coasting or decaying (a persisted signal read at query time; running new checks is a separate step).
     advisor_review_decay_checked: int = 0
     advisor_review_decay_flagged: int = 0
+    # Of `total_companies`: how many carry any current registry_status fact at all. This is data coverage,
+    # not a business filter: a company can be excluded from later stages either because its status fact
+    # says it is not registered, or because no status fact was ever imported for it. When this is far below
+    # `total_companies`, the "registered" stage (and everything after it) undercounts for a data reason, not
+    # because those companies were evaluated and found ineligible; show that distinction, do not hide it.
+    registry_status_known: int = 0
     # Which list `items` holds: "cash_harvesting" (default: Cash Harvesting candidates not in liquidation,
     # bankrupt or deleted) or "all" (every imported company in the sector, the pre-signal list).
     view: Literal["cash_harvesting", "all"] = "all"
@@ -444,6 +456,21 @@ class SellerFunnelOut(BaseModel):
     peer_groups: list[PeerGroupOut] = []
     sector_options: list[SectorOptionOut] = []
     items: list[SellerProspectOut]
+    # Paging over the sector-filtered, sorted prospect list: `items` is the window [offset, offset+limit).
+    total_items: int = 0
+    offset: int = 0
+    limit: int = 100
+    methodology: str
+
+
+class SellerProspectBriefOut(BaseModel):
+    """One company's prospect evaluation for a filter context, retrievable regardless of rank."""
+
+    item: SellerProspectOut
+    # 1-based position in the sector-filtered, sorted list; None when the sector filter excludes it.
+    rank: int | None
+    total_items: int
+    in_sector: bool
     methodology: str
 
 
