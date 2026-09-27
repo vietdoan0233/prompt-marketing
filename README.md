@@ -134,19 +134,74 @@ It is disabled by default and requires `LIVE_CONNECTORS_ENABLED=true`. The check
 - It stores extracted evidence only (no raw HTML) for 14 days.
 - It does not use LinkedIn.
 
-One-time step: import the register-declared domains from the official general-data file
-(`ettevotja_rekvisiidid__yldandmed.json.zip`, about 230 MB, cached in `api/data/ee_ariregister_general/`).
-It runs as an `ee-ariregister` ingestion run with normal provenance and is idempotent; `--from-cache`
-re-reads the verified cached copy without downloading. The live download needs `LIVE_CONNECTORS_ENABLED=true`.
+### How to run it
+
+All commands run from `api/`. PowerShell is shown; on macOS/Linux use `.venv/bin/python` and set the variable
+inline (`LIVE_CONNECTORS_ENABLED=true .venv/bin/python -m app.decay ...`).
+
+1. **Load register data first** (see *First-time setup*). The check only enriches imported companies.
+2. **Import the register-declared domains** (one time, idempotent). This reads the official general-data
+   file (`ettevotja_rekvisiidid__yldandmed.json.zip`, about 230 MB, cached in `api/data/ee_ariregister_general/`)
+   as a normal `ee-ariregister` ingestion run:
+
+   ```powershell
+   .\.venv\Scripts\python.exe -m app.decay --sync-register-domains --from-cache   # or without --from-cache to download
+   ```
+
+3. **Enable the source** (operator step, audited; once per database):
+
+   ```powershell
+   .\.venv\Scripts\python.exe -m app.decay --approve-and-enable
+   .\.venv\Scripts\python.exe -m app.decay --status        # shows whether the gate is open and why not
+   ```
+
+4. **Turn on live access for the run.** Either add `LIVE_CONNECTORS_ENABLED=true` to `api/.env`, or set it
+   only for the current shell:
+
+   ```powershell
+   $env:LIVE_CONNECTORS_ENABLED = "true"
+   ```
+
+5. **Run checks.** The usual run is the Cash Harvesting candidates that feed Seller Prospects:
+
+   ```powershell
+   # every Cash Harvesting candidate not checked in the last 30 days (max 200 per run)
+   .\.venv\Scripts\python.exe -m app.decay --cash-harvesting --limit 100
+   # re-check everything regardless of when it was last checked
+   .\.venv\Scripts\python.exe -m app.decay --cash-harvesting --limit 100 --recheck-after-days 0
+
+   # other targets
+   .\.venv\Scripts\python.exe -m app.decay --registry-code 12345678 [--domain example.ee]
+   .\.venv\Scripts\python.exe -m app.decay --name "Example OÜ" --address "Pärnu mnt 10, Tallinn"
+   .\.venv\Scripts\python.exe -m app.decay --revenue-min 4000000 --revenue-max 6000000 --limit 15 [--json]
+   ```
+
+   A single company can also be checked from its detail page (**Run check**) or with
+   `POST /companies/{id}/signals/digital-decay`.
+
+6. **See the result.** Refresh **Seller Prospects**: coasting, decaying and watch companies move to the top,
+   unchecked ones follow, and `active` ones go last (or tick *Hide companies whose website check is active*).
+
+Practical notes:
+- **Timing:** each site is limited to 20 requests a minute and needs roughly 6–10 fetches, so expect about
+  30–40 seconds per company (≈25 minutes for 45 companies). Results are printed and saved when the run ends.
+- **One run at a time:** SQLite allows one writer and a run holds it until it finishes, so parallel runs fail
+  with `database is locked`. Run batches one after another.
+- **Many results are `insufficient_evidence`:** small company sites often have no news page, careers page or
+  footer year. That is expected; unknown checks are never counted as stale.
+
+#### Sharing results without re-crawling
+
+The database is git-ignored, so crawl results travel as a snapshot file keyed by registry code:
 
 ```powershell
-cd api
-.\.venv\Scripts\python.exe -m app.decay --sync-register-domains [--from-cache]
-.\.venv\Scripts\python.exe -m app.decay --approve-and-enable            # operator step, audited
-.\.venv\Scripts\python.exe -m app.decay --registry-code 12345678 [--domain example.ee]
-.\.venv\Scripts\python.exe -m app.decay --name "Example OÜ" --address "Pärnu mnt 10, Tallinn"
-.\.venv\Scripts\python.exe -m app.decay --revenue-min 4000000 --revenue-max 6000000 --limit 15 [--json]
+.\.venv\Scripts\python.exe -m app.decay_snapshot --export seeds\digital_decay_YYYY-MM-DD.json
+.\.venv\Scripts\python.exe -m app.decay_snapshot --import seeds\digital_decay_2026-09-27.json
 ```
+
+`api/seeds/digital_decay_2026-09-27.json` holds the results for 45 Cash Harvesting candidates (7 flagged
+coasting or watch). The import needs the register data loaded first, is idempotent, skips companies missing
+from your database, and versions rather than overwrites existing decay facts.
 
 Verdicts:
 - `coasting`: revenue ≥ €5M, at least 2 checks stale, and zero roles.
@@ -175,13 +230,3 @@ npm run build
 ```
 
 The Estonia orchestration tests build small ZIP fixtures and cover real manifest resolution, required indicator years, import snapshots, company and status facts, address versioning, financial derivation and EUR values, orphan rejection, completion logging, and idempotent reruns. Tests use isolated SQLite databases by default; `TEST_DATABASE_URL` may point to PostgreSQL.
-
-### Shared Digital Decay results
-
-`api/seeds/digital_decay_2026-09-27.json` holds the website-check results for 45 Cash Harvesting candidates (7 flagged coasting or watch), so teammates can load them without re-crawling. After seeding the register data, run from `api/`:
-
-```powershell
-.\.venv\Scripts\python.exe -m app.decay_snapshot --import seeds\digital_decay_2026-09-27.json
-```
-
-The import matches companies by registry code, is idempotent, and versions rather than overwrites existing decay facts. Export your own results with `--export FILE`.
