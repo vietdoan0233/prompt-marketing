@@ -1,6 +1,32 @@
-# Estonia company register
+# Mergero Seller Signals — Estonia
 
-This FastAPI and Next.js application stores company identities, official registry statuses, registered-address versions, and annual financial observations for Estonian entities. Production ingestion uses the official [Estonian e-Business Register open-data portal](https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine) bulk files. The active country is `EE`; the region is `baltics`.
+**This is not a company database — that's the supporting data layer.** The product is an explainable
+**seller-prospect signal engine**: it turns the official Estonian business register into ranked, source-cited
+advisor leads, each with its own evidence, thresholds, and an explicit "why," so an advisor can trust a result
+without re-deriving it. It never claims owner intent or buyer fit; those stay `unknown` / `not_assessed`
+everywhere.
+
+The signals, all served under **Seller Prospects** in the web UI:
+
+- **Cash Harvesting candidate** — a financial-only signal: stable revenue (CAGR between -2% and +3% over
+  three consecutive comparable years) and a high EBITDA margin. The margin is ranked against real comparable
+  peers — every company in the same EMTAK sector, or the whole database when no sector is picked — not one
+  fixed number, except for the "others" bucket (no reliable peer group), which keeps a fixed 15% threshold.
+- **Peer-relative financial-profile index** — operating margin and equity/assets, ranked (robust Z-score)
+  within comparable EMTAK peer groups of at least 8 companies.
+- **Digital Decay (opt-in)** — reads a company's own public website (footer copyright year, news/press
+  cadence, open roles on the careers page) alongside official reported revenue and register headcount, to
+  flag likely operational stagnation. Disabled by default; never guesses a company's website, never invents
+  contact details, and is read here only — it is triggered separately (see below).
+
+Every signal reports `insufficient_evidence` instead of guessing when data is missing or incomparable, and
+every number links back to its source filing.
+
+To get the signals, this repo ingests the official
+[Estonian e-Business Register open-data portal](https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine)
+bulk files into a FastAPI + Next.js app: company identities, official registry statuses, registered-address
+versions, share capital, current shareholders, and annual financial observations. The active country is `EE`;
+the region is `baltics`.
 
 ## Prerequisites
 
@@ -34,7 +60,7 @@ The SQLite database and official dataset cache are git-ignored. A clean checkout
    .\.venv\Scripts\python.exe -m app.seed --replace
    ```
 
-   This downloads and verifies the required official ZIPs into `api/data/ee_ariregister/`, then imports them. Keep `LIVE_CONNECTORS_ENABLED=true` for the live import.
+   This downloads and verifies the required official ZIPs into `api/data/ee_ariregister/`, then imports them, including the two optional JSON ZIPs (current share capital, and shareholders/osanikud) when the portal has them — a portal outage or a cache predating them only adds a run warning and skips that section, it does not fail the import. Keep `LIVE_CONNECTORS_ENABLED=true` for the live import.
 
 2. **Use a teammate's verified cache.** Copy the complete `api/data/ee_ariregister/` directory, including `manifest.json`, from a trusted checkout, then run:
 
@@ -93,7 +119,7 @@ Unmatched indicator report IDs are rejected and included in the ingestion run's 
 
 The funnel applies an explainable sequence to the imported companies: annual revenue band, three consecutive comparable standalone EUR fiscal years, operating-profit persistence, and a peer-relative financial-profile index. It uses only reported revenue, operating profit, assets, and equity. The index combines robust Z-scores for median operating margin (70%) and equity/assets (30%) inside two-digit EMTAK groups with at least eight comparable peers. Smaller groups show no index. Report IDs, official source links, and data gaps remain visible. A shortlist is for advisor review, not automatic outreach. Buyer fit and owner intent are not assessed by these files. The dataset does not directly provide dividends or capex; the funnel does not use them or treat derived EBITDA as a reported value.
 
-Each prospect also carries a separate **Cash Harvesting candidate** flag: revenue CAGR between -2% and +3% across the same three consecutive comparable years, and an EBITDA margin above 15% (strictly) in the latest one, both required and both read only from populated, comparable data. EBITDA comes from `company_financials.ebitda` (reported, or the importer's operating-profit-minus-depreciation/impairment derivation); operating-profit margin is never substituted for it. The flag never reads dividends or capex, in any form — no payout ratio, no dividend-history or capex comparison — because no imported row has either populated; a missing or incomparable input reports `insufficient_evidence` instead of guessing. The label is descriptive only: stable, high-margin, low-growth financials, not evidence of cash extraction or of an owner's intent to sell.
+Each prospect also carries a separate **Cash Harvesting candidate** flag: revenue CAGR between -2% and +3% across the same three consecutive comparable years, and a positive EBITDA margin at or above the 75th percentile of comparable companies' margins — ranked within the same EMTAK sector when one is selected, or across the whole database when "All sectors" is selected — both required and both read only from populated, comparable data. The "others" sector bucket has no reliable common peer group, so it keeps the original fixed rule instead: EBITDA margin strictly above 15%. A group with fewer than 10 comparable peers, or a company with no usable sector code, reports `insufficient_evidence` for the margin condition rather than guessing or ranking against unrelated peers; the actual peer count, percentile, and threshold used are exposed alongside the result. EBITDA comes from `company_financials.ebitda` (reported, or the importer's operating-profit-minus-depreciation/impairment derivation); operating-profit margin is never substituted for it. The flag never reads dividends or capex, in any form — no payout ratio, no dividend-history or capex comparison — because no imported row has either populated. The label is descriptive only: stable, high-margin, low-growth financials, not evidence of cash extraction or of an owner's intent to sell. It is separate from the general Peer Index above (operating margin and equity/assets).
 
 Sector filtering (`GET /sectors`, and the `sector` parameter on `/companies` and `/seller-prospects`) is built from source-backed two-digit EMTAK division codes, not the always-blank `companies.sector` field: each option needs at least 10 companies, and every smaller or unmapped group folds into a display-only `others` option, preserving each company's original industry code. Counts are recomputed from the live database on every request.
 
