@@ -375,6 +375,12 @@ class SellerProspectOut(BaseModel):
     cash_harvesting_evidence_status: Literal["insufficient_evidence", "evaluated"] = "insufficient_evidence"
     latest_ebitda_margin: float | None = None
     cash_harvesting_revenue_cagr: float | None = None
+    # The cash signal's own evidence. It can cover a different latest year than the general financial
+    # signal (`latest_year`/`filing_ids`/`source_urls`/`issues`), so it is carried separately.
+    cash_harvesting_latest_year: int | None = None
+    cash_harvesting_filing_ids: list[str] = []
+    cash_harvesting_source_urls: list[str] = []
+    cash_harvesting_issues: list[str] = []
     # Link to the official e-Business Register company page, built from the source-backed registry code.
     registry_url: str | None = None
     # The opt-in web-digital-decay verdict, read from the company's latest CompanyFact if one was run.
@@ -427,6 +433,21 @@ class SellerFunnelOut(BaseModel):
     peer_groups: list[PeerGroupOut] = []
     sector_options: list[SectorOptionOut] = []
     items: list[SellerProspectOut]
+    # Paging over the sector-filtered, sorted prospect list: `items` is the window [offset, offset+limit).
+    total_items: int = 0
+    offset: int = 0
+    limit: int = 100
+    methodology: str
+
+
+class SellerProspectBriefOut(BaseModel):
+    """One company's prospect evaluation for a filter context, retrievable regardless of rank."""
+
+    item: SellerProspectOut
+    # 1-based position in the sector-filtered, sorted list; None when the sector filter excludes it.
+    rank: int | None
+    total_items: int
+    in_sector: bool
     methodology: str
 
 

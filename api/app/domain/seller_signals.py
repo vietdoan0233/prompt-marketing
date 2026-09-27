@@ -274,6 +274,9 @@ def cash_harvesting_candidate(rows: list[AnnualFinancial]) -> CashHarvestingSign
     else:
         assert latest.revenue is not None  # guaranteed by _comparable_revenue_row
         signal.latest_ebitda_margin = float(latest.ebitda / latest.revenue)
+        # Provenance for the margin alone; replaced by the three-year set below when CAGR is computable.
+        signal.filing_ids = [f"{latest.fiscal_year}:{latest.filing_id}"]
+        signal.source_urls = [latest.source_url] if latest.source_url else []
 
     years = [latest_year - 2, latest_year - 1, latest_year]
     if not all(year in unique for year in years):

@@ -146,6 +146,12 @@ export type SellerProspect = {
   cash_harvesting_evidence_status: "insufficient_evidence" | "evaluated";
   latest_ebitda_margin: number | null;
   cash_harvesting_revenue_cagr: number | null;
+  // The cash signal's own evidence. It can cover a different latest year than the general financial signal
+  // (latest_year / filing_ids / source_urls / issues above), so render these beside the cash values.
+  cash_harvesting_latest_year: number | null;
+  cash_harvesting_filing_ids: string[]; // "YYYY:filingId"
+  cash_harvesting_source_urls: string[];
+  cash_harvesting_issues: string[];
 };
 
 export type FunnelStage = {
@@ -181,6 +187,19 @@ export type SellerFunnel = {
   peer_groups: PeerGroup[];
   sector_options: SectorOption[];
   items: SellerProspect[];
+  // Paging over the sector-filtered, sorted list: items is the window [offset, offset + limit).
+  total_items: number;
+  offset: number;
+  limit: number;
+  methodology: string;
+};
+
+// GET /seller-prospects/{company_id}: one company's brief for a filter context, independent of rank.
+export type SellerProspectBrief = {
+  item: SellerProspect;
+  rank: number | null; // 1-based position in the filtered, sorted list; null when the sector filter excludes it
+  total_items: number;
+  in_sector: boolean;
   methodology: string;
 };
 

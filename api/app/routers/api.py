@@ -35,7 +35,8 @@ from app.services import audit, digital_decay, ingestion, quality, retention
 from app.services.contacts import erase_contact
 from app.services.corrections import CorrectionError, apply_correction
 from app.services.permissions import PermissionDenied, enable_gate, ingestion_gate
-from app.services.seller_funnel import seller_funnel
+from app.services.quality import active_fact_fields, company_completeness
+from app.services.seller_funnel import seller_funnel, seller_prospect_brief
 from app.views import company_detail, digital_decay_out, duplicate_out, freshness, summaries
 
 router = APIRouter()
@@ -288,6 +289,7 @@ def list_seller_prospects(
     max_revenue_eur: int = Query(50_000_000, ge=1),
     sector: str | None = None,
     limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
 ) -> schemas.SellerFunnelOut:
     if min_revenue_eur > max_revenue_eur:
         raise HTTPException(422, "min_revenue_eur must be <= max_revenue_eur")
@@ -297,7 +299,31 @@ def list_seller_prospects(
         max_revenue_eur=max_revenue_eur,
         sector=sector,
         limit=limit,
+        offset=offset,
     )
+
+
+@router.get("/seller-prospects/{company_id}", response_model=schemas.SellerProspectBriefOut)
+def get_seller_prospect(
+    company_id: str,
+    session: SessionDep,
+    min_revenue_eur: int = Query(5_000_000, ge=1),
+    max_revenue_eur: int = Query(50_000_000, ge=1),
+    sector: str | None = None,
+) -> schemas.SellerProspectBriefOut:
+    """One company's evidence brief for the given filter context, independent of its rank or list page."""
+    if min_revenue_eur > max_revenue_eur:
+        raise HTTPException(422, "min_revenue_eur must be <= max_revenue_eur")
+    try:
+        return seller_prospect_brief(
+            session,
+            company_id,
+            min_revenue_eur=min_revenue_eur,
+            max_revenue_eur=max_revenue_eur,
+            sector=sector,
+        )
+    except LookupError as exc:
+        raise HTTPException(404, "no active Estonian company with this id") from exc
 
 
 SORTS = {
@@ -388,11 +414,24 @@ def list_companies(
             rows = [c for c in rows if industry_division(c.industry_codes) not in named_divisions]
         else:
             rows = [c for c in rows if industry_division(c.industry_codes) == key]
+    if sort == "completeness":
+        # Sort the whole filtered set before paging (not just the visible page). Completeness is computed from
+        # the same current-fact field names as the company summaries.
+        fields = active_fact_fields(session)
+        scores = {c.id: company_completeness(fields.get(c.id, set())) for c in rows}
+        rows.sort(key=lambda c: c.legal_name)
+        rows.sort(key=lambda c: scores[c.id], reverse=order == "desc")
+    elif sort == "sector":
+        # `companies.sector` is never populated; sort by the source-backed two-digit EMTAK division that the
+        # sector filter uses. Companies without a usable code sort last in both directions.
+        rows.sort(key=lambda c: c.legal_name)
+        with_code = [c for c in rows if industry_division(c.industry_codes) is not None]
+        without_code = [c for c in rows if industry_division(c.industry_codes) is None]
+        with_code.sort(key=lambda c: industry_division(c.industry_codes) or "", reverse=order == "desc")
+        rows = with_code + without_code
     total = len(rows)
     page_rows = rows[(page - 1) * page_size : page * page_size]
     items = summaries(session, page_rows)
-    if sort == "completeness":
-        items.sort(key=lambda i: i.completeness, reverse=order == "desc")
     return schemas.CompanyPage(
         items=items,
         total=total,

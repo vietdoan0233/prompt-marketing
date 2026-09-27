@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 
 const LINKS = [
@@ -12,6 +12,18 @@ const LINKS = [
   { href: "/audit", label: "Audit" },
 ];
 
+// Rendered inside <Link>: shows that a navigation to this section is in flight (some pages take seconds).
+function NavLabel({ label }: { label: string }) {
+  const { pending } = useLinkStatus();
+  return (
+    <>
+      {label}
+      {pending && <span className="nav-pending" aria-hidden="true" />}
+      {pending && <span className="visually-hidden">(loading)</span>}
+    </>
+  );
+}
+
 export function Nav() {
   const path = usePathname();
   return (
@@ -20,7 +32,7 @@ export function Nav() {
         const active = path.startsWith(l.href);
         return (
           <Link key={l.href} href={l.href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
-            {l.label}
+            <NavLabel label={l.label} />
           </Link>
         );
       })}
