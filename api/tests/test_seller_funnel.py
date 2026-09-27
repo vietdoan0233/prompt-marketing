@@ -61,6 +61,7 @@ def _add_company(
     years: tuple[int, ...] = YEARS,
     consolidated_revenue: int | None = None,
     decay_verdict: str | None = None,
+    ebitda_margin: float | None = None,
 ) -> Company:
     code = _registry_code(seed)
     company = Company(legal_name=name, normalized_name=name.casefold(), country="EE", industry_codes=[emtak])
@@ -83,7 +84,7 @@ def _add_company(
         )
     )
 
-    def financial(year: int, value: int, scope: str) -> CompanyFinancial:
+    def financial(year: int, value: int, scope: str, ebitda: int | None = None) -> CompanyFinancial:
         return CompanyFinancial(
             company_id=company.id,
             fiscal_year=year,
@@ -94,6 +95,7 @@ def _add_company(
             statement_scope=scope,
             revenue=Decimal(value),
             operating_profit=Decimal(round(value * margin)),
+            ebitda=Decimal(ebitda) if ebitda is not None else None,
             total_assets=Decimal(value // 2),
             equity=Decimal(round(value // 2 * equity_ratio)),
             employees_fte=Decimal(40),
@@ -110,7 +112,8 @@ def _add_company(
         )
 
     for year, value in zip(years, revenue, strict=False):
-        session.add(financial(year, value, "standalone"))
+        ebitda = round(value * ebitda_margin) if ebitda_margin is not None and year == years[-1] else None
+        session.add(financial(year, value, "standalone", ebitda))
     if consolidated_revenue is not None:
         session.add(financial(years[-1], consolidated_revenue, "consolidated"))
     if decay_verdict is not None:
@@ -280,6 +283,49 @@ def test_sector_filter_keeps_peer_reference(session: Session) -> None:
     assert {item.peer_group for item in filtered.items} == {"62"}
     for item in filtered.items:
         assert item.financial_profile_index == everything[item.legal_name].financial_profile_index
+
+
+def test_sector_options_and_others_bucket(session: Session) -> None:
+    _seed_funnel(session)  # 13 companies in EMTAK 62 (>= 10), 1 in EMTAK 64 (Holding OÜ, below threshold)
+    funnel = seller_funnel(session, sector=None, limit=100, **BAND)
+    options = {opt.code: opt.count for opt in funnel.sector_options}
+    assert options == {"62": 13, "others": 1}
+
+    others = seller_funnel(session, sector="others", limit=100, **BAND)
+    assert {item.legal_name for item in others.items} == {"Holding OÜ"}
+    assert others.peer_groups == []
+    # The option list itself never changes with the currently selected sector.
+    assert {opt.code: opt.count for opt in others.sector_options} == options
+
+
+def test_cash_harvesting_candidate_flows_through_the_funnel(session: Session) -> None:
+    _add_company(
+        session,
+        30,
+        "Steady Cashco OÜ",
+        revenue=(10_000_000, 10_000_000, 10_000_000),  # flat: 0% CAGR, inside [-2%, +3%]
+        ebitda_margin=0.25,  # above the 15% threshold
+    )
+    _add_company(
+        session, 31, "Growth Co OÜ", revenue=(10_000_000, 12_000_000, 14_000_000), ebitda_margin=0.25
+    )
+    session.commit()
+
+    funnel = seller_funnel(session, sector=None, limit=100, **BAND)
+    items = {item.legal_name: item for item in funnel.items}
+
+    steady = items["Steady Cashco OÜ"]
+    assert steady.cash_harvesting_candidate is True
+    assert steady.cash_harvesting_evidence_status == "evaluated"
+    assert steady.latest_ebitda_margin == 0.25
+    assert "cash_harvesting_candidate" in steady.flags
+    assert any("Cash Harvesting candidate" in reason for reason in steady.review_reasons)
+    assert steady.owner_intent == "unknown" and steady.buyer_fit == "not_assessed"
+
+    growth = items["Growth Co OÜ"]
+    assert growth.cash_harvesting_candidate is False
+    assert growth.cash_harvesting_evidence_status == "evaluated"
+    assert "cash_harvesting_candidate" not in growth.flags
 
 
 def test_seller_prospects_endpoint(client, session: Session) -> None:
