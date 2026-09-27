@@ -28,7 +28,7 @@ def test_offset_paging_is_a_window_over_the_same_sorted_list(session: Session) -
 
 def test_brief_is_retrievable_regardless_of_rank(client, session: Session) -> None:
     _seed_funnel(session)
-    full = client.get("/seller-prospects", params={"limit": 500}).json()["items"]
+    full = client.get("/seller-prospects", params={"limit": 500, "view": "all"}).json()["items"]
     last = full[-1]
 
     brief = client.get(f"/seller-prospects/{last['company_id']}").json()
@@ -41,7 +41,8 @@ def test_brief_is_retrievable_regardless_of_rank(client, session: Session) -> No
 def test_brief_distinguishes_absent_excluded_and_outside_band(client, session: Session) -> None:
     _seed_funnel(session)
     items = {
-        i["legal_name"]: i for i in client.get("/seller-prospects", params={"limit": 500}).json()["items"]
+        i["legal_name"]: i
+        for i in client.get("/seller-prospects", params={"limit": 500, "view": "all"}).json()["items"]
     }
 
     assert client.get("/seller-prospects/no-such-company").status_code == 404

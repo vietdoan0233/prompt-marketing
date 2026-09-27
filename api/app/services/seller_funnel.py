@@ -618,7 +618,7 @@ def seller_funnel(
     sector: str | None,
     limit: int,
     offset: int = 0,
-    view: SellerView = "cash_harvesting",
+    view: SellerView = "all",
     hide_active_decay: bool = False,
 ) -> schemas.SellerFunnelOut:
     evaluated, peer_groups, sector_opts = _evaluate(
