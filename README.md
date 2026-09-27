@@ -93,6 +93,10 @@ Unmatched indicator report IDs are rejected and included in the ingestion run's 
 
 The funnel applies an explainable sequence to the imported companies: annual revenue band, three consecutive comparable standalone EUR fiscal years, operating-profit persistence, and a peer-relative financial-profile index. It uses only reported revenue, operating profit, assets, and equity. The index combines robust Z-scores for median operating margin (70%) and equity/assets (30%) inside two-digit EMTAK groups with at least eight comparable peers. Smaller groups show no index. Report IDs, official source links, and data gaps remain visible. A shortlist is for advisor review, not automatic outreach. Buyer fit and owner intent are not assessed by these files. The dataset does not directly provide dividends or capex; the funnel does not use them or treat derived EBITDA as a reported value.
 
+Each prospect also carries a separate **Cash Harvesting candidate** flag: revenue CAGR between -2% and +3% across the same three consecutive comparable years, and an EBITDA margin above 15% (strictly) in the latest one, both required and both read only from populated, comparable data. EBITDA comes from `company_financials.ebitda` (reported, or the importer's operating-profit-minus-depreciation/impairment derivation); operating-profit margin is never substituted for it. The flag never reads dividends or capex, in any form — no payout ratio, no dividend-history or capex comparison — because no imported row has either populated; a missing or incomparable input reports `insufficient_evidence` instead of guessing. The label is descriptive only: stable, high-margin, low-growth financials, not evidence of cash extraction or of an owner's intent to sell.
+
+Sector filtering (`GET /sectors`, and the `sector` parameter on `/companies` and `/seller-prospects`) is built from source-backed two-digit EMTAK division codes, not the always-blank `companies.sector` field: each option needs at least 10 companies, and every smaller or unmapped group folds into a display-only `others` option, preserving each company's original industry code. Counts are recomputed from the live database on every request.
+
 The response also reports the funnel stage by stage (imported → active → size band → three comparable years → three profitable years → advisor review), the EMTAK groups that carry a peer index, and two flags. `group_parent` means the company also filed consolidated accounts for its latest year, so the standalone figures may understate the sellable group; the reported group revenue is shown when available. `holding_activity` marks EMTAK 64.2x or 70.10 activity codes; these are sent to research rather than ranked, because a holding's margins are not comparable with operating peers. Each company has a deterministic brief: what the filings show, each line tied to a fiscal year, and what they cannot show. It also links to the official e-Business Register company page built from the registry code.
 
 To see what the imported data actually covers, run the read-only coverage report from `api/`:
@@ -153,18 +157,6 @@ Verdicts:
 - `insufficient_evidence`: fewer than 2 determinable checks, or the domain is unverified.
 
 Unknown checks never count as stale. Thresholds are configurable with `DECAY_COPYRIGHT_STALE_YEARS`, `DECAY_NEWS_STALE_MONTHS`, `DECAY_NEWS_MIN_POSTS` (default 3), `DECAY_HEADCOUNT_FLAT_PCT` (default 10) and `DECAY_MIN_REVENUE_EUR`. The company detail page shows the latest result with evidence links and a **Run check** button.
-
-## Seller-prospect and sector work (pending)
-
-The 2026-09-27 local audit found `origin/codex/seller-funnel` to be the candidate integration branch: it includes the Digital Decay branch and current `main`. The standalone `digital-decay-signal` branch is behind `main`. These features are not yet part of this checkout's `main` API.
-
-The seller review should combine source-backed financial evidence with an optional Digital Decay website signal. The website check must remain opt-in and disabled by default. Before enabling it, validate caller-supplied domains before fetching, prevent private/reserved network access through redirects, and only call a domain verified when the company match succeeds. Website activity and financial patterns are review cues; they do not establish an owner's intent to sell.
-
-The planned cash-harvesting flag uses comparable standalone EUR annual reports across three or four consecutive years: EBITDA margin above 15%, revenue CAGR between -2% and +3%, and dividends/net income above 70%. Compare payout ratios over time before describing a dividend spike. Capex below depreciation may be supporting evidence only when both values are available. Missing inputs must produce insufficient evidence, not a zero or a positive signal.
-
-Audit snapshot of the local `api/mergero_dev.db` on 2026-09-27: 3,159 companies and 20,805 financial rows; about 2,517 companies have three consecutive comparable years with revenue, EBITDA, and net income. No financial row has dividends or capex populated, so the payout-ratio trigger cannot currently fire. Depreciation/impairment data exists but does not supply capex.
-
-The `companies.sector` field is blank for all 3,159 local companies. Build sector options from the source-backed two-digit EMTAK division codes instead. In this snapshot, 57 divisions meet the 10-company minimum and cover 3,067 companies; 90 companies are in smaller divisions and 2 have no usable code. Group those 92 into a display-only `Others` option, preserving each company's original industry code. Recompute counts from the active database rather than hard-coding this snapshot.
 
 ## Checks
 
