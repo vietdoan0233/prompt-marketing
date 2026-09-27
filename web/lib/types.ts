@@ -130,7 +130,7 @@ export type SellerProspect = {
   owner_intent: "unknown";
   latest_employees_fte: number | null;
   consolidated_revenue_eur: number | null;
-  flags: ("group_parent" | "holding_activity")[];
+  flags: ("group_parent" | "holding_activity" | "cash_harvesting_candidate")[];
   registry_url: string | null;
   digital_decay_verdict: "coasting" | "decaying" | "watch" | "active" | "insufficient_evidence" | null;
   digital_decay_observed_at: string | null;
@@ -139,6 +139,13 @@ export type SellerProspect = {
   filing_ids: string[];
   source_urls: string[];
   issues: string[];
+  // Cash Harvesting candidate: stable, high-margin, low-growth financials only. Never derived from
+  // dividends or capex. Not evidence of owner intent or cash extraction; owner_intent/buyer_fit above
+  // stay unknown/not_assessed regardless of this flag.
+  cash_harvesting_candidate: boolean;
+  cash_harvesting_evidence_status: "insufficient_evidence" | "evaluated";
+  latest_ebitda_margin: number | null;
+  cash_harvesting_revenue_cagr: number | null;
 };
 
 export type FunnelStage = {
@@ -155,6 +162,14 @@ export type PeerGroup = {
   median_equity_ratio: number;
 };
 
+// A source-backed two-digit EMTAK division with >= MIN_COMPANIES_PER_SECTOR companies, or the
+// display-only "others" bucket. See GET /sectors and app.domain.sectors.
+export type SectorOption = {
+  code: string;
+  label: string;
+  count: number;
+};
+
 export type SellerFunnel = {
   total_companies: number;
   core_size: number;
@@ -164,6 +179,7 @@ export type SellerFunnel = {
   advisor_review_decay_flagged: number;
   stages: FunnelStage[];
   peer_groups: PeerGroup[];
+  sector_options: SectorOption[];
   items: SellerProspect[];
   methodology: string;
 };

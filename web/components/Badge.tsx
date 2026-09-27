@@ -55,6 +55,7 @@ const TONE: Record<string, string> = {
   weak: "bad",
   group_parent: "info",
   holding_activity: "warn",
+  cash_harvesting_candidate: "info",
   // digital decay
   coasting: "bad",
   decaying: "warn",
@@ -79,6 +80,7 @@ const LABEL: Record<string, string> = {
   needs_data: "needs data",
   group_parent: "group parent",
   holding_activity: "holding / head office",
+  cash_harvesting_candidate: "Cash Harvesting candidate",
   insufficient_evidence: "insufficient evidence",
   zero_roles: "0 open roles",
   watch: "watch",

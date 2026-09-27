@@ -57,8 +57,15 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
           <input name="max_millions" type="number" min="0.1" step="0.1" defaultValue={sp.max_millions ?? "50"} />
         </label>
         <label>
-          Sector or EMTAK group
-          <input name="sector" defaultValue={sp.sector ?? ""} placeholder="e.g. 62" />
+          Sector (EMTAK division)
+          <select name="sector" defaultValue={sp.sector ?? ""}>
+            <option value="">All sectors</option>
+            {data.sector_options.map((opt) => (
+              <option key={opt.code} value={opt.code}>
+                {opt.label} ({opt.count.toLocaleString("en")})
+              </option>
+            ))}
+          </select>
         </label>
         <button className="btn btn-primary">Apply</button>
         <Link className="btn btn-ghost" href="/seller-prospects">Reset</Link>

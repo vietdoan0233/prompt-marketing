@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Badge } from "@/components/Badge";
 import { apiGet, fmtDate, fmtEmployees } from "@/lib/api";
-import type { CompanyPage } from "@/lib/types";
+import type { CompanyPage, SectorOption } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +28,7 @@ function pageHref(sp: SP, page: number): string {
 export default async function CompaniesPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const minEmployees = sp.min_employees ?? "20";
+  const sectorOptions = await apiGet<SectorOption[]>("/sectors");
   const data = await apiGet<CompanyPage>("/companies", {
     country: sp.country,
     region: sp.region,
@@ -77,8 +78,15 @@ export default async function CompaniesPage({ searchParams }: { searchParams: Pr
           </select>
         </label>
         <label>
-          Sector / NACE
-          <input name="sector" defaultValue={sp.sector} placeholder="e.g. software, 62" />
+          Sector (EMTAK division)
+          <select name="sector" defaultValue={sp.sector ?? ""}>
+            <option value="">All sectors</option>
+            {sectorOptions.map((opt) => (
+              <option key={opt.code} value={opt.code}>
+                {opt.label} ({opt.count.toLocaleString("en")})
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Min employees
