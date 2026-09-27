@@ -86,18 +86,12 @@ def _registry_url(registry_id: str | None) -> str | None:
     return REGISTER_COMPANY_URL.format(code=code) if re.fullmatch(r"\d{8}", code) else None
 
 
-def _next_action(status: str | None, focus: str, quality: str, evidence: str, holding: bool) -> str:
-    if is_inactive_status(status):
-        return "exclude"
+def _next_action(focus: str, quality: str, evidence: str, holding: bool) -> str:
+    """Financial criteria only: this funnel does not check registry status (registered, inactive, in
+    liquidation, bankrupt or deleted); see the company's own profile for that."""
     if focus == "adjacent":
         return "outside_size_band"
-    if (
-        focus == "core"
-        and quality == "core"
-        and evidence == "complete"
-        and is_registered_status(status)
-        and not holding
-    ):
+    if focus == "core" and quality == "core" and evidence == "complete" and not holding:
         return "advisor_review"
     return "research"
 
@@ -209,12 +203,6 @@ def _stages(
     rules = [
         ("imported", "Imported companies", "Estonian companies in the database (≥20 FTE import scope)", None),
         (
-            "registered",
-            "Active in the register",
-            "Official status is registered",
-            lambda i: is_registered_status(i.registry_status),
-        ),
-        (
             "in_size_band",
             "In the size band",
             f"Latest comparable revenue {_millions(min_revenue_eur)}–{_millions(max_revenue_eur)}",
@@ -252,12 +240,6 @@ def _stages(
 def _cash_harvesting_rules(hide_active_decay: bool) -> list:
     rules: list = [
         ("imported", "Imported companies", "Estonian companies in the database (≥20 FTE import scope)", None),
-        (
-            "not_inactive",
-            "Not closing down",
-            "Official status is not in liquidation, bankrupt or deleted",
-            lambda i: not is_inactive_status(i.registry_status),
-        ),
         (
             "cash_harvesting",
             CASH_HARVESTING_LABEL,
@@ -407,8 +389,6 @@ def _evaluate(
         if harvesting.triggered:
             flags.append("cash_harvesting_candidate")
         issues = list(signal.issues)
-        if status is None:
-            issues.append("Current registry status unavailable")
         decay_verdict, decay_observed_at = decay.get(company.id, (None, None))
         all_items.append(
             schemas.SellerProspectOut(
@@ -423,7 +403,7 @@ def _evaluate(
                 quality_band=signal.quality_band,
                 evidence_status=signal.evidence_status,
                 next_action=_next_action(
-                    status, signal.focus_band, signal.quality_band, signal.evidence_status, holding
+                    signal.focus_band, signal.quality_band, signal.evidence_status, holding
                 ),
                 latest_year=signal.latest_year,
                 latest_revenue_eur=signal.latest_revenue_eur,
@@ -463,7 +443,6 @@ def _evaluate(
             and item.evidence_status == "complete"
             and item.three_year_median_margin is not None
             and item.latest_equity_ratio is not None
-            and is_registered_status(item.registry_status)
             and "holding_activity" not in item.flags
         ):
             peers[item.peer_group].append(item)
@@ -549,11 +528,7 @@ def _apply_view(
     """Narrows a sector-filtered list to the selected view, applies the opt-in "hide active Digital Decay"
     filter, and sorts. Returns (listed, cash_harvesting_candidates, view_note); the candidates list is
     always the Cash Harvesting subset, regardless of which view is selected, so callers can report both."""
-    cash_harvesting = [
-        item
-        for item in items
-        if item.cash_harvesting_candidate and not is_inactive_status(item.registry_status)
-    ]
+    cash_harvesting = [item for item in items if item.cash_harvesting_candidate]
     listed = cash_harvesting if view == "cash_harvesting" else list(items)
     if hide_active_decay:
         listed = [item for item in listed if item.digital_decay_verdict != "active"]
@@ -571,9 +546,9 @@ def _apply_view(
     else:
         _sort(listed)
     view_note = (
-        "This list shows Cash Harvesting candidates that are not closing down, ordered by website timing "
-        "signal (coasting, decaying, watch, then unchecked, then active) and then by next action and peer "
-        "index. Switch the view to all companies to see the full funnel. "
+        "This list shows Cash Harvesting candidates, ordered by website timing signal (coasting, decaying, "
+        "watch, then unchecked, then active) and then by next action and peer index. Switch the view to "
+        "all companies to see the full funnel. "
         if view == "cash_harvesting"
         else ""
     )
@@ -656,7 +631,6 @@ def seller_funnel(
         advisor_review_decay_flagged=sum(
             item.digital_decay_verdict in DECAY_PRIORITY for item in review_queue
         ),
-        registry_status_known=sum(item.registry_status is not None for item in sector_items),
         view=view,
         hide_active_decay=hide_active_decay,
         listed_companies=len(listed),

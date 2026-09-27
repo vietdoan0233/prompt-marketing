@@ -227,14 +227,6 @@ function FilterContext({ brief, filters }: { brief: SellerProspectBrief; filters
       </div>,
     );
   }
-  if (item.next_action === "exclude") {
-    notices.push(
-      <div className="notice notice-bad" key="exclude">
-        <strong>Excluded:</strong> the official registry status is “{item.registry_status ?? "unknown"}”, which is not an
-        active company.
-      </div>,
-    );
-  }
   if (item.focus_band === "adjacent") {
     notices.push(
       <div className="notice" key="band">

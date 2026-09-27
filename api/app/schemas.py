@@ -434,19 +434,15 @@ class SellerFunnelOut(BaseModel):
     # are coasting or decaying (a persisted signal read at query time; running new checks is a separate step).
     advisor_review_decay_checked: int = 0
     advisor_review_decay_flagged: int = 0
-    # Of `total_companies`: how many carry any current registry_status fact at all. This is data coverage,
-    # not a business filter: a company can be excluded from later stages either because its status fact
-    # says it is not registered, or because no status fact was ever imported for it. When this is far below
-    # `total_companies`, the "registered" stage (and everything after it) undercounts for a data reason, not
-    # because those companies were evaluated and found ineligible; show that distinction, do not hide it.
-    registry_status_known: int = 0
-    # Which list `items` holds: "cash_harvesting" (default: Cash Harvesting candidates not in liquidation,
-    # bankrupt or deleted) or "all" (every imported company in the sector, the pre-signal list).
+    # Which list `items` holds: "cash_harvesting" (default: every Cash Harvesting candidate by financial
+    # criteria only) or "all" (every imported company in the sector, the pre-signal list). Neither view
+    # checks registry status (registered, inactive, in liquidation, bankrupt or deleted); that data is
+    # still shown on the company's own profile, just not used to gate or exclude here.
     view: Literal["cash_harvesting", "all"] = "all"
     hide_active_decay: bool = False
     # Companies in the selected view after every filter, before `limit` truncates `items`.
     listed_companies: int = 0
-    # Cash Harvesting candidates not in liquidation, bankrupt or deleted, within the sector filter.
+    # Cash Harvesting candidates by financial criteria only, within the sector filter.
     cash_harvesting_candidates: int = 0
     # Of the listed companies: how many carry any digital-decay verdict / a coasting, decaying or watch
     # verdict.

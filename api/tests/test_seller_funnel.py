@@ -198,14 +198,13 @@ def test_funnel_stages_flags_and_ranking(session: Session) -> None:
     stages = {stage.key: stage.count for stage in funnel.stages}
     assert stages == {
         "imported": 14,
-        "registered": 13,
-        "in_size_band": 12,
-        "complete_evidence": 11,
-        "profitable": 11,
-        "advisor_review": 10,
+        "in_size_band": 13,
+        "complete_evidence": 12,
+        "profitable": 12,
+        "advisor_review": 11,
         "decay_flagged": 0,  # no company here has ever had a digital-decay check run
     }
-    assert funnel.advisor_review == 10
+    assert funnel.advisor_review == 11
     assert funnel.advisor_review_decay_checked == 0
     assert funnel.advisor_review_decay_flagged == 0
 
@@ -213,7 +212,9 @@ def test_funnel_stages_flags_and_ranking(session: Session) -> None:
     assert items["Holding OÜ"].next_action == "research"
     assert items["Holding OÜ"].flags == ["holding_activity"]
     assert items["Holding OÜ"].financial_profile_index is None
-    assert items["Closing OÜ"].next_action == "exclude"
+    # Registry status (here: in liquidation) is no longer checked by this funnel; Closing OÜ qualifies on
+    # financial criteria alone, same as any other company with this profile.
+    assert items["Closing OÜ"].next_action == "advisor_review"
     assert items["Large AS"].next_action == "outside_size_band"
     assert items["Gap OÜ"].evidence_status == "needs_data"
 
@@ -223,8 +224,9 @@ def test_funnel_stages_flags_and_ranking(session: Session) -> None:
 
     ranked = [item for item in funnel.items if item.next_action == "advisor_review"]
     assert ranked[0].legal_name == "Peer 8 OÜ"  # highest margin peer ranks first
-    assert all(item.peer_count == 10 for item in ranked)
-    assert funnel.peer_groups[0].group == "62" and funnel.peer_groups[0].peer_count == 10
+    # Closing OÜ (in liquidation) is now a peer too: registry status no longer gates peer eligibility.
+    assert all(item.peer_count == 11 for item in ranked)
+    assert funnel.peer_groups[0].group == "62" and funnel.peer_groups[0].peer_count == 11
 
     top = ranked[0]
     assert top.registry_url == f"https://ariregister.rik.ee/eng/company/{_registry_code(8)}"
@@ -335,7 +337,7 @@ def test_seller_prospects_endpoint(client, session: Session) -> None:
     _seed_funnel(session)
     body = client.get("/seller-prospects", params={"limit": 5, "view": "all"}).json()
     stage_counts = {s["key"]: s["count"] for s in body["stages"]}
-    assert len(body["items"]) == 5 and stage_counts["advisor_review"] == 10
+    assert len(body["items"]) == 5 and stage_counts["advisor_review"] == 11
     assert body["items"][0]["next_action"] == "advisor_review"
     assert (
         client.get("/seller-prospects", params={"min_revenue_eur": 9, "max_revenue_eur": 1}).status_code
@@ -349,7 +351,7 @@ def test_coverage_report_summarises_fields_and_peer_groups(session: Session) -> 
     _seed_funnel(session)
     report = coverage(session, **BAND)
     assert report["companies"] == 14
-    assert report["funnel_stages"]["advisor_review"] == 10
+    assert report["funnel_stages"]["advisor_review"] == 11
     assert report["peer_groups_all_sizes"] == {"62": 10}
     assert report["eligible_companies_with_index"] == 10
     assert report["flags"] == {"group_parent": 1, "holding_activity": 1}

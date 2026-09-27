@@ -61,14 +61,6 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
   // Example searches are real companies already in the current result page, never invented names.
   const examples = Array.from(new Set(data.items.map((item) => item.legal_name))).slice(0, EXAMPLE_COUNT);
 
-  // registry_status is data coverage, not a business filter: a company can be missing from the "Active in
-  // the register" stage (and everything after it) either because its status says it is not registered, or
-  // because no status fact was ever imported for it. Warn on the gap instead of letting a wall of zeroes
-  // read as "nothing qualifies".
-  const statusGap = data.total_companies - data.registry_status_known;
-  const statusCoveragePct =
-    data.total_companies > 0 ? Math.round((data.registry_status_known / data.total_companies) * 100) : null;
-
   return (
     <>
       <PageHeader
@@ -155,24 +147,6 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
         )}
       </Panel>
 
-      {statusGap > 0 && (
-        <div className={`notice ${statusCoveragePct === 0 ? "notice-bad" : "notice-info"} ${styles.coverageNotice}`} role="status">
-          <strong>
-            {statusCoveragePct === 0
-              ? "No registry-status evidence in this database"
-              : `Registry-status evidence covers ${statusCoveragePct}% of companies`}
-          </strong>
-          <p style={{ margin: "6px 0 0" }}>
-            {data.registry_status_known.toLocaleString("en")} of {data.total_companies.toLocaleString("en")} companies
-            in this filter carry an official registry_status fact.{" "}
-            {statusGap.toLocaleString("en")} {statusGap === 1 ? "company has" : "companies have"} none on file — that
-            company is not confirmed inactive, it is simply unchecked. The &quot;Active in the register&quot; funnel
-            stage, and every stage after it, can only count companies with recorded status; a low or zero count there
-            reflects this data gap, not that no company qualifies.
-          </p>
-        </div>
-      )}
-
       {/* Keyed by the normalised filters, so after every navigation the inputs show exactly what was applied. */}
       <form
         key={filterQuery(filters)}
@@ -226,8 +200,8 @@ export default async function SellerProspectsPage({ searchParams }: { searchPara
         </div>
         <p className={`form-hint ${styles.filterNote}`}>
           <strong>Show</strong> selects which list is returned: Cash Harvesting candidates (the default; a stable,
-          high-margin, low-growth financial signal, not evidence of seller intent) not currently in liquidation,
-          bankrupt or deleted, or every company instead. The revenue band classifies companies; it does not remove
+          high-margin, low-growth financial signal, not evidence of seller intent, based on financial criteria
+          only), or every company instead. The revenue band classifies companies; it does not remove
           them. A company whose latest comparable standalone EUR revenue lies inside {bandLabel(filters)} is{" "}
           <strong>in the size band</strong> (core); one outside it stays in the list as{" "}
           <strong>outside size band</strong> (adjacent); one without a comparable annual report (revenue and operating

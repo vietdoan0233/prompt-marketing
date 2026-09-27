@@ -293,7 +293,8 @@ def list_seller_prospects(
     view: Literal["cash_harvesting", "all"] = Query(
         "cash_harvesting",
         description=(
-            "cash_harvesting (default): Cash Harvesting candidates not closing down; all: every company"
+            "cash_harvesting (default): Cash Harvesting candidates by financial criteria only; "
+            "all: every company"
         ),
     ),
     hide_active_decay: bool = Query(False, description="Hide companies whose website check came back active"),

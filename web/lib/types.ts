@@ -188,14 +188,11 @@ export type SellerFunnel = {
   advisor_review: number;
   advisor_review_decay_checked: number;
   advisor_review_decay_flagged: number;
-  // Of total_companies: how many carry any current registry_status fact at all (data coverage, not a
-  // business filter). Far below total_companies means later stages undercount for a data reason.
-  registry_status_known: number;
   view: "cash_harvesting" | "all";
   hide_active_decay: boolean;
   // Companies in the selected view after all filters, before the 100-row limit.
   listed_companies: number;
-  // Cash Harvesting candidates not closing down, within the sector filter.
+  // Cash Harvesting candidates by financial criteria only, within the sector filter.
   cash_harvesting_candidates: number;
   // Of the listed companies: any decay verdict / coasting, decaying or watch.
   listed_decay_checked: number;
