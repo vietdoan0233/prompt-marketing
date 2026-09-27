@@ -400,7 +400,6 @@ def _signal_dict(value: Any) -> dict[str, Any] | None:
 VERIFIED_DOMAIN_SOURCES = {
     "registry_code",
     "name_and_address",
-    "user_supplied",
     "registry_www",
     "registry_email",
 }
@@ -409,7 +408,9 @@ VERIFIED_DOMAIN_SOURCES = {
 class _EnrichmentOnly:
     """Safety net around the website connector: every row is enrichment-only EE data, and `website` is kept
     only when the signal says the domain was verified against the register (registry_code,
-    name_and_address, user_supplied, registry_www or registry_email)."""
+    name_and_address, registry_www or registry_email). A caller-supplied domain earns one of these two
+    identity-check outcomes the same way a guessed domain does; supplying a domain is never itself a
+    verification source."""
 
     def __init__(self, inner: Any) -> None:
         self.inner = inner

@@ -6,6 +6,8 @@
 - Optional robots.txt compliance (website connectors).
 """
 
+import ipaddress
+import socket
 import ssl
 import threading
 import time
@@ -27,6 +29,67 @@ from app.connectors.base import ConnectorError
 
 MAX_BYTES = 2_000_000
 KEPT_HEADERS = {"last-modified", "content-type", "etag", "date"}
+
+
+def _is_blocked_ip(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """True for loopback, private, link-local (this covers the 169.254.169.254 cloud metadata address),
+    reserved, multicast, and unspecified addresses -- i.e. anything that is not a routable public target."""
+    return (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+    )
+
+
+def _safe_ip_for_host(host: str) -> str:
+    """Resolve `host` and return one address that is safe to connect to.
+
+    Resolution and validation happen together so the address returned is the exact one the caller then
+    connects to: a later, independent DNS lookup at connect time (which could return a different address
+    under attacker control -- DNS rebinding) never happens. All resolved addresses are considered; the
+    request is refused only when every one of them is blocked.
+    """
+    try:
+        ipaddress.ip_address(host)
+        is_literal = True
+    except ValueError:
+        is_literal = False
+    if is_literal:
+        addresses = [host]
+    else:
+        try:
+            infos = socket.getaddrinfo(host, None, proto=socket.IPPROTO_TCP)
+        except OSError as exc:
+            raise ConnectorError(f"DNS resolution failed for {host}: {exc}") from exc
+        addresses = list(dict.fromkeys(info[4][0] for info in infos))
+    safe = [addr for addr in addresses if not _is_blocked_ip(ipaddress.ip_address(addr))]
+    if not safe:
+        raise ConnectorError(f"refusing to connect to {host}: resolves only to a blocked network address")
+    safe.sort(key=lambda addr: (ipaddress.ip_address(addr).version, addr))  # deterministic
+    return safe[0]
+
+
+class _SSRFSafeTransport(httpx.BaseTransport):
+    """Wraps a real transport so every request -- including each redirect hop, which httpx re-submits
+    through the same transport -- resolves its target host and validates the address before connecting,
+    then pins the connection to that exact validated address (see `_safe_ip_for_host`)."""
+
+    def __init__(self, inner: httpx.BaseTransport) -> None:
+        self._inner = inner
+
+    def handle_request(self, request: httpx.Request) -> httpx.Response:
+        host = request.url.host
+        safe_ip = _safe_ip_for_host(host)
+        if safe_ip != host:
+            request.url = request.url.copy_with(host=safe_ip)
+            request.extensions = {**request.extensions, "sni_hostname": host}
+        return self._inner.handle_request(request)
+
+    def close(self) -> None:
+        self._inner.close()
 
 
 def user_agent() -> str:
@@ -60,17 +123,27 @@ class Response:
 
 
 class PoliteClient:
-    def __init__(self, rate_limit_per_minute: int | None = 60, respect_robots: bool = False) -> None:
+    def __init__(
+        self,
+        rate_limit_per_minute: int | None = 60,
+        respect_robots: bool = False,
+        *,
+        transport: httpx.BaseTransport | None = None,
+    ) -> None:
+        """`transport` overrides the real network transport (tests only); every request still passes
+        through `_SSRFSafeTransport`, so a test can inject an `httpx.MockTransport` and still exercise the
+        real address-validation and redirect-revalidation behavior end to end."""
         settings = get_settings()
         self.respect_robots = respect_robots
         self._robots: dict[str, urllib.robotparser.RobotFileParser | None] = {}
         self.min_interval = 60.0 / rate_limit_per_minute if rate_limit_per_minute else 0.0
         self._last: dict[str, float] = {}
         self._lock = threading.Lock()
+        inner = transport or httpx.HTTPTransport(verify=_SSL_CONTEXT)
         self._client = httpx.Client(
             timeout=settings.http_timeout_seconds,
             follow_redirects=True,
-            verify=_SSL_CONTEXT,
+            transport=_SSRFSafeTransport(inner),
             headers={"User-Agent": user_agent(), "Accept-Language": "et;q=0.8, *;q=0.5"},
         )
 

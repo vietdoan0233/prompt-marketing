@@ -363,7 +363,10 @@ class WebsiteDecayConnector:
             domain, home, detail = self._resolve_user_domain(crawl, hint, tried)
             payload.update(
                 domain=domain,
-                domain_verification="user_supplied",
+                # A caller-supplied domain is only ever marked verified when the company-identity check
+                # on the page actually succeeds ("registry_code" or "name_and_address"); it is never
+                # trusted just because the caller supplied it.
+                domain_verification=detail,
                 verification_detail=detail,
                 domain_source="user",
             )

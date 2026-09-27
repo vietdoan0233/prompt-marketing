@@ -401,7 +401,6 @@ export type DigitalDecaySignal = {
   domain_verification:
     | "registry_code"
     | "name_and_address"
-    | "user_supplied"
     | "registry_www"
     | "registry_email"
     | "unverified";
