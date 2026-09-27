@@ -175,3 +175,13 @@ npm run build
 ```
 
 The Estonia orchestration tests build small ZIP fixtures and cover real manifest resolution, required indicator years, import snapshots, company and status facts, address versioning, financial derivation and EUR values, orphan rejection, completion logging, and idempotent reruns. Tests use isolated SQLite databases by default; `TEST_DATABASE_URL` may point to PostgreSQL.
+
+### Shared Digital Decay results
+
+`api/seeds/digital_decay_2026-09-27.json` holds the website-check results for 45 Cash Harvesting candidates (7 flagged coasting or watch), so teammates can load them without re-crawling. After seeding the register data, run from `api/`:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.decay_snapshot --import seeds\digital_decay_2026-09-27.json
+```
+
+The import matches companies by registry code, is idempotent, and versions rather than overwrites existing decay facts. Export your own results with `--export FILE`.

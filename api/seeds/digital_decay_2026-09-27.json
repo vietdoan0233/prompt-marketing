@@ -1,0 +1,5878 @@
+{
+ "format_version": 1,
+ "source_id": "web-digital-decay",
+ "facts": [
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 8.3,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        84
+       ],
+       [
+        2023,
+        88
+       ],
+       [
+        2024,
+        86
+       ],
+       [
+        2025,
+        91
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://www.viiking.ee",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": "2026-09-23T12:20:31Z",
+      "url": "https://www.viiking.ee/"
+     },
+     "news": {
+      "age_months": 7,
+      "cadence_source": "sitemap",
+      "evidence_url": "https://www.viiking.ee/hea-uudis-joutrenn-sopradele/",
+      "latest_date": "2026-02-11",
+      "method": "sitemap_lastmod",
+      "post_dates": [
+       "2026-02-11"
+      ],
+      "posts_18m": 1,
+      "reason": "low_cadence",
+      "state": "stale"
+     }
+    },
+    "determinable_count": 2,
+    "domain": "viiking.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 5812149,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 2,
+    "verdict": "coasting",
+    "version": "decay-2026.09.3",
+    "warnings": []
+   },
+   "original_value": null,
+   "value_hash": "843c94a27f1a3c45fbc077ca06922d21edffae10ed1ca883b1f82c822ac74cda",
+   "source_key": "web-decay:10002098",
+   "source_url": "https://www.viiking.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10002098",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-02-11",
+   "original_value": "2026-02-11",
+   "value_hash": "24afc967111ea4ed5b8b497ae8eef91e9b1edff288d96076ba6e8656aa790d76",
+   "source_key": "web-decay:10002098",
+   "source_url": "https://www.viiking.ee/hea-uudis-joutrenn-sopradele/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10002098",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:10002098",
+   "source_url": "https://www.viiking.ee",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10002098",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://viiking.ee",
+   "original_value": "viiking.ee",
+   "value_hash": "900a163fa738a27a4893c83ccd1c15c65ea29383444a38c7b551f3f94c31c3f6",
+   "source_key": "web-decay:10002098",
+   "source_url": "https://www.viiking.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10002098",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 10.5,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        38
+       ],
+       [
+        2023,
+        42
+       ],
+       [
+        2024,
+        41
+       ],
+       [
+        2025,
+        42
+       ]
+      ],
+      "state": "growing",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 7195772,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "febc8c6e39a746e74dba4dc43c738375ea0a3315a7056f67fb4e45d400280494",
+   "source_key": "web-decay:10028353",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10028353",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -11.8,
+      "from_year": 2021,
+      "series": [
+       [
+        2021,
+        34
+       ],
+       [
+        2022,
+        33
+       ],
+       [
+        2023,
+        32
+       ],
+       [
+        2024,
+        30
+       ]
+      ],
+      "state": "shrinking",
+      "to_year": 2024
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://et.se/ee/"
+     },
+     "news": {
+      "age_months": 2,
+      "cadence_source": "sitemap",
+      "evidence_url": "https://et.se/ee/uudised/miljo-hallbarhetskoordinator-till-et/",
+      "latest_date": "2026-07-02",
+      "method": "jsonld",
+      "post_dates": [
+       "2026-07-02",
+       "2026-02-24"
+      ],
+      "posts_18m": 2,
+      "reason": "low_cadence",
+      "state": "stale"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "et.se",
+    "domain_verification": "registry_email",
+    "revenue": {
+     "amount": 5570197,
+     "currency": "EUR",
+     "fiscal_year": 2024,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "careers page not found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "eb0112b2b30976db468ff41b3e265009fcfb44e3306b0a3dd949128af3bd2d33",
+   "source_key": "web-decay:10029393",
+   "source_url": "https://et.se/ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10029393",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-07-02",
+   "original_value": "2026-07-02",
+   "value_hash": "971e519c552904653971d78d5534011d5d86c55f8d4afeee0f49fb1ea184336d",
+   "source_key": "web-decay:10029393",
+   "source_url": "https://et.se/ee/uudised/miljo-hallbarhetskoordinator-till-et/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10029393",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://et.se",
+   "original_value": "et.se",
+   "value_hash": "b815b88e37cf65e05a32dd015f788cf8c2ee5ba7a5229e61b0140cc5a15b07cd",
+   "source_key": "web-decay:10029393",
+   "source_url": "https://et.se/ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10029393",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 5.3,
+      "from_year": 2023,
+      "series": [
+       [
+        2023,
+        38
+       ],
+       [
+        2024,
+        39
+       ],
+       [
+        2025,
+        40
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": "2024-06-11T08:51:57Z",
+      "url": "http://electro-hill.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": "electro-hill.ee",
+    "domain_verification": "registry_email",
+    "revenue": {
+     "amount": 7058303,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "TLS certificate invalid or expired on electro-hill.ee",
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "2d27ce4bc15f60377f94bda31ebdb009fa142901b075d355ec43f631759fd099",
+   "source_key": "web-decay:10061103",
+   "source_url": "http://electro-hill.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10061103",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://electro-hill.ee",
+   "original_value": "electro-hill.ee",
+   "value_hash": "6b56f01f9406978a6c0db33586002ce37df33b837f009e908b86adeaf8978a1c",
+   "source_key": "web-decay:10061103",
+   "source_url": "http://electro-hill.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10061103",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 10.0,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        20
+       ],
+       [
+        2023,
+        23
+       ],
+       [
+        2025,
+        22
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://farwell.ee/firmast/toopakkumised/",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://farwell.ee/"
+     },
+     "news": {
+      "age_months": 1,
+      "cadence_source": "sitemap",
+      "evidence_url": "https://farwell.ee/blog/farwell-30-aastat-see-on-rohkem-kui-uks-tavaline-tahtpaev/",
+      "latest_date": "2026-08-19",
+      "method": "sitemap_lastmod",
+      "post_dates": [
+       "2026-08-19",
+       "2026-05-15",
+       "2025-03-02",
+       "2025-02-26",
+       "2024-02-28",
+       "2023-07-14"
+      ],
+      "posts_18m": 2,
+      "reason": "low_cadence",
+      "state": "stale"
+     }
+    },
+    "determinable_count": 2,
+    "domain": "farwell.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 5498041,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 2,
+    "verdict": "coasting",
+    "version": "decay-2026.09.3",
+    "warnings": []
+   },
+   "original_value": null,
+   "value_hash": "3a2eeb768122231e11c8ab65ff25139e2962960c63ec4caccbe301ec9f74b8dd",
+   "source_key": "web-decay:10067755",
+   "source_url": "https://farwell.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10067755",
+   "observed_at": "2026-09-26T19:52:31.893788+00:00",
+   "valid_from": "2026-09-26T19:52:31.893788+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-08-19",
+   "original_value": "2026-08-19",
+   "value_hash": "7f5b1b54da779be1e852374b569d65e50d92016010eaea54e5a4a15afd43164b",
+   "source_key": "web-decay:10067755",
+   "source_url": "https://farwell.ee/ru/blog/farwell-30-aastat-see-on-rohkem-kui-uks-tavaline-tahtpaev/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10067755",
+   "observed_at": "2026-09-26T19:52:31.893788+00:00",
+   "valid_from": "2026-09-26T19:36:26.316551+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:10067755",
+   "source_url": "https://farwell.ee/firmast/toopakkumised/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10067755",
+   "observed_at": "2026-09-26T19:52:31.893788+00:00",
+   "valid_from": "2026-09-26T19:36:26.316551+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://farwell.ee",
+   "original_value": "farwell.ee",
+   "value_hash": "797b043d5b3736e14f4dc898600a53ca5e99dd9948cfc97424b84fd5ddd94470",
+   "source_key": "web-decay:10067755",
+   "source_url": "https://farwell.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10067755",
+   "observed_at": "2026-09-26T19:52:31.893788+00:00",
+   "valid_from": "2026-09-26T19:36:26.316551+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": 11,
+      "evidence_url": "https://hevea.ee/",
+      "state": "stale",
+      "year": 2015
+     },
+     "headcount": {
+      "change_pct": -6.1,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        49
+       ],
+       [
+        2023,
+        47
+       ],
+       [
+        2024,
+        47
+       ],
+       [
+        2025,
+        46
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": "2024-04-29T06:49:25Z",
+      "url": "https://hevea.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "hevea.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 5551983,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "b77d56810bf89c0527e3ac74c0a4369f975a4727805b3334f6f61d532a1f6437",
+   "source_key": "web-decay:10097905",
+   "source_url": "https://hevea.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10097905",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "footer_copyright_year",
+   "value_json": 2015,
+   "original_value": "2015",
+   "value_hash": "a85e9db4851f7cd3efb8db7bf69a07cfb97bc528b72785a9cff7bdfef7e2279d",
+   "source_key": "web-decay:10097905",
+   "source_url": "https://hevea.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10097905",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://hevea.ee",
+   "original_value": "hevea.ee",
+   "value_hash": "207778b13fa7f5729cd168d8146161656e1314697d674d65054fc4905f08dce8",
+   "source_key": "web-decay:10097905",
+   "source_url": "https://hevea.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10097905",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": 0,
+      "evidence_url": "https://pmc.ee/et/",
+      "state": "fresh",
+      "year": 2026
+     },
+     "headcount": {
+      "change_pct": -1.9,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        52
+       ],
+       [
+        2023,
+        47
+       ],
+       [
+        2024,
+        44
+       ],
+       [
+        2025,
+        51
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://pmc.ee/et/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "pmc.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 8688740,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "2d689dc648886822c2bc47685e3745dd3080b6c836a70ab91cda45f1cc5d4aa1",
+   "source_key": "web-decay:10107710",
+   "source_url": "https://pmc.ee/et/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10107710",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "footer_copyright_year",
+   "value_json": 2026,
+   "original_value": "2026",
+   "value_hash": "158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab",
+   "source_key": "web-decay:10107710",
+   "source_url": "https://178.62.23.10/et/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10107710",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:19:02.178645+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://pmc.ee",
+   "original_value": "pmc.ee",
+   "value_hash": "a5f54bfebeda57ade00322cb5e197a1c68103f52da4e88c133defbe7378e6f5f",
+   "source_key": "web-decay:10107710",
+   "source_url": "https://pmc.ee/et/",
+   "base_confidence": "estimated",
+   "confidence": "conflicting",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10107710",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -15.1,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        126
+       ],
+       [
+        2023,
+        108
+       ],
+       [
+        2024,
+        105
+       ],
+       [
+        2025,
+        107
+       ]
+      ],
+      "state": "shrinking",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://rappin.ee/est/vabad-tookohad",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://rappin.ee/"
+     },
+     "news": {
+      "age_months": 28,
+      "cadence_source": "news_page",
+      "evidence_url": "https://rappin.ee/est/uudised",
+      "latest_date": "2024-05-23",
+      "method": "page_dates",
+      "post_dates": [
+       "2024-05-23"
+      ],
+      "posts_18m": 0,
+      "reason": "no_recent_post",
+      "state": "stale"
+     }
+    },
+    "determinable_count": 2,
+    "domain": "rappin.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 16616229,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 2,
+    "verdict": "coasting",
+    "version": "decay-2026.09.3",
+    "warnings": []
+   },
+   "original_value": null,
+   "value_hash": "5828156b9ddf11020b0a18320a791e827d8a1bb707bde21ff0ee997ed316bd70",
+   "source_key": "web-decay:10149813",
+   "source_url": "https://rappin.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10149813",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2024-05-23",
+   "original_value": "2024-05-23",
+   "value_hash": "0c71d5326070aa4ea3b8d4b49faba15f50f3687c5030c386103fec965e5070ff",
+   "source_key": "web-decay:10149813",
+   "source_url": "https://rappin.ee/est/uudised",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10149813",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:10149813",
+   "source_url": "https://rappin.ee/est/vabad-tookohad",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10149813",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://rappin.ee",
+   "original_value": "rappin.ee",
+   "value_hash": "61a3321728d0432974d18b9f7a6251819578d0df47cd97361f60255176f9882e",
+   "source_key": "web-decay:10149813",
+   "source_url": "https://rappin.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10149813",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 7.8,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        180
+       ],
+       [
+        2023,
+        191
+       ],
+       [
+        2024,
+        192
+       ],
+       [
+        2025,
+        194
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://www.cramo.ee/karjaar",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": "2026-09-21T11:00:08Z",
+      "url": "https://www.cramo.ee/"
+     },
+     "news": {
+      "age_months": 6,
+      "cadence_source": "sitemap",
+      "evidence_url": "https://www.cramo.ee/et/cramost/news/uudised/remo-holsmer-lahkub-cramo-tegevjuhi-ametist",
+      "latest_date": "2026-03-06",
+      "method": "sitemap_lastmod",
+      "post_dates": [
+       "2026-03-06",
+       "2025-09-24",
+       "2025-08-27"
+      ],
+      "posts_18m": 3,
+      "reason": null,
+      "state": "fresh"
+     }
+    },
+    "determinable_count": 2,
+    "domain": "cramo.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 32046336,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "watch",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "zero open roles and flat/shrinking register headcount at ≥€5M revenue; website otherwise maintained"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "828f0f5f35bbfcbaa97f9e80f88025feb042bd03b3a25f0d4ed476bf31b738fd",
+   "source_key": "web-decay:10166658",
+   "source_url": "https://www.cramo.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10166658",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-03-06",
+   "original_value": "2026-03-06",
+   "value_hash": "7cc2228c642214aee9e90d4237a61245d9f8018e4705c291f8130621b2995891",
+   "source_key": "web-decay:10166658",
+   "source_url": "https://www.cramo.ee/et/cramost/news/uudised/remo-holsmer-lahkub-cramo-tegevjuhi-ametist",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10166658",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:10166658",
+   "source_url": "https://www.cramo.ee/karjaar",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10166658",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://cramo.ee",
+   "original_value": "cramo.ee",
+   "value_hash": "e53b8e436306e49e7b6680c9c4ceb59a71958f2aaaa0bb0594aee54051ecc232",
+   "source_key": "web-decay:10166658",
+   "source_url": "https://www.cramo.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10166658",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": 1,
+      "evidence_url": "https://www.alpter.ee/",
+      "state": "fresh",
+      "year": 2025
+     },
+     "headcount": {
+      "change_pct": -20.6,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        97
+       ],
+       [
+        2023,
+        93
+       ],
+       [
+        2024,
+        91
+       ],
+       [
+        2025,
+        77
+       ]
+      ],
+      "state": "shrinking",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://www.alpter.ee/muu/vabad-tookohad",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://www.alpter.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 2,
+    "domain": "alpter.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 9694359,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "watch",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "no dated news/press found",
+     "zero open roles and flat/shrinking register headcount at ≥€5M revenue; website otherwise maintained"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "cb683a03d1b360a390188a1855588f6b1dec20dce5127b65e660b3be3844af5c",
+   "source_key": "web-decay:10224321",
+   "source_url": "https://www.alpter.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10224321",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "footer_copyright_year",
+   "value_json": 2025,
+   "original_value": "2025",
+   "value_hash": "b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744",
+   "source_key": "web-decay:10224321",
+   "source_url": "https://www.alpter.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10224321",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:10224321",
+   "source_url": "https://www.alpter.ee/muu/vabad-tookohad",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10224321",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://alpter.ee",
+   "original_value": "alpter.ee",
+   "value_hash": "dd0886b059602752a0cc3731187ab7b9966b48bedd318e73b5f8b25ad10c2b78",
+   "source_key": "web-decay:10224321",
+   "source_url": "https://www.alpter.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10224321",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": 0,
+      "evidence_url": "https://abmedical.ee/",
+      "state": "fresh",
+      "year": 2026
+     },
+     "headcount": {
+      "change_pct": 15.0,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        20
+       ],
+       [
+        2023,
+        20
+       ],
+       [
+        2024,
+        22
+       ],
+       [
+        2025,
+        23
+       ]
+      ],
+      "state": "growing",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": "2026-09-27T09:31:58Z",
+      "url": "https://abmedical.ee/"
+     },
+     "news": {
+      "age_months": 0,
+      "cadence_source": "news_page",
+      "evidence_url": "https://abmedical.ee/uudised/",
+      "latest_date": "2026-09-18",
+      "method": "page_dates",
+      "post_dates": [
+       "2026-09-18",
+       "2026-09-14",
+       "2026-09-01",
+       "2026-08-21",
+       "2026-08-14",
+       "2026-06-11",
+       "2026-06-09",
+       "2026-05-24",
+       "2026-05-11",
+       "2026-05-05"
+      ],
+      "posts_18m": 20,
+      "reason": null,
+      "state": "fresh"
+     }
+    },
+    "determinable_count": 2,
+    "domain": "abmedical.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 13310915,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "active",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "careers page not found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "2422dfe10446b6d9e27da3cc091e023ad837fb7bd320b7833b804ab61012bbb2",
+   "source_key": "web-decay:10234070",
+   "source_url": "https://abmedical.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10234070",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "footer_copyright_year",
+   "value_json": 2026,
+   "original_value": "2026",
+   "value_hash": "158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab",
+   "source_key": "web-decay:10234070",
+   "source_url": "https://217.146.71.89/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10234070",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:19:02.178645+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-09-18",
+   "original_value": "2026-09-18",
+   "value_hash": "1c81a2ca8e37cb855b15cf3d3722b5f95eb1a72330f79fb43b0cab107ba89846",
+   "source_key": "web-decay:10234070",
+   "source_url": "https://217.146.71.89/uudised/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10234070",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:19:02.178645+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://abmedical.ee",
+   "original_value": "abmedical.ee",
+   "value_hash": "2c0b169c7478be5f7ea8958934bf954362a9cb517dec4344ff9f382c929cf706",
+   "source_key": "web-decay:10234070",
+   "source_url": "https://abmedical.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10234070",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": 0,
+      "evidence_url": "https://www.makroflex.ee/",
+      "state": "fresh",
+      "year": 2026
+     },
+     "headcount": {
+      "change_pct": -6.1,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        99
+       ],
+       [
+        2023,
+        95
+       ],
+       [
+        2024,
+        91
+       ],
+       [
+        2025,
+        93
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://www.makroflex.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "makroflex.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 7328756,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "5f471ecb8610bb51ceabab62820c666538cc13dc7311f7c65aad78cd0c65adf8",
+   "source_key": "web-decay:10238205",
+   "source_url": "https://www.makroflex.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10238205",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "footer_copyright_year",
+   "value_json": 2026,
+   "original_value": "2026",
+   "value_hash": "158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab",
+   "source_key": "web-decay:10238205",
+   "source_url": "https://www.makroflex.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10238205",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://makroflex.ee",
+   "original_value": "makroflex.ee",
+   "value_hash": "dd0cf6f57be981f967bf6434300ad6efd6a44da6cfc6e6a5d73217c578738693",
+   "source_key": "web-decay:10238205",
+   "source_url": "https://www.makroflex.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10238205",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 1.5,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        130
+       ],
+       [
+        2023,
+        120
+       ],
+       [
+        2024,
+        124
+       ],
+       [
+        2025,
+        132
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://juhanipuukool.ee/est/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": "juhanipuukool.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 7887194,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "0271700dca1d4701d28302e496ba6d581757b3533fb1c7bfa87ad01690c8c7cb",
+   "source_key": "web-decay:10242052",
+   "source_url": "https://juhanipuukool.ee/est/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10242052",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://juhanipuukool.ee",
+   "original_value": "juhanipuukool.ee",
+   "value_hash": "358c99b1a1a0f8d3aad85d4b3414abb986214b19c74b5a6eee2a715bdb68fc4a",
+   "source_key": "web-decay:10242052",
+   "source_url": "https://juhanipuukool.ee/est/",
+   "base_confidence": "estimated",
+   "confidence": "conflicting",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10242052",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -12.9,
+      "from_year": 2023,
+      "series": [
+       [
+        2023,
+        62
+       ],
+       [
+        2024,
+        59
+       ],
+       [
+        2025,
+        54
+       ]
+      ],
+      "state": "shrinking",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 9685622,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "email domain agrone.ee is shared by several register entries (group domain); not used",
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "f83e1027c6984c898db4f10dc4f95505cba20539f5e1d07eb2112b9264b48cdb",
+   "source_key": "web-decay:10269039",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10269039",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 9.1,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        187
+       ],
+       [
+        2023,
+        204
+       ],
+       [
+        2024,
+        206
+       ],
+       [
+        2025,
+        204
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://spaestonia.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": "spaestonia.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 11449799,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "491d146eddc9fdeee2b3f29581fdc57322b377848ada1b09bf55ec9088cb029b",
+   "source_key": "web-decay:10275471",
+   "source_url": "https://spaestonia.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10275471",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://spaestonia.ee",
+   "original_value": "spaestonia.ee",
+   "value_hash": "869ac85c3118681ba75cbef11c61bdfdcfbf0eed8112424d5fcfaa1c4e858bc4",
+   "source_key": "web-decay:10275471",
+   "source_url": "https://spaestonia.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10275471",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -1.7,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        59
+       ],
+       [
+        2023,
+        58
+       ],
+       [
+        2024,
+        57
+       ],
+       [
+        2025,
+        58
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 28763698,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "email domain combimill.ee is shared by several register entries (group domain); not used",
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "cbcfdfb2949e1f238ff3ce5a090ea7b484f25c44f8c08d6190d55c5b1651925c",
+   "source_key": "web-decay:10282560",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10282560",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": 0,
+      "evidence_url": "https://sakumaja.ee/",
+      "state": "fresh",
+      "year": 2026
+     },
+     "headcount": {
+      "change_pct": -4.2,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        24
+       ],
+       [
+        2023,
+        24
+       ],
+       [
+        2024,
+        22
+       ],
+       [
+        2025,
+        23
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://sakumaja.ee/"
+     },
+     "news": {
+      "age_months": 1,
+      "cadence_source": "news_page",
+      "evidence_url": "https://sakumaja.ee/blog/",
+      "latest_date": "2026-08-26",
+      "method": "page_dates",
+      "post_dates": [
+       "2026-08-26",
+       "2026-08-24",
+       "2026-08-18",
+       "2026-08-17",
+       "2026-08-14",
+       "2026-06-29",
+       "2026-06-25",
+       "2026-05-29",
+       "2026-05-22",
+       "2026-05-11"
+      ],
+      "posts_18m": 12,
+      "reason": null,
+      "state": "fresh"
+     }
+    },
+    "determinable_count": 2,
+    "domain": "sakumaja.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 5473056,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "active",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "careers page not found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "26a75de68bbc307aa7b3768a9c578f71763e4394363d5eb95ffe5159a17559a6",
+   "source_key": "web-decay:10344321",
+   "source_url": "https://sakumaja.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10344321",
+   "observed_at": "2026-09-26T19:52:50.832342+00:00",
+   "valid_from": "2026-09-26T19:52:50.832342+00:00"
+  },
+  {
+   "field_name": "footer_copyright_year",
+   "value_json": 2026,
+   "original_value": "2026",
+   "value_hash": "158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab",
+   "source_key": "web-decay:10344321",
+   "source_url": "https://sakumaja.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10344321",
+   "observed_at": "2026-09-26T19:52:50.832342+00:00",
+   "valid_from": "2026-09-26T19:19:00.365919+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-08-26",
+   "original_value": "2026-08-26",
+   "value_hash": "94066ca6393b4a1bdcced935aa077b8439f7f75e6a5d10b5f0b88d013c5f7e7e",
+   "source_key": "web-decay:10344321",
+   "source_url": "https://sakumaja.ee/blog/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10344321",
+   "observed_at": "2026-09-26T19:52:50.832342+00:00",
+   "valid_from": "2026-09-26T19:19:00.365919+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://sakumaja.ee",
+   "original_value": "sakumaja.ee",
+   "value_hash": "be8bcbfd63ecfb98d271dfaef122d9ffab3093a1a805de84f899f90b8241f50f",
+   "source_key": "web-decay:10344321",
+   "source_url": "https://sakumaja.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10344321",
+   "observed_at": "2026-09-26T19:52:50.832342+00:00",
+   "valid_from": "2026-09-26T19:19:00.365919+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 1.4,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        145
+       ],
+       [
+        2023,
+        153
+       ],
+       [
+        2024,
+        155
+       ],
+       [
+        2025,
+        147
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://tap.ee/et/vabad-tookohad",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://tap.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "tap.ee",
+    "domain_verification": "registry_email",
+    "revenue": {
+     "amount": 13842927,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "39f3747090d5066f8261f3f3a900d34ce9229d01583bfcca365a178c7d8dcde3",
+   "source_key": "web-decay:10346917",
+   "source_url": "https://tap.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10346917",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:10346917",
+   "source_url": "https://tap.ee/et/vabad-tookohad",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10346917",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://tap.ee",
+   "original_value": "tap.ee",
+   "value_hash": "9750e6fc89816c00f3dbe4d2f04b655682ab9a987876d2a3c1ebbe11209afb59",
+   "source_key": "web-decay:10346917",
+   "source_url": "https://tap.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10346917",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 13.8,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        29
+       ],
+       [
+        2023,
+        28
+       ],
+       [
+        2024,
+        33
+       ],
+       [
+        2025,
+        33
+       ]
+      ],
+      "state": "growing",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://www.jcdecaux.com/talent/careers",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://www.jcdecaux.com/"
+     },
+     "news": {
+      "age_months": 0,
+      "cadence_source": "sitemap",
+      "evidence_url": "https://www.jcdecaux.com/news-media/press-releases/jcdecaux-renews-its-advertising-contract-dusseldorf",
+      "latest_date": "2026-09-16",
+      "method": "sitemap_lastmod",
+      "post_dates": [
+       "2026-09-16",
+       "2026-09-15",
+       "2026-09-09",
+       "2026-09-07",
+       "2026-08-31",
+       "2026-08-11",
+       "2026-08-06",
+       "2026-07-30",
+       "2026-07-28",
+       "2026-07-21"
+      ],
+      "posts_18m": 60,
+      "reason": null,
+      "state": "fresh"
+     }
+    },
+    "determinable_count": 2,
+    "domain": "jcdecaux.com",
+    "domain_verification": "registry_email",
+    "revenue": {
+     "amount": 9025798,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "active",
+    "version": "decay-2026.09.3",
+    "warnings": []
+   },
+   "original_value": null,
+   "value_hash": "111b40947d0c43b1e8534d10ab5c77a415cb86e7553ca8cfaa36a07f28c12c4c",
+   "source_key": "web-decay:10348263",
+   "source_url": "https://www.jcdecaux.com/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10348263",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-09-16",
+   "original_value": "2026-09-16",
+   "value_hash": "eb01157aec488565fbc2a2ffdea6518d65ad6c0568d3f9e16007b8dfa8a36959",
+   "source_key": "web-decay:10348263",
+   "source_url": "https://www.jcdecaux.com/news-media/press-releases/jcdecaux-renews-its-advertising-contract-dusseldorf",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10348263",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:10348263",
+   "source_url": "https://www.jcdecaux.com/talent/careers",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10348263",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://jcdecaux.com",
+   "original_value": "jcdecaux.com",
+   "value_hash": "e538ee900bac87ddf986eb0db21f34beb67c0e29c92a47d7130e47a9c4700af8",
+   "source_key": "web-decay:10348263",
+   "source_url": "https://www.jcdecaux.com/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10348263",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": 0,
+      "evidence_url": "https://tarplan.ee/",
+      "state": "fresh",
+      "year": 2026
+     },
+     "headcount": {
+      "change_pct": -4.2,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        24
+       ],
+       [
+        2023,
+        22
+       ],
+       [
+        2024,
+        21
+       ],
+       [
+        2025,
+        23
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://tarplan.ee",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://tarplan.ee/"
+     },
+     "news": {
+      "age_months": 23,
+      "cadence_source": "sitemap",
+      "evidence_url": "https://tarplan.ee/en/tarplan-blog/",
+      "latest_date": "2024-10-07",
+      "method": "sitemap_lastmod",
+      "post_dates": [
+       "2024-10-07"
+      ],
+      "posts_18m": 0,
+      "reason": "no_recent_post",
+      "state": "stale"
+     }
+    },
+    "determinable_count": 3,
+    "domain": "tarplan.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 6062461,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 2,
+    "verdict": "coasting",
+    "version": "decay-2026.09.3",
+    "warnings": []
+   },
+   "original_value": null,
+   "value_hash": "78562940452f83ac050925116dd0c25a9495fd602e93e9a32dd6f03fbec6d386",
+   "source_key": "web-decay:10349904",
+   "source_url": "https://tarplan.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10349904",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "footer_copyright_year",
+   "value_json": 2026,
+   "original_value": "2026",
+   "value_hash": "158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab",
+   "source_key": "web-decay:10349904",
+   "source_url": "https://217.146.69.48/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10349904",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:19:02.178645+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2024-10-07",
+   "original_value": "2024-10-07",
+   "value_hash": "d1ebdeaa4f88da531f7f6b7ad8251806356c256bf62bee451709215c056fd603",
+   "source_key": "web-decay:10349904",
+   "source_url": "https://tarplan.ee/en/tarplan-blog/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10349904",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:10349904",
+   "source_url": "https://tarplan.ee",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10349904",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://tarplan.ee",
+   "original_value": "tarplan.ee",
+   "value_hash": "77cc57d4572375bc92b51b7ab025293e39cdd822def901f7e06d5a348a5a98cf",
+   "source_key": "web-decay:10349904",
+   "source_url": "https://tarplan.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10349904",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -12.7,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        55
+       ],
+       [
+        2023,
+        50
+       ],
+       [
+        2024,
+        50
+       ],
+       [
+        2025,
+        48
+       ]
+      ],
+      "state": "shrinking",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": "2026-09-27T09:22:11Z",
+      "url": "https://pak.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": "pak.ee",
+    "domain_verification": "registry_email",
+    "revenue": {
+     "amount": 5592364,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "f820bd28d5954a927bd6aec6777d53f28a1e37b8aa77dbc9508b1cd61d5d28e0",
+   "source_key": "web-decay:10357648",
+   "source_url": "https://pak.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10357648",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://pak.ee",
+   "original_value": "pak.ee",
+   "value_hash": "438b90067d4b19adae26668bb79a91c577ada06a1d1d3eaef84e5d376803d33b",
+   "source_key": "web-decay:10357648",
+   "source_url": "https://pak.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10357648",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 5.2,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        194
+       ],
+       [
+        2023,
+        197
+       ],
+       [
+        2024,
+        201
+       ],
+       [
+        2025,
+        204
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://eshop.wuerth.ee/karjaar/",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://eshop.wuerth.ee/et/EE/EUR/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "eshop.wuerth.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 42052187,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "344e22c2cf27cf8891976f9d5f6568d24180af0637886fb7a69dd31df17147cb",
+   "source_key": "web-decay:10396849",
+   "source_url": "https://eshop.wuerth.ee/et/EE/EUR/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10396849",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:10396849",
+   "source_url": "https://eshop.wuerth.ee/karjaar/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10396849",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://eshop.wuerth.ee",
+   "original_value": "eshop.wuerth.ee",
+   "value_hash": "6509ee8cb8af6249aeac549b12c23b8f5ce5ade4ebaaada9a04c2f456723c9b9",
+   "source_key": "web-decay:10396849",
+   "source_url": "https://eshop.wuerth.ee/et/EE/EUR/",
+   "base_confidence": "estimated",
+   "confidence": "conflicting",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10396849",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 12.5,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        24
+       ],
+       [
+        2023,
+        26
+       ],
+       [
+        2024,
+        26
+       ],
+       [
+        2025,
+        27
+       ]
+      ],
+      "state": "growing",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": "2026-09-27T02:35:10Z",
+      "url": "https://tapvei.com/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": "tapvei.com",
+    "domain_verification": "registry_email",
+    "revenue": {
+     "amount": 5278567,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "ab5599e6ec0b427fd4dd8db9ef1e7e1dc7dbf9460fc86979ed510058bb072622",
+   "source_key": "web-decay:10431089",
+   "source_url": "https://tapvei.com/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10431089",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://tapvei.com",
+   "original_value": "tapvei.com",
+   "value_hash": "b641bbe19cfc2cbc1f096e9c4855de3e6b3fbf7ae6c62a9d906c207f3d0cfed8",
+   "source_key": "web-decay:10431089",
+   "source_url": "https://tapvei.com/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10431089",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 5484102,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.2",
+    "warnings": [
+     "register-listed website ecomatic.ee unreachable",
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "9f3351631c109fb781540b5484f322efafe3d53786c4cc475653d3cd073982d0",
+   "source_key": "web-decay:10432999",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10432999",
+   "observed_at": "2026-09-26T19:37:18.330295+00:00",
+   "valid_from": "2026-09-26T19:37:18.330295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 5464400,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.2",
+    "warnings": [
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "9d7dff6c9d97d6e6f19353a10100de1423c1f1a46bb00f763a4948b64e8d2eaf",
+   "source_key": "web-decay:10471829",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10471829",
+   "observed_at": "2026-09-26T19:38:43.372112+00:00",
+   "valid_from": "2026-09-26T19:38:43.372112+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -12.5,
+      "from_year": 2021,
+      "series": [
+       [
+        2021,
+        80
+       ],
+       [
+        2022,
+        86
+       ],
+       [
+        2023,
+        77
+       ],
+       [
+        2024,
+        70
+       ]
+      ],
+      "state": "shrinking",
+      "to_year": 2024
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 7992347,
+     "currency": "EUR",
+     "fiscal_year": 2024,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "register-listed website fleetcomplete.eu unreachable",
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "9a8fd4db297904330e3cbdbe9ba55a49c73b80610f89414b8c006f6fdb700613",
+   "source_key": "web-decay:10503340",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10503340",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -12.0,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        75
+       ],
+       [
+        2023,
+        67
+       ],
+       [
+        2024,
+        69
+       ],
+       [
+        2025,
+        66
+       ]
+      ],
+      "state": "shrinking",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://dataprint.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": "dataprint.ee",
+    "domain_verification": "registry_email",
+    "revenue": {
+     "amount": 14694718,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "aa9493a1ca0dc876e403a8bf6727792a1425cf4425e05e25b34be9379b7e165f",
+   "source_key": "web-decay:10511612",
+   "source_url": "https://dataprint.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10511612",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://dataprint.ee",
+   "original_value": "dataprint.ee",
+   "value_hash": "745bc0cc3f50579899622d9f7cebff5003c501a24a6166b7dec4fba9293c2ffa",
+   "source_key": "web-decay:10511612",
+   "source_url": "https://dataprint.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10511612",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 23.6,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        318
+       ],
+       [
+        2023,
+        336
+       ],
+       [
+        2024,
+        345
+       ],
+       [
+        2025,
+        393
+       ]
+      ],
+      "state": "growing",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://elron.ee/toopakkumised",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://elron.ee/"
+     },
+     "news": {
+      "age_months": 0,
+      "cadence_source": "news_page",
+      "evidence_url": "https://elron.ee/elronist/uudised/oktoobri-alguse-rongide-soiduplaanimuutus-lukkub-edasi",
+      "latest_date": "2026-09-25",
+      "method": "page_dates",
+      "post_dates": [
+       "2026-09-25",
+       "2026-09-24",
+       "2026-09-11",
+       "2026-09-09",
+       "2026-09-04",
+       "2026-08-29",
+       "2026-08-26",
+       "2026-08-25"
+      ],
+      "posts_18m": 8,
+      "reason": null,
+      "state": "fresh"
+     }
+    },
+    "determinable_count": 2,
+    "domain": "elron.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 22093193,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "active",
+    "version": "decay-2026.09.3",
+    "warnings": []
+   },
+   "original_value": null,
+   "value_hash": "27278fd67f9337002462f7a06846b1001e212880b932ae228eb195d73cc01363",
+   "source_key": "web-decay:10520953",
+   "source_url": "https://elron.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10520953",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-09-25",
+   "original_value": "2026-09-25",
+   "value_hash": "a9b0a25ae5ed68d53f6571c0cb4e497bbf15ffb85b6d8fe3cd9950d7cf06f1bc",
+   "source_key": "web-decay:10520953",
+   "source_url": "https://elron.ee/elronist/uudised/oktoobri-alguse-rongide-soiduplaanimuutus-lukkub-edasi",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10520953",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:10520953",
+   "source_url": "https://elron.ee/toopakkumised",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10520953",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://elron.ee",
+   "original_value": "elron.ee",
+   "value_hash": "c6609c8cdeb037d1738c0ddd0dcd22c44af3603523601a6dde8419539df459e8",
+   "source_key": "web-decay:10520953",
+   "source_url": "https://elron.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10520953",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": null,
+      "from_year": null,
+      "series": [
+       [
+        2023,
+        57
+       ],
+       [
+        2024,
+        64
+       ]
+      ],
+      "state": "unknown",
+      "to_year": null
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 6735557,
+     "currency": "EUR",
+     "fiscal_year": 2024,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "register-listed website metropol.ee unreachable",
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "2528e670c2dacace65ebb61948283139a456e777b13c5eef4ebf88df7f709137",
+   "source_key": "web-decay:10545025",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10545025",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:19:02.178645+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": 5,
+      "evidence_url": "https://esfiltehno.ee/",
+      "state": "stale",
+      "year": 2021
+     },
+     "headcount": {
+      "change_pct": 0.0,
+      "from_year": 2021,
+      "series": [
+       [
+        2021,
+        28
+       ],
+       [
+        2022,
+        16
+       ],
+       [
+        2023,
+        28
+       ],
+       [
+        2024,
+        28
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2024
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": "2021-02-21T14:39:05Z",
+      "url": "https://esfiltehno.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "esfiltehno.ee",
+    "domain_verification": "registry_email",
+    "revenue": {
+     "amount": 596119,
+     "currency": "EUR",
+     "fiscal_year": 2024,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "9b48c65982d54d47bab3a8de0003d0683021177a8d048f5a1dee336ca80f7b3e",
+   "source_key": "web-decay:10548294",
+   "source_url": "https://esfiltehno.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10548294",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "footer_copyright_year",
+   "value_json": 2021,
+   "original_value": "2021",
+   "value_hash": "1bea20e1df19b12013976de2b5e0e3d1fb4ba088b59fe53642c324298b21ffd9",
+   "source_key": "web-decay:10548294",
+   "source_url": "https://esfiltehno.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10548294",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://esfiltehno.ee",
+   "original_value": "esfiltehno.ee",
+   "value_hash": "7a7e92298e832db96564c90c69e0ff74843ba38523c0aca594c2a325d6785485",
+   "source_key": "web-decay:10548294",
+   "source_url": "https://esfiltehno.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10548294",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": 8,
+      "evidence_url": "https://estpakplastik.ee/",
+      "state": "stale",
+      "year": 2018
+     },
+     "headcount": {
+      "change_pct": -2.5,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        40
+       ],
+       [
+        2023,
+        39
+       ],
+       [
+        2024,
+        40
+       ],
+       [
+        2025,
+        39
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://estpakplastik.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "estpakplastik.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 8897010,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "1efd3fcce327b3545af3c0667e3528d7c991768fdc0c01e301a57edb316c807c",
+   "source_key": "web-decay:10558691",
+   "source_url": "https://estpakplastik.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10558691",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "footer_copyright_year",
+   "value_json": 2018,
+   "original_value": "2018",
+   "value_hash": "152e69cf3c8e76c8d8b0aed924ddd1708e4c68624611af33d52c2c2814dd5df9",
+   "source_key": "web-decay:10558691",
+   "source_url": "https://estpakplastik.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10558691",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://estpakplastik.ee",
+   "original_value": "estpakplastik.ee",
+   "value_hash": "674e78963db7c13756f970e09f8fb37b3be6c7e3fe1667569f13cff51eefd425",
+   "source_key": "web-decay:10558691",
+   "source_url": "https://estpakplastik.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10558691",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 5.8,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        103
+       ],
+       [
+        2023,
+        108
+       ],
+       [
+        2024,
+        107
+       ],
+       [
+        2025,
+        109
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://spa.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": "spa.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 6901604,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "d5140a0b7683ae8a35745cba8b87a3f224cf09f0f74010e1e290ee567de5dfe5",
+   "source_key": "web-decay:10559955",
+   "source_url": "https://spa.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10559955",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://spa.ee",
+   "original_value": "spa.ee",
+   "value_hash": "bc6bfb44f7d09e35d704d82e5f7bc5e49391883da36f2c95dca239db02ea8a36",
+   "source_key": "web-decay:10559955",
+   "source_url": "https://spa.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10559955",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 7.3,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        41
+       ],
+       [
+        2023,
+        42
+       ],
+       [
+        2024,
+        43
+       ],
+       [
+        2025,
+        44
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": "2026-09-27T07:13:41Z",
+      "url": "https://ahren-transport.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": "ahren-transport.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 5120938,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "25ecb95dea83d4601ff09d847543132f684e9e435da61929c3a83c2ee60ea4b4",
+   "source_key": "web-decay:10573725",
+   "source_url": "https://ahren-transport.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10573725",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://ahren-transport.ee",
+   "original_value": "ahren-transport.ee",
+   "value_hash": "ec3fd945b34a0917d21d51281d60c3102b7498931e2bec1124786f3c889dbe74",
+   "source_key": "web-decay:10573725",
+   "source_url": "https://ahren-transport.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10573725",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 1.9,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        54
+       ],
+       [
+        2023,
+        53
+       ],
+       [
+        2024,
+        58
+       ],
+       [
+        2025,
+        55
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://julianus.ee/ettevottest/tule-meile-toole/",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://julianus.ee/"
+     },
+     "news": {
+      "age_months": 0,
+      "cadence_source": "news_page",
+      "evidence_url": "https://julianus.ee/uudised-pealeht/",
+      "latest_date": "2026-09-11",
+      "method": "page_dates",
+      "post_dates": [
+       "2026-09-11",
+       "2026-05-12",
+       "2026-04-16",
+       "2026-02-18",
+       "2026-01-20",
+       "2025-06-19",
+       "2025-04-09",
+       "2025-03-28",
+       "2024-12-17",
+       "2024-05-29"
+      ],
+      "posts_18m": 8,
+      "reason": null,
+      "state": "fresh"
+     }
+    },
+    "determinable_count": 2,
+    "domain": "julianus.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 5815312,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "watch",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "zero open roles and flat/shrinking register headcount at ≥€5M revenue; website otherwise maintained"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "d8532551077af95b6766cbf09b7aca7a79149978d4287955ef268c767c60f730",
+   "source_key": "web-decay:10686553",
+   "source_url": "https://julianus.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10686553",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-09-11",
+   "original_value": "2026-09-11",
+   "value_hash": "532d5d6f9a809deb934bb9936a2e29095f56ddb3ca4fd7f7db545dc0a1465c9d",
+   "source_key": "web-decay:10686553",
+   "source_url": "https://julianus.ee/uudised-pealeht/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10686553",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:10686553",
+   "source_url": "https://julianus.ee/ettevottest/tule-meile-toole/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10686553",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://julianus.ee",
+   "original_value": "julianus.ee",
+   "value_hash": "346b9e2103b4fb6f45165db8db30de561255cc9eec275a2bf3ab9ddc8aeebd5d",
+   "source_key": "web-decay:10686553",
+   "source_url": "https://julianus.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10686553",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -8.0,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        75
+       ],
+       [
+        2023,
+        76
+       ],
+       [
+        2024,
+        70
+       ],
+       [
+        2025,
+        69
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://www.trafox.fi/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": "trafox.fi",
+    "domain_verification": "registry_email",
+    "revenue": {
+     "amount": 5492597,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "careers page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "ca91297f3bea2a1dbd01558d556b65c870e20939dde4f38fbb70d5e55e450bb9",
+   "source_key": "web-decay:10703719",
+   "source_url": "https://www.trafox.fi/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10703719",
+   "observed_at": "2026-09-26T19:53:12.687629+00:00",
+   "valid_from": "2026-09-26T19:53:12.687629+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://trafox.fi",
+   "original_value": "trafox.fi",
+   "value_hash": "8c84ac551f9c7313d6af7d866b92c359ef4e1d611f8c545cf6c2d1a52cbecf75",
+   "source_key": "web-decay:10703719",
+   "source_url": "https://www.trafox.fi/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10703719",
+   "observed_at": "2026-09-26T19:53:12.687629+00:00",
+   "valid_from": "2026-09-26T19:36:42.228354+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 11.1,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        18
+       ],
+       [
+        2023,
+        18
+       ],
+       [
+        2024,
+        19
+       ],
+       [
+        2025,
+        20
+       ]
+      ],
+      "state": "growing",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://quantum.ee/"
+     },
+     "news": {
+      "age_months": 91,
+      "cadence_source": "news_page",
+      "evidence_url": "https://quantum.ee/uudised/",
+      "latest_date": "2019-02-06",
+      "method": "page_dates",
+      "post_dates": [
+       "2019-02-06",
+       "2017-08-15",
+       "2016-05-13",
+       "2015-11-16"
+      ],
+      "posts_18m": 0,
+      "reason": "no_recent_post",
+      "state": "stale"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "quantum.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 10940006,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "careers page not found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "118f8ecf81b189d4a740e5f85ec542aacbebc0eaa11913f28d0ca3d2a614191b",
+   "source_key": "web-decay:10832463",
+   "source_url": "https://quantum.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10832463",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2019-02-06",
+   "original_value": "2019-02-06",
+   "value_hash": "eed8320cd8a4487cecb5fe71f5af29ba15ce9cd9a98356002f7aa602dfc93207",
+   "source_key": "web-decay:10832463",
+   "source_url": "https://213.219.115.100/uudised/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10832463",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:19:02.178645+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://quantum.ee",
+   "original_value": "quantum.ee",
+   "value_hash": "2c1f10184b96612503e74a2e318a7ae975e2dba831f3955ce08827354580a074",
+   "source_key": "web-decay:10832463",
+   "source_url": "https://quantum.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10832463",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -26.8,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        317
+       ],
+       [
+        2023,
+        223
+       ],
+       [
+        2024,
+        220
+       ],
+       [
+        2025,
+        232
+       ]
+      ],
+      "state": "shrinking",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": "app.teamtailor.com",
+      "careers_url": "https://careers.aqg.se/",
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://www.aqgroup.com/"
+     },
+     "news": {
+      "age_months": 29,
+      "cadence_source": "sitemap",
+      "evidence_url": "http://aqgroup.com/en/investor/corporate-governance/articles-of-association",
+      "latest_date": "2024-04-19",
+      "method": "sitemap_lastmod",
+      "post_dates": [
+       "2024-04-19",
+       "2020-01-28",
+       "2020-01-21",
+       "2020-01-21",
+       "2020-01-15",
+       "2019-12-16",
+       "2016-09-02"
+      ],
+      "posts_18m": 0,
+      "reason": "no_recent_post",
+      "state": "stale"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "aqgroup.com",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 45272000,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": []
+   },
+   "original_value": null,
+   "value_hash": "728b1477d0de59c96ea53ca70faa56a46a83da89e4769a3bbe0db7ef4b1ac68f",
+   "source_key": "web-decay:10930852",
+   "source_url": "https://www.aqgroup.com/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10930852",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2024-04-19",
+   "original_value": "2024-04-19",
+   "value_hash": "7ebcaa45124fee160041d246f236b420d48105d1f3cfb3ce5161dd905f9c2749",
+   "source_key": "web-decay:10930852",
+   "source_url": "http://aqgroup.com/en/investor/corporate-governance/articles-of-association",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10930852",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://aqgroup.com",
+   "original_value": "aqgroup.com",
+   "value_hash": "4d13fdf8be49afb2dafaf1b6522feba40f21c9259688b5bf1e02b1f7f394abba",
+   "source_key": "web-decay:10930852",
+   "source_url": "https://www.aqgroup.com/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:10930852",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 25.0,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        76
+       ],
+       [
+        2023,
+        99
+       ],
+       [
+        2024,
+        101
+       ],
+       [
+        2025,
+        95
+       ]
+      ],
+      "state": "growing",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://www.kalevspa.ee/kalev-spa/inimesed/vabad-tookohad/",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://www.kalevspa.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "kalevspa.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 7038268,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "ecc4417cfed32d5c7c84a32bb5d6533a08744396d688a7eee2416e5b35566d7f",
+   "source_key": "web-decay:11053554",
+   "source_url": "https://www.kalevspa.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11053554",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:11053554",
+   "source_url": "https://www.kalevspa.ee/kalev-spa/inimesed/vabad-tookohad/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11053554",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://kalevspa.ee",
+   "original_value": "kalevspa.ee",
+   "value_hash": "1fd5ac9d336aad35b7814c6d8d8ae8afb53b419ec8a5eb31ac0f19177a8fde8e",
+   "source_key": "web-decay:11053554",
+   "source_url": "https://www.kalevspa.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11053554",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -10.5,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        95
+       ],
+       [
+        2023,
+        85
+       ],
+       [
+        2024,
+        89
+       ],
+       [
+        2025,
+        85
+       ]
+      ],
+      "state": "shrinking",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://combitrans.ee/toopakkumised/",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://combitrans.ee/"
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "combitrans.ee",
+    "domain_verification": "registry_email",
+    "revenue": {
+     "amount": 13446534,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "news page not found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "4b0b62d98154a6c5f7f6e7b9de6fd7d29473abab88440b321b5080d4effd87e1",
+   "source_key": "web-decay:11172187",
+   "source_url": "https://combitrans.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11172187",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:11172187",
+   "source_url": "https://combitrans.ee/toopakkumised/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11172187",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://combitrans.ee",
+   "original_value": "combitrans.ee",
+   "value_hash": "d28451b7d00cf89c53143d1aeeb167c8675fe0baadd5dd0ddf0a6b5c8b4e8438",
+   "source_key": "web-decay:11172187",
+   "source_url": "https://combitrans.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11172187",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 3.0,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        133
+       ],
+       [
+        2023,
+        136
+       ],
+       [
+        2024,
+        137
+       ],
+       [
+        2025,
+        137
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": "2026-09-27T09:45:46Z",
+      "url": "https://www.aqvahotels.ee/"
+     },
+     "news": {
+      "age_months": 0,
+      "cadence_source": "news_page",
+      "evidence_url": "https://www.aqvahotels.ee/uudised/",
+      "latest_date": "2026-09-15",
+      "method": "page_dates",
+      "post_dates": [
+       "2026-09-15",
+       "2026-09-14",
+       "2026-09-07",
+       "2026-08-27",
+       "2025-08-27"
+      ],
+      "posts_18m": 5,
+      "reason": null,
+      "state": "fresh"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "aqvahotels.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 8111303,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "careers page not found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "75946993bfd7ebc6de7699483e4abbb4f12b3aea2c055c9ae8b4ceff962e5572",
+   "source_key": "web-decay:11236415",
+   "source_url": "https://www.aqvahotels.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11236415",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-09-15",
+   "original_value": "2026-09-15",
+   "value_hash": "918ad75fe37202c6d8e306f4019d5fea852e72fb75aae73cff50f3d1cd6e2e3a",
+   "source_key": "web-decay:11236415",
+   "source_url": "https://www.aqvahotels.ee/uudised/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11236415",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://aqvahotels.ee",
+   "original_value": "aqvahotels.ee",
+   "value_hash": "4b87e427d4c3e091a5deda10f68f3b6ba2c0e4f212c7853e7dbd67ba0e00ce9f",
+   "source_key": "web-decay:11236415",
+   "source_url": "https://www.aqvahotels.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11236415",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:45:45.407938+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": 0,
+      "evidence_url": "https://alwark.ee/",
+      "state": "fresh",
+      "year": 2026
+     },
+     "headcount": {
+      "change_pct": 8.1,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        37
+       ],
+       [
+        2023,
+        39
+       ],
+       [
+        2024,
+        39
+       ],
+       [
+        2025,
+        40
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://alwark.ee/karjaar-alwarkis/",
+      "open_roles": 0,
+      "state": "zero_roles"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://alwark.ee/"
+     },
+     "news": {
+      "age_months": 6,
+      "cadence_source": "news_page",
+      "evidence_url": "https://alwark.ee/uudised/",
+      "latest_date": "2026-03-01",
+      "method": "meta",
+      "post_dates": [
+       "2026-03-01"
+      ],
+      "posts_18m": 1,
+      "reason": "low_cadence",
+      "state": "stale"
+     }
+    },
+    "determinable_count": 3,
+    "domain": "alwark.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 11207795,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 2,
+    "verdict": "coasting",
+    "version": "decay-2026.09.3",
+    "warnings": []
+   },
+   "original_value": null,
+   "value_hash": "463768b883286c20861d9c2bd43cdf8b1eb90de870a5477d8bcc4f209548f233",
+   "source_key": "web-decay:11341282",
+   "source_url": "https://alwark.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11341282",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "footer_copyright_year",
+   "value_json": 2026,
+   "original_value": "2026",
+   "value_hash": "158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab",
+   "source_key": "web-decay:11341282",
+   "source_url": "https://alwark.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11341282",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-03-01",
+   "original_value": "2026-03-01",
+   "value_hash": "db9b71c8e01cc41403791b3dbd7265c3beb7db273f0f4f4f944fa7677ca35fe4",
+   "source_key": "web-decay:11341282",
+   "source_url": "https://alwark.ee/uudised/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11341282",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 0,
+   "original_value": "0",
+   "value_hash": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9",
+   "source_key": "web-decay:11341282",
+   "source_url": "https://alwark.ee/karjaar-alwarkis/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11341282",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://alwark.ee",
+   "original_value": "alwark.ee",
+   "value_hash": "cca85a42aee6a7c562ede8008c658f40788744329a8f1a36d9702d46c681cabb",
+   "source_key": "web-decay:11341282",
+   "source_url": "https://alwark.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11341282",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 45.5,
+      "from_year": 2021,
+      "series": [
+       [
+        2021,
+        33
+       ],
+       [
+        2022,
+        50
+       ],
+       [
+        2023,
+        47
+       ],
+       [
+        2024,
+        48
+       ]
+      ],
+      "state": "growing",
+      "to_year": 2024
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://hanzadent.ee/"
+     },
+     "news": {
+      "age_months": 20,
+      "cadence_source": "news_page",
+      "evidence_url": "https://hanzadent.ee/blogid/",
+      "latest_date": "2025-01-18",
+      "method": "jsonld",
+      "post_dates": [
+       "2025-01-18",
+       "2024-12-07"
+      ],
+      "posts_18m": 0,
+      "reason": "no_recent_post",
+      "state": "stale"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "hanzadent.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 5210031,
+     "currency": "EUR",
+     "fiscal_year": 2024,
+     "value_type": "reported"
+    },
+    "stale_count": 1,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "careers page not found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "eb1cfbeef9894e4e5b0f501b24f3ae7449f0b0083a7744e1b49d32ab502bbb81",
+   "source_key": "web-decay:11411717",
+   "source_url": "https://hanzadent.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11411717",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2025-01-18",
+   "original_value": "2025-01-18",
+   "value_hash": "28383813b2019b1492abcf88f42c96d8dd5f49e807e7ff6765586c29af81d06f",
+   "source_key": "web-decay:11411717",
+   "source_url": "https://hanzadent.ee/blogid/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11411717",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://hanzadent.ee",
+   "original_value": "hanzadent.ee",
+   "value_hash": "498f7d059aaa83f5e7ff6f82410085a5d5fcffe94e919b781f9c68da3d129ab7",
+   "source_key": "web-decay:11411717",
+   "source_url": "https://hanzadent.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11411717",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -26.9,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        52
+       ],
+       [
+        2023,
+        51
+       ],
+       [
+        2024,
+        39
+       ],
+       [
+        2025,
+        38
+       ]
+      ],
+      "state": "shrinking",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": "https://btisolatsioon.ee/toopakkumine/",
+      "open_roles": 1,
+      "state": "hiring"
+     },
+     "last_modified": {
+      "header": null,
+      "url": "https://btisolatsioon.ee/"
+     },
+     "news": {
+      "age_months": 1,
+      "cadence_source": "sitemap",
+      "evidence_url": "https://btisolatsioon.ee/ru/%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B8/%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B-%D0%BF%D0%BE-%D1%82%D0%B5%D0%BF%D0%BB%D0%BE%D0%B8%D0%B7%D0%BE%D0%BB%D1%8F%D1%86%D0%B8%D0%B8-%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D1%8B-%D0%B3%D0%B0%D0%B7%D0%BE/",
+      "latest_date": "2026-08-07",
+      "method": "sitemap_lastmod",
+      "post_dates": [
+       "2026-08-07",
+       "2026-08-07",
+       "2026-08-07",
+       "2025-03-07",
+       "2025-03-06",
+       "2025-03-06",
+       "2025-01-20",
+       "2025-01-17",
+       "2025-01-17",
+       "2024-12-12"
+      ],
+      "posts_18m": 3,
+      "reason": null,
+      "state": "fresh"
+     }
+    },
+    "determinable_count": 2,
+    "domain": "btisolatsioon.ee",
+    "domain_verification": "registry_www",
+    "revenue": {
+     "amount": 5100454,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "active",
+    "version": "decay-2026.09.3",
+    "warnings": []
+   },
+   "original_value": null,
+   "value_hash": "11b59fba6f99c8b1f4624ffa98f2882e47cc5225b67b0c555f84682521383109",
+   "source_key": "web-decay:11834139",
+   "source_url": "https://btisolatsioon.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11834139",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-08-07",
+   "original_value": "2026-08-07",
+   "value_hash": "56e2f54764773ca7960c379f702d8b5f5c01ff8f618bc16cc5d837e56d094054",
+   "source_key": "web-decay:11834139",
+   "source_url": "https://btisolatsioon.ee/ru/%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B8/%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B-%D0%BF%D0%BE-%D1%82%D0%B5%D0%BF%D0%BB%D0%BE%D0%B8%D0%B7%D0%BE%D0%BB%D1%8F%D1%86%D0%B8%D0%B8-%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D1%8B-%D0%B3%D0%B0%D0%B7%D0%BE/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11834139",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "open_positions",
+   "value_json": 1,
+   "original_value": "1",
+   "value_hash": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+   "source_key": "web-decay:11834139",
+   "source_url": "https://btisolatsioon.ee/toopakkumine/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11834139",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://btisolatsioon.ee",
+   "original_value": "btisolatsioon.ee",
+   "value_hash": "e6ba530ffbcab292609f58c7dc045c99f43a32f561c58b820a0d05ee0ca8968b",
+   "source_key": "web-decay:11834139",
+   "source_url": "https://btisolatsioon.ee/",
+   "base_confidence": "estimated",
+   "confidence": "multi-source",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:11834139",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 1500.0,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        2
+       ],
+       [
+        2023,
+        31
+       ],
+       [
+        2024,
+        35
+       ],
+       [
+        2025,
+        32
+       ]
+      ],
+      "state": "growing",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 5329771,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "6a0b3c3d564fcc04c03a1b164692803d64aafa127a4ea607249401e378981724",
+   "source_key": "web-decay:12043532",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:12043532",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 5.9,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        51
+       ],
+       [
+        2023,
+        52
+       ],
+       [
+        2024,
+        55
+       ],
+       [
+        2025,
+        54
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 20285264,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "42d22f3e94376e55b2acc4059c0c0ebf22574cf803f45f915e00795c18f607c3",
+   "source_key": "web-decay:12650045",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:12650045",
+   "observed_at": "2026-09-27T09:19:02.178645+00:00",
+   "valid_from": "2026-09-27T09:19:02.178645+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 2.2,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        136
+       ],
+       [
+        2023,
+        137
+       ],
+       [
+        2024,
+        138
+       ],
+       [
+        2025,
+        139
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 37808000,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "1ecc1c7a4fbeea08029d694204b9da4d77fb323036213ccca665485dae15f650",
+   "source_key": "web-decay:12678055",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:12678055",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -12.9,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        31
+       ],
+       [
+        2023,
+        31
+       ],
+       [
+        2024,
+        30
+       ],
+       [
+        2025,
+        27
+       ]
+      ],
+      "state": "shrinking",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": "2026-09-26T11:24:14Z",
+      "url": "https://grader.ee/"
+     },
+     "news": {
+      "age_months": 1,
+      "cadence_source": "news_page",
+      "evidence_url": "https://grader.ee/uudised/",
+      "latest_date": "2026-08-21",
+      "method": "page_dates",
+      "post_dates": [
+       "2026-08-21",
+       "2026-06-16",
+       "2026-01-02",
+       "2025-12-17",
+       "2025-06-16",
+       "2025-06-13",
+       "2024-05-23",
+       "2024-05-07",
+       "2024-05-02",
+       "2024-01-14"
+      ],
+      "posts_18m": 6,
+      "reason": null,
+      "state": "fresh"
+     }
+    },
+    "determinable_count": 1,
+    "domain": "grader.ee",
+    "domain_verification": "registry_email",
+    "revenue": {
+     "amount": 5700203,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "careers page not found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "0eb172937cd9d4d8e2e16d88ae4b40ca707307475f6821974b34acbf24f3b967",
+   "source_key": "web-decay:12759919",
+   "source_url": "https://grader.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:12759919",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "latest_news_date",
+   "value_json": "2026-08-21",
+   "original_value": "2026-08-21",
+   "value_hash": "041c2b803f40ad97a2d4f93d20a89a4dbec6548b3291281b49212e64dc85cd1b",
+   "source_key": "web-decay:12759919",
+   "source_url": "https://grader.ee/uudised/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:12759919",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "website",
+   "value_json": "https://grader.ee",
+   "original_value": "grader.ee",
+   "value_hash": "92ecace8780622be3af0396af623cba130ff5ba254d582b949ec434f91a3416e",
+   "source_key": "web-decay:12759919",
+   "source_url": "https://grader.ee/",
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:12759919",
+   "observed_at": "2026-09-27T09:39:37.053243+00:00",
+   "valid_from": "2026-09-27T09:39:37.053243+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 15.6,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        77
+       ],
+       [
+        2023,
+        84
+       ],
+       [
+        2024,
+        90
+       ],
+       [
+        2025,
+        89
+       ]
+      ],
+      "state": "growing",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 6639515,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "f7b00e2fe28950d201c34bc3d470eda19c1db01fa32bc3eca3688442c4e787e6",
+   "source_key": "web-decay:14191794",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:14191794",
+   "observed_at": "2026-09-27T09:45:45.407938+00:00",
+   "valid_from": "2026-09-27T09:19:02.178645+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": -3.5,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        86
+       ],
+       [
+        2023,
+        84
+       ],
+       [
+        2024,
+        84
+       ],
+       [
+        2025,
+        83
+       ]
+      ],
+      "state": "flat",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 45301000,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "d8f93d8d6d2b7b5eb89f8b3a6b10bb88cd628093d7a7d5da17db78e3e65d02d7",
+   "source_key": "web-decay:14975047",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:14975047",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  },
+  {
+   "field_name": "digital_decay_signal",
+   "value_json": {
+    "checks": {
+     "copyright": {
+      "age_years": null,
+      "evidence_url": null,
+      "state": "unknown",
+      "year": null
+     },
+     "headcount": {
+      "change_pct": 50.0,
+      "from_year": 2022,
+      "series": [
+       [
+        2022,
+        80
+       ],
+       [
+        2023,
+        70
+       ],
+       [
+        2024,
+        90
+       ],
+       [
+        2025,
+        120
+       ]
+      ],
+      "state": "growing",
+      "to_year": 2025
+     },
+     "hiring": {
+      "ats": null,
+      "careers_url": null,
+      "open_roles": null,
+      "state": "unknown"
+     },
+     "last_modified": {
+      "header": null,
+      "url": null
+     },
+     "news": {
+      "age_months": null,
+      "cadence_source": null,
+      "evidence_url": null,
+      "latest_date": null,
+      "method": null,
+      "post_dates": [],
+      "posts_18m": null,
+      "reason": null,
+      "state": "unknown"
+     }
+    },
+    "determinable_count": 0,
+    "domain": null,
+    "domain_verification": "unverified",
+    "revenue": {
+     "amount": 16927996,
+     "currency": "EUR",
+     "fiscal_year": 2025,
+     "value_type": "reported"
+    },
+    "stale_count": 0,
+    "verdict": "insufficient_evidence",
+    "version": "decay-2026.09.3",
+    "warnings": [
+     "no verified company website found",
+     "no dated news/press found"
+    ]
+   },
+   "original_value": null,
+   "value_hash": "c2cc22a5b260885c2c8f7a82dd2a6e7e080f831ab042d6b25a760ef6240bf57e",
+   "source_key": "web-decay:16082036",
+   "source_url": null,
+   "base_confidence": "estimated",
+   "confidence": "estimated",
+   "usage_policy": "internal-only",
+   "review_status": "unreviewed",
+   "code_system": null,
+   "code_version": null,
+   "registry_id": "EE:16082036",
+   "observed_at": "2026-09-27T09:49:26.187295+00:00",
+   "valid_from": "2026-09-27T09:49:26.187295+00:00"
+  }
+ ],
+ "domains": [
+  {
+   "registry_id": "EE:10002098",
+   "value": "217.146.69.10"
+  },
+  {
+   "registry_id": "EE:10002098",
+   "value": "viiking.ee"
+  },
+  {
+   "registry_id": "EE:10067755",
+   "value": "farwell.ee"
+  },
+  {
+   "registry_id": "EE:10097905",
+   "value": "hevea.ee"
+  },
+  {
+   "registry_id": "EE:10107710",
+   "value": "178.62.23.10"
+  },
+  {
+   "registry_id": "EE:10107710",
+   "value": "pmc.ee"
+  },
+  {
+   "registry_id": "EE:10149813",
+   "value": "rappin.ee"
+  },
+  {
+   "registry_id": "EE:10166658",
+   "value": "cramo.ee"
+  },
+  {
+   "registry_id": "EE:10234070",
+   "value": "217.146.71.89"
+  },
+  {
+   "registry_id": "EE:10234070",
+   "value": "abmedical.ee"
+  },
+  {
+   "registry_id": "EE:10238205",
+   "value": "makroflex.ee"
+  },
+  {
+   "registry_id": "EE:10242052",
+   "value": "juhanipuukool.ee"
+  },
+  {
+   "registry_id": "EE:10275471",
+   "value": "spaestonia.ee"
+  },
+  {
+   "registry_id": "EE:10344321",
+   "value": "sakumaja.ee"
+  },
+  {
+   "registry_id": "EE:10349904",
+   "value": "217.146.69.48"
+  },
+  {
+   "registry_id": "EE:10349904",
+   "value": "tarplan.ee"
+  },
+  {
+   "registry_id": "EE:10396849",
+   "value": "23.49.110.219"
+  },
+  {
+   "registry_id": "EE:10396849",
+   "value": "eshop.wuerth.ee"
+  },
+  {
+   "registry_id": "EE:10520953",
+   "value": "elron.ee"
+  },
+  {
+   "registry_id": "EE:10558691",
+   "value": "estpakplastik.ee"
+  },
+  {
+   "registry_id": "EE:10559955",
+   "value": "spa.ee"
+  },
+  {
+   "registry_id": "EE:10573725",
+   "value": "ahren-transport.ee"
+  },
+  {
+   "registry_id": "EE:10686553",
+   "value": "217.146.69.51"
+  },
+  {
+   "registry_id": "EE:10686553",
+   "value": "julianus.ee"
+  },
+  {
+   "registry_id": "EE:10832463",
+   "value": "213.219.115.100"
+  },
+  {
+   "registry_id": "EE:10832463",
+   "value": "quantum.ee"
+  },
+  {
+   "registry_id": "EE:11053554",
+   "value": "kalevspa.ee"
+  },
+  {
+   "registry_id": "EE:11236415",
+   "value": "217.146.69.21"
+  },
+  {
+   "registry_id": "EE:11236415",
+   "value": "aqvahotels.ee"
+  },
+  {
+   "registry_id": "EE:11341282",
+   "value": "alwark.ee"
+  },
+  {
+   "registry_id": "EE:11411717",
+   "value": "217.146.69.13"
+  },
+  {
+   "registry_id": "EE:11411717",
+   "value": "hanzadent.ee"
+  },
+  {
+   "registry_id": "EE:11834139",
+   "value": "188.68.57.54"
+  },
+  {
+   "registry_id": "EE:11834139",
+   "value": "btisolatsioon.ee"
+  }
+ ]
+}
