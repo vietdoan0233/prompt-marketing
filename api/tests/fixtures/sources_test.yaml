@@ -33,7 +33,11 @@ sources:
     connector_type: ee_ariregister
     connector_config: {live: false}
     enabled: true
-    allowed_fields: [legal_name, registry_id, vat_id, city, registry_status, industry_code, employees]
+    allowed_fields:
+      [
+        legal_name, registry_id, vat_id, city, registry_status, industry_code, employees,
+        share_capital, currency,
+      ]
     base_confidence: verified
     usage_policy: internal-only
     retention_days: 30

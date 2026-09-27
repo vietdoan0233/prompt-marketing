@@ -43,6 +43,9 @@ export function fmtValue(v: unknown): string {
       const range = fmtEmployees(o.min as number | null, (o.max as number | null) ?? null);
       return o.currency ? `${range} ${o.currency}` : range;
     }
+    if ("amount" in o) {
+      return fmtMoney(o.amount as number | string | null, (o.currency as string) ?? "EUR");
+    }
     return JSON.stringify(v);
   }
   return String(v);

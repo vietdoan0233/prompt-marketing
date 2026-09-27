@@ -1,5 +1,8 @@
 import os
+import shutil
 from collections.abc import Iterator
+from pathlib import Path
+from uuid import uuid4
 
 import pytest
 import yaml
@@ -86,6 +89,15 @@ def source(session: Session, source_id: str) -> Source:
     s = session.get(Source, source_id)
     assert s is not None
     return s
+
+
+@pytest.fixture
+def cache_dir() -> Iterator[Path]:
+    """A throwaway local-manifest cache directory for Estonia importer tests."""
+    path = Path(__file__).parent / f".ee-import-cache-{uuid4().hex}"
+    path.mkdir()
+    yield path
+    shutil.rmtree(path)
 
 
 MERGERO_HEADER = (

@@ -4,12 +4,9 @@ import csv
 import hashlib
 import io
 import json
-import shutil
 import zipfile
 from pathlib import Path
-from uuid import uuid4
 
-import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -28,14 +25,7 @@ from app.services.ee_import import import_estonia
 
 REGISTRY_CODE = "10065762"
 PUBLISHED = "2026-09-03T11:04:00+00:00"
-
-
-@pytest.fixture
-def cache_dir():
-    path = Path(__file__).parent / f".ee-import-cache-{uuid4().hex}"
-    path.mkdir()
-    yield path
-    shutil.rmtree(path)
+# `cache_dir` (a throwaway local-manifest cache directory) is a shared fixture in conftest.py.
 
 
 def _csv(headers: list[str], rows: list[list[str]]) -> str:

@@ -2,7 +2,7 @@
 
 ## Mission and scope
 
-Maintain an internal, provenance-linked company database for Estonia. The production deployment is Estonia-only (`ACTIVE_COUNTRIES=EE`, region `baltics`) and has one enabled ingestion source: the official Estonian e-Business Register bulk-data portal (`ee-ariregister`). The application imports company identity and registry status, registered-address versions, annual-report facts, and financial rows. It does not scrape company pages or annual-report PDFs.
+Maintain an internal, provenance-linked company database for Estonia. The production deployment is Estonia-only (`ACTIVE_COUNTRIES=EE`, region `baltics`) and has one enabled ingestion source: the official Estonian e-Business Register bulk-data portal (`ee-ariregister`). The application imports company identity and registry status, registered-address versions, annual-report facts, financial rows, current share capital, and current shareholders. It does not scrape company pages or annual-report PDFs, and it does not import the beneficial-owner (kasusaajad) file.
 
 Read `ARCHITECTURE.md` before making implementation decisions. The source catalog and this file must stay aligned with the Estonia-only production scope.
 
@@ -15,20 +15,21 @@ Read `ARCHITECTURE.md` before making implementation decisions. The source catalo
 5. Preserve official legal status as a source-backed `registry_status` fact; do not infer it from company names or other fields.
 6. Make imports idempotent using stable source keys and content hashes. Version address and fact changes rather than silently overwriting evidence.
 7. Keep the minimum evidence needed to reproduce a record and expire raw snapshots according to configuration.
-8. Treat any contact fields as personal data. Keep them source-backed; never create or enrich personal details from naming conventions.
+8. Treat any contact fields as personal data. Keep them source-backed; never create or enrich personal details from naming conventions. A person shareholder's name and holding are personal data too: store them as source-backed, but never read the register's national ID code, its one-way hash, birth date, or home address for a person shareholder into any table, snapshot, or log, regardless of what the source file contains.
 9. Use reported FTE from the 2024 or 2025 indicator datasets as the default ≥20 employee scope filter. Keep previously known companies visible with an updated qualification status when newer reported FTE falls below the threshold.
 10. The approved production source is the official Estonian e-Business Register bulk-data portal. Do not wire Nordic, DACH, company-website, or unapproved social-network connectors into the Estonia production workflow.
 
 ## Data model and API
 
 - `companies` stores the consolidated company profile and qualification status.
-- `company_facts` stores versioned facts such as `registry_status`, headcount, registry ID, and industry code with source provenance.
+- `company_facts` stores versioned facts such as `registry_status`, headcount, registry ID, industry code, and share capital (`{amount, currency}`) with source provenance.
 - `registered_addresses` stores versioned official registered seats (`asukoht`), not operating locations.
+- `company_shareholders` stores the current shareholder set (osanikud), versioned as one group per company like a registered address. A person shareholder keeps only a name, role, and holding; a legal-entity shareholder also keeps its (or a foreign entity's) registry code.
 - `company_financials` stores annual report values by filing, statement scope, and explicit period length. Estonia rows use EUR. Period days and the short/standard/long class are exposed; values are never annualized. Reported EBITDA takes precedence, otherwise it is derived only when operating profit and depreciation plus impairment are both present; the formula and `value_type="derived"` are recorded.
 - EMTAK code facts retain the official `emtak_version` metadata. Never infer taxonomy version from fiscal year.
 - `source_snapshots`, `ingestion_runs`, `ingestion_records`, and `audit_events` preserve dataset evidence and import outcomes.
 
-Company detail is served by `GET /companies/{id}`. It includes the company summary and registry status, source-backed facts, registered address, financials, identifiers, warnings, and review history. Dedicated time-series endpoints are `GET /companies/{id}/financials` and `GET /companies/{id}/registered-address`. Other relevant routes include `GET /companies`, `GET /ingestion-runs`, and `GET /ingestion-runs/{id}`.
+Company detail is served by `GET /companies/{id}`. It includes the company summary and registry status, source-backed facts, registered address, current shareholders, financials, identifiers, warnings, and review history. Dedicated time-series endpoints are `GET /companies/{id}/financials`, `GET /companies/{id}/registered-address`, and `GET /companies/{id}/shareholders`. Other relevant routes include `GET /companies`, `GET /ingestion-runs`, and `GET /ingestion-runs/{id}`.
 
 ## Working conventions
 
@@ -48,4 +49,4 @@ Keep raw snapshots short-lived and configurable. Redact personal contact data an
 
 ## Expected quality bar
 
-Run the requested formatter, linter, type checker, migration consistency check, and tests. Verify the Estonia import lifecycle, cache integrity and missing-year handling, idempotency, address versioning, financial derivation and currency, status exposure, orphan rejection, permissions, and provenance. Keep setup instructions usable from a clean checkout; explain that the ignored `api/data/` cache must be downloaded once or copied from a verified cache before offline `--from-cache` use.
+Run the requested formatter, linter, type checker, migration consistency check, and tests. Verify the Estonia import lifecycle, cache integrity and missing-year handling, idempotency, address versioning, share-capital and shareholder versioning, that no person shareholder's ID code, ID hash, birth date, or home address ever reaches a table, snapshot, or API response, financial derivation and currency, status exposure, orphan rejection, permissions, and provenance. Keep setup instructions usable from a clean checkout; explain that the ignored `api/data/` cache must be downloaded once or copied from a verified cache before offline `--from-cache` use.

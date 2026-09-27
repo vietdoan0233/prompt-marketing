@@ -5,14 +5,26 @@ No company pages or annual-report PDFs are scraped. The connector:
    date, e.g. `4.2024_aruannete_elemendid_kuni_31082026.zip`);
 2. downloads a file only when the portal copy changed (Last-Modified / size), keeping a manifest with the
    SHA-256 of every file so each imported fact can name the exact dataset file it came from;
-3. streams the semicolon-separated CSVs inside the zips.
+3. streams the semicolon-separated CSVs, or the single JSON array, inside the zips.
 
 Datasets used:
-- basic data   `ettevotja_rekvisiidid__lihtandmed.csv.zip` — name, registry code, legal form, VAT, status,
-                                                            registered address
-- reports      `1.aruannete_yldandmed_kuni_*.zip`          — annual report ID and period
-- activity     `2.EMTAK_myygitulu_kuni_*.zip`              — revenue split by EMTAK; main activity flag
-- indicators   `4.<year>_aruannete_elemendid_kuni_*.zip`   — key indicators per report (long format)
+- basic data   `ettevotja_rekvisiidid__lihtandmed.csv.zip`   — name, registry code, legal form, VAT,
+                                                              status, registered address
+- reports      `1.aruannete_yldandmed_kuni_*.zip`            — annual report ID and period
+- activity     `2.EMTAK_myygitulu_kuni_*.zip`                — revenue split by EMTAK; main activity flag
+- indicators   `4.<year>_aruannete_elemendid_kuni_*.zip`     — key indicators per report (long format)
+- general      `avaandmed/ettevotja_rekvisiidid__yldandmed.json.zip`  — current share capital (`kapitalid`)
+                                                              among other registry-card history
+- shareholders `avaandmed/ettevotja_rekvisiidid__osanikud.json.zip`   — current shareholders (`osanikud`);
+                                                              only name, role and holding are read for a
+                                                              person — the file's national ID code, its
+                                                              hash, birth date and home address are never
+                                                              read into the importer, so they can never
+                                                              reach storage
+
+The general and shareholders files are optional: an offline `--from-cache` manifest that predates them, or
+a portal that temporarily drops one, still lets the rest of the import run; the affected section is skipped
+with a run warning instead of failing the run.
 """
 
 import csv
@@ -26,21 +38,26 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from pathlib import Path
+from typing import Any
 
 from app.connectors.base import ConnectorError
 from app.connectors.http import PoliteClient
 
 PORTAL = "https://avaandmed.ariregister.rik.ee"
 DOWNLOAD_PAGE = f"{PORTAL}/et/avaandmete-allalaadimine"
-EE_PARSER_VERSION = "ee-ariregister-2026.09.3"
+EE_PARSER_VERSION = "ee-ariregister-2026.09.4"
 MANIFEST = "manifest.json"
 QUALIFICATION_YEARS = {2024, 2025}
+# Optional dataset kinds: their absence from a discovered or cached file set never fails the run.
+OPTIONAL_KINDS = {"general", "shareholders"}
 
 _PATTERNS = {
     "basic": re.compile(r"/sites/default/files/avaandmed/ettevotja_rekvisiidid__lihtandmed\.csv\.zip"),
     "reports": re.compile(r"/sites/default/files/1\.aruannete_yldandmed_kuni_\d{8}\.zip"),
     "activity": re.compile(r"/sites/default/files/2\.EMTAK_myygitulu_kuni_\d{8}\.zip"),
     "indicators": re.compile(r"/sites/default/files/4\.(\d{4})_aruannete_elemendid_kuni_\d{8}\.zip"),
+    "general": re.compile(r"/sites/default/files/avaandmed/ettevotja_rekvisiidid__yldandmed\.json\.zip"),
+    "shareholders": re.compile(r"/sites/default/files/avaandmed/ettevotja_rekvisiidid__osanikud\.json\.zip"),
 }
 
 
@@ -219,3 +236,55 @@ def iter_rows(file: DatasetFile) -> Iterator[dict[str, str]]:
             raise ConnectorError(f"{file.name}: expected exactly one CSV, found {len(members)}")
         with zf.open(members[0]) as fh:
             yield from csv.DictReader(io.TextIOWrapper(fh, encoding="utf-8-sig", newline=""), delimiter=";")
+
+
+def iter_json_records(file: DatasetFile) -> Iterator[dict[str, Any]]:
+    """Stream a top-level JSON array of one object per company, without loading the whole file.
+
+    The general and shareholders files are hundreds of MB to several GB uncompressed. This reads the
+    zip's single JSON member in chunks and decodes one top-level array element at a time, so memory use
+    stays bounded by one company's record rather than the whole file.
+    """
+    try:
+        zf = zipfile.ZipFile(file.path)
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise ConnectorError(f"{file.name} is not a readable zip: {exc}") from exc
+    with zf:
+        members = [i for i in zf.infolist() if i.filename.lower().endswith(".json")]
+        if len(members) != 1:
+            raise ConnectorError(f"{file.name}: expected exactly one JSON file, found {len(members)}")
+        decoder = json.JSONDecoder()
+        ws_commas = " \t\r\n,"
+        with zf.open(members[0]) as fh:
+            reader = io.TextIOWrapper(fh, encoding="utf-8", errors="replace", newline="")
+            buf = ""
+            started = False
+
+            def _more() -> str:
+                return reader.read(1 << 20)
+
+            while True:
+                buf = buf.lstrip(ws_commas)
+                if not started:
+                    if not buf:
+                        more = _more()
+                        if not more:
+                            raise ConnectorError(f"{file.name}: empty JSON file")
+                        buf += more
+                        continue
+                    if buf[0] != "[":
+                        raise ConnectorError(f"{file.name}: expected a top-level JSON array")
+                    buf = buf[1:].lstrip(ws_commas)
+                    started = True
+                if buf.startswith("]"):
+                    return
+                try:
+                    obj, end = decoder.raw_decode(buf)
+                except json.JSONDecodeError:
+                    more = _more()
+                    if not more:
+                        raise ConnectorError(f"{file.name}: truncated JSON array") from None
+                    buf += more
+                    continue
+                yield obj
+                buf = buf[end:]

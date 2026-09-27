@@ -4,7 +4,7 @@
 
 This internal application imports and presents source-backed company information for Estonia. Production configuration is Estonia-only (`ACTIVE_COUNTRIES=EE`) in the `baltics` region. The only enabled production ingestion source is the official [Estonian e-Business Register open-data portal](https://avaandmed.ariregister.rik.ee/et/avaandmete-allalaadimine), connector ID `ee-ariregister`.
 
-The importer uses the portal's basic company, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs. It does not scrape company websites, download annual-report PDFs, or ingest shareholder, beneficial-owner, or personal-register datasets. If event data is added later, legal effective dates, registry-entry dates, and ingestion dates must remain distinct; the 1 September 2023 ownership-register change is a structural break and its bulk of resulting entries must not be presented as ordinary acquisitions without corroboration. Source permission and allowed fields are checked before an import.
+The importer uses the portal's basic company, annual-report metadata, EMTAK activity, and annual indicator CSV ZIPs, plus two optional JSON ZIPs: general company data (current share capital) and shareholders (osanikud). It does not scrape company websites, download annual-report PDFs, or ingest the beneficial-owner (kasusaajad) or personal-register datasets. A person shareholder is stored by name, role, and holding only: the official file's national ID code, its one-way hash, birth date, and home address are never read by the importer, so they can never reach storage. If event data is added later, legal effective dates, registry-entry dates, and ingestion dates must remain distinct; the 1 September 2023 ownership-register change is a structural break and its bulk of resulting entries must not be presented as ordinary acquisitions without corroboration. Source permission and allowed fields are checked before an import.
 
 ## System shape
 
@@ -13,11 +13,12 @@ Official RIK bulk files or verified local cache
                     |
            ee-ariregister resolver
                     |
-          Estonia import service
-          /         |          \
- company facts  address versions  annual financials
-          \         |          /
-            FastAPI + SQLAlchemy
+                Estonia import service
+          /            |            |            \
+ company facts     address       annual       shareholders
+ (+ share capital)  versions    financials
+          \            |            |            /
+                  FastAPI + SQLAlchemy
                     |
         Next.js company database UI
 ```
@@ -32,7 +33,11 @@ Stores the consolidated company profile, identity, headcount range, review state
 
 ### `company_facts`
 
-Stores versioned, source-backed claims including `registry_status`, legal name, registry ID, headcount, and industry code. Each fact retains its source, source key and URL, observed time, confidence, usage policy, review state, and link to an import run and source snapshot. Industry-code facts also retain `code_system` and `code_version` from the official EMTAK `emtak_version` column; a version is never inferred from report year. The company list and `GET /companies/{id}` expose versioned industry-code details. `GET /companies/{id}` returns active facts and superseded history.
+Stores versioned, source-backed claims including `registry_status`, legal name, registry ID, headcount, industry code, and share capital. Each fact retains its source, source key and URL, observed time, confidence, usage policy, review state, and link to an import run and source snapshot. Industry-code facts also retain `code_system` and `code_version` from the official EMTAK `emtak_version` column; a version is never inferred from report year. Share-capital facts hold `{amount, currency}` from the general-data file's current `kapitalid` entry (the source's own currency; not necessarily EUR, though it always is under Estonian company law today). The company list and `GET /companies/{id}` expose versioned industry-code details. `GET /companies/{id}` returns active facts and superseded history.
+
+### `company_shareholders`
+
+Stores current shareholders (osanikud) from the official register, one row per holder. A person shareholder is stored by `holder_name` and `holding_*` only; a legal-entity shareholder also keeps `holder_registry_code` (its own registry code, or a foreign entity's foreign code with `holder_country`). The register's national ID code, its one-way hash, birth date, and home address are personal data belonging to a person shareholder and are never read by the importer, so they can never reach this table or a source snapshot. The whole reported shareholder set for a company is versioned together, like a registered address: an unchanged set is confirmed in place, a changed set closes the current rows (`valid_to`) and inserts the new set. `GET /companies/{id}` and `GET /companies/{id}/shareholders` return the current set.
 
 ### `registered_addresses`
 
@@ -51,12 +56,13 @@ Stores one financial observation per company, filing, period, and statement scop
 The Estonia import performs these stages:
 
 1. Apply the source permission gate and resolve requested official datasets.
-2. Require every requested indicator year and both qualification years (2024 and 2025). Missing files fail before company upserts. The seed command also resolves and validates all required files before a `--replace` backup and purge.
+2. Require every requested indicator year and both qualification years (2024 and 2025). Missing files fail before company upserts. The seed command also resolves and validates all required files before a `--replace` backup and purge. The general-data and shareholders files are optional: either being missing (a portal outage, or an offline cache predating them) only adds a run warning and skips that section.
 3. Snapshot file metadata and load annual-report metadata.
 4. Select companies using non-consolidated reported FTE from 2024/2025, apply the legal-form allowlist, and refresh already-known companies that have fallen below the threshold.
-5. Upsert source-backed company facts and status, then version the registered address.
+5. Upsert source-backed company facts and status (including current share capital, when the general-data file is present), then version the registered address.
 6. Join indicator rows to annual reports, reject and log orphan 2024 report IDs, and upsert financial rows by stable source key and content hash.
-7. Record counts and warnings, mark the run complete, and write an audit event.
+7. When the shareholders file is present, version each in-scope company's shareholder set (see `company_shareholders` above).
+8. Record counts and warnings, mark the run complete, and write an audit event.
 
 Imports are incremental and idempotent for unchanged source content. Cache mode accepts only files whose URL, size, and SHA-256 match the local manifest. `api/data/` is git-ignored; a clean checkout therefore needs one live download with `LIVE_CONNECTORS_ENABLED=true` or a copy of a teammate's verified `api/data/ee_ariregister/` directory before `--from-cache` can work.
 
@@ -73,6 +79,7 @@ GET    /companies
 GET    /companies/{id}
 GET    /companies/{id}/financials
 GET    /companies/{id}/registered-address
+GET    /companies/{id}/shareholders
 POST   /companies/{id}/facts/corrections
 GET    /companies/{id}/audit-events
 GET    /audit-events
@@ -80,7 +87,7 @@ GET    /quality/report
 GET    /quality/duplicates
 ```
 
-`GET /companies/{id}` includes `company.registry_status`, the `registry_status` fact and provenance, current registered address, financial rows, identifiers, warnings, and review history. `GET /companies` defaults to at least 20 employees and supports qualification and review filters.
+`GET /companies/{id}` includes `company.registry_status`, the `registry_status` fact and provenance, current registered address, current shareholders, financial rows, identifiers, warnings, and review history. `GET /companies` defaults to at least 20 employees and supports qualification and review filters.
 
 ## Local development and checks
 
